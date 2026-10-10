@@ -46,17 +46,18 @@ def main():
     model, tok = FastLanguageModel.from_pretrained(BASE_MODEL, max_seq_length=MAX_LEN, load_in_4bit=False,
                                                    load_in_16bit=True, full_finetuning=False)
     model = FastLanguageModel.get_peft_model(
-        model, r=16, lora_alpha=16, lora_dropout=0, bias="none", random_state=3407, use_gradient_checkpointing="unsloth",
+        model, r=16, lora_alpha=16, lora_dropout=0, bias="none", random_state=3407, use_gradient_checkpointing=(True if arg("--gc", "unsloth") == "true" else arg("--gc", "unsloth")),
         target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"])
 
     train, val = load(ROOT / "data/train/train.jsonl"), load(ROOT / "data/train/val.jsonl")
     print(f"train {len(train)} samples, val {len(val)} samples", flush=True)
-    collator = DataCollatorForSeq2Seq(tok, padding=True, label_pad_token_id=-100, pad_to_multiple_of=8)
+    text_tok = getattr(tok, "tokenizer", tok)        # Qwen3.5 loads as a multimodal processor; padding needs its tokenizer
+    collator = DataCollatorForSeq2Seq(text_tok, padding=True, label_pad_token_id=-100, pad_to_multiple_of=arg("--pad", 512, int))   # few distinct shapes = few kernel re-tunes
     args = TrainingArguments(
-        output_dir=str(out / "checkpoints"), per_device_train_batch_size=1, per_device_eval_batch_size=1,
-        gradient_accumulation_steps=16, num_train_epochs=epochs, max_steps=max_steps, learning_rate=lr,
+        output_dir=str(out / "checkpoints"), per_device_train_batch_size=arg("--bs", 1, int), per_device_eval_batch_size=1, train_sampling_strategy="group_by_length",
+        gradient_accumulation_steps=16 // arg("--bs", 1, int), num_train_epochs=epochs, max_steps=max_steps, learning_rate=lr,
         lr_scheduler_type="cosine", warmup_ratio=0.03, weight_decay=0.01, optim="adamw_8bit", bf16=True,
-        logging_steps=5, eval_strategy="steps", eval_steps=100 if max_steps < 0 else max(1, max_steps),
+        logging_steps=1, eval_strategy="no",   # full-vocab eval logits do not fit in 6 GB; the 30-scenario eval is the real test
         save_strategy="steps", save_steps=100, save_total_limit=2, report_to="none", seed=3407,
         dataloader_num_workers=0, remove_unused_columns=False)
     trainer = Trainer(model=model, args=args, train_dataset=train, eval_dataset=val, data_collator=collator,
@@ -64,7 +65,6 @@ def main():
     torch.cuda.reset_peak_memory_stats()
     trainer.train()
     print(f"peak VRAM {torch.cuda.max_memory_allocated() / 2**30:.2f} GiB", flush=True)
-    print("final eval:", trainer.evaluate(), flush=True)
 
     model.save_pretrained(str(out / "lora"))
     tok.save_pretrained(str(out / "lora"))

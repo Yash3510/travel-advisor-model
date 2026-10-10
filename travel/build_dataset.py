@@ -18,7 +18,9 @@ from travel import format as fmt
 sys.stdout.reconfigure(encoding="utf-8")
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 MAX_LEN = 4096
-SGD_TURNS_PER_CONV = 2
+SGD_TURNS_PER_CONV = 1          # training runs ~1,600 tokens/s on the 4050; one well-chosen turn per conversation
+SGD_BOOKING_CONVS = 700
+SGD_SEARCH_CONVS = 300
 VAL_SHARE = 0.05
 LEAK_JACCARD = 0.5
 
@@ -46,8 +48,11 @@ def main():
     eval_openings = [words(o) for o in evaluate.opening_messages()]
     stats, convs = collections.Counter(), []
 
-    for line in (ROOT / "data/processed/sgd_india.jsonl").open(encoding="utf-8"):
-        conv = json.loads(line)
+    sgd = [json.loads(line) for line in (ROOT / "data/processed/sgd_india.jsonl").open(encoding="utf-8")]
+    rng.shuffle(sgd)
+    sgd = ([c for c in sgd if c["meta"]["has_booking"]][:SGD_BOOKING_CONVS]
+           + [c for c in sgd if not c["meta"]["has_booking"]][:SGD_SEARCH_CONVS])
+    for conv in sgd:
         ranked = sorted(fmt.reply_segments(conv), key=lambda t: turn_score(t[1], rng), reverse=True)
         convs.append((conv, {n for n, _ in ranked[:SGD_TURNS_PER_CONV]}))
 
