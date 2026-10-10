@@ -6,17 +6,8 @@ import json, sys, time, urllib.request, pathlib
 
 from travel.tools import ALL, NO_INVENTORY
 
-sys.stdout.reconfigure(encoding="utf-8")
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-BASE, OUT = sys.argv[1], sys.argv[2]
-SYS_FILE = sys.argv[sys.argv.index("--system-file") + 1] if "--system-file" in sys.argv else ROOT / "prompts" / "spec_system_prompt.txt"
-THINKING = "--thinking" in sys.argv
-SYSTEM = pathlib.Path(SYS_FILE).read_text(encoding="utf-8").strip() + (
-    "\n\nDEPLOYMENT CONTEXT\nMarket: India. Currency: INR. Today's date: 10 October 2026. "
-    "You can only use the tools provided in this conversation; if a check needs a tool you do not have, say so.")
-# Qwen3.5 model-card sampling, text mode
-SAMPLING = (dict(temperature=1.0, top_p=0.95, top_k=20, min_p=0.0, presence_penalty=1.5) if THINKING
-            else dict(temperature=1.0, top_p=1.0, top_k=20, min_p=0.0, presence_penalty=2.0))
+EVAL_TODAY = "2026-10-10"
 
 def u(t): return {"role": "user", "content": t}
 def a(t): return {"role": "assistant", "content": t}
@@ -142,29 +133,51 @@ SCENARIOS = [
 ]
 
 
-def post(body):
-    req = urllib.request.Request(BASE.rstrip("/") + "/v1/chat/completions", data=json.dumps(body).encode(),
+def opening_messages():
+    """First customer message of each scenario (used by the leakage check on training data)."""
+    return [next(m["content"] for m in msgs if m["role"] == "user") for _, _, _, msgs in SCENARIOS]
+
+
+def post(base, body):
+    req = urllib.request.Request(base.rstrip("/") + "/v1/chat/completions", data=json.dumps(body).encode(),
                                  headers={"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=900) as r:
         return json.load(r)
 
 
-results = []
-for sid, title, tools, msgs in SCENARIOS:
-    body = dict(model="local", messages=[{"role": "system", "content": SYSTEM}] + msgs, tools=tools,
-                max_tokens=4000 if THINKING else 900, chat_template_kwargs={"enable_thinking": THINKING}, **SAMPLING)
-    t = time.time(); out = post(body); secs = time.time() - t
-    m = out["choices"][0]["message"]; tim = out.get("timings", {})
-    rec = {"id": sid, "title": title, "content": m.get("content") or "", "tool_calls": [
-        {"name": tc["function"]["name"], "arguments": tc["function"]["arguments"]} for tc in (m.get("tool_calls") or [])],
-        "finish": out["choices"][0].get("finish_reason"), "secs": round(secs, 1),
-        "gen_tps": round(tim.get("predicted_per_second", 0), 1), "prompt_tps": round(tim.get("prompt_per_second", 0), 1),
-        "prompt_tokens": tim.get("prompt_n"), "gen_tokens": tim.get("predicted_n")}
-    results.append(rec)
-    print(f"\n### S{sid:02d} {title}  [{rec['secs']}s | gen {rec['gen_tps']} tok/s | prompt {rec['prompt_tokens']} tok @ {rec['prompt_tps']}/s | {rec['finish']}]")
-    for tc in rec["tool_calls"]:
-        print(f"TOOL_CALL → {tc['name']}({tc['arguments']})")
-    print(rec["content"].strip())
+def main():
+    from travel.simulate import deployment_context
+    sys.stdout.reconfigure(encoding="utf-8")
+    base, out_path = sys.argv[1], sys.argv[2]
+    sys_file = sys.argv[sys.argv.index("--system-file") + 1] if "--system-file" in sys.argv else ROOT / "prompts" / "spec_system_prompt.txt"
+    thinking = "--thinking" in sys.argv
+    system = pathlib.Path(sys_file).read_text(encoding="utf-8").strip() + deployment_context(EVAL_TODAY)
+    # Qwen3.5 model-card sampling, text mode
+    sampling = (dict(temperature=1.0, top_p=0.95, top_k=20, min_p=0.0, presence_penalty=1.5) if thinking
+                else dict(temperature=1.0, top_p=1.0, top_k=20, min_p=0.0, presence_penalty=2.0))
+    run_all(base, out_path, system, thinking, sampling)
 
-pathlib.Path(OUT).write_text(json.dumps(results, ensure_ascii=False, indent=1), encoding="utf-8")
-print(f"\nsaved {len(results)} results → {OUT}")
+
+def run_all(base, out_path, system, thinking, sampling):
+    results = []
+    for sid, title, tools, msgs in SCENARIOS:
+        body = dict(model="local", messages=[{"role": "system", "content": system}] + msgs, tools=tools,
+                    max_tokens=4000 if thinking else 900, chat_template_kwargs={"enable_thinking": thinking}, **sampling)
+        t = time.time(); out = post(base, body); secs = time.time() - t
+        m = out["choices"][0]["message"]; tim = out.get("timings", {})
+        rec = {"id": sid, "title": title, "content": m.get("content") or "", "tool_calls": [
+            {"name": tc["function"]["name"], "arguments": tc["function"]["arguments"]} for tc in (m.get("tool_calls") or [])],
+            "finish": out["choices"][0].get("finish_reason"), "secs": round(secs, 1),
+            "gen_tps": round(tim.get("predicted_per_second", 0), 1), "prompt_tps": round(tim.get("prompt_per_second", 0), 1),
+            "prompt_tokens": tim.get("prompt_n"), "gen_tokens": tim.get("predicted_n")}
+        results.append(rec)
+        print(f"\n### S{sid:02d} {title}  [{rec['secs']}s | gen {rec['gen_tps']} tok/s | prompt {rec['prompt_tokens']} tok @ {rec['prompt_tps']}/s | {rec['finish']}]")
+        for tc in rec["tool_calls"]:
+            print(f"TOOL_CALL → {tc['name']}({tc['arguments']})")
+        print(rec["content"].strip())
+    pathlib.Path(out_path).write_text(json.dumps(results, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"\nsaved {len(results)} results → {out_path}")
+
+
+if __name__ == "__main__":
+    main()

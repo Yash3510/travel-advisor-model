@@ -1,0 +1,96 @@
+"""Build tokenised train/val sets: python -I -m travel.build_dataset
+
+SGD contributes its two most instructive customer turns per conversation (bookings, confirmations, tool calls);
+the generated gap data contributes every turn of every conversation that passed the checks.
+"""
+import collections
+import json
+import pathlib
+import random
+import re
+import sys
+
+from transformers import AutoTokenizer
+
+from travel import evaluate
+from travel import format as fmt
+
+sys.stdout.reconfigure(encoding="utf-8")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+MAX_LEN = 4096
+SGD_TURNS_PER_CONV = 2
+VAL_SHARE = 0.05
+LEAK_JACCARD = 0.5
+
+
+def words(text):
+    return set(re.findall(r"[a-z0-9₹]+", text.lower()))
+
+
+def leaks(opening, eval_openings):
+    w = words(opening)
+    return any(len(w & e) / max(1, len(w | e)) >= LEAK_JACCARD for e in eval_openings)
+
+
+def turn_score(segment, rng):
+    calls = [c["function"]["name"] for m in segment for c in (m.get("tool_calls") or [])]
+    text = " ".join(m.get("content") or "" for m in segment if m["role"] == "assistant")
+    score = 3 * any(not n.startswith(("Search", "Find", "Get", "search", "get")) for n in calls) + 2 * bool(calls)
+    score += 2 * bool(re.search(r"\bconfirm", text, re.I)) + (1 if "?" in text and not calls else 0)
+    return score + rng.random()
+
+
+def main():
+    rng = random.Random(1234)
+    tok = AutoTokenizer.from_pretrained("unsloth/Qwen3.5-0.8B")
+    eval_openings = [words(o) for o in evaluate.opening_messages()]
+    stats, convs = collections.Counter(), []
+
+    for line in (ROOT / "data/processed/sgd_india.jsonl").open(encoding="utf-8"):
+        conv = json.loads(line)
+        ranked = sorted(fmt.reply_segments(conv), key=lambda t: turn_score(t[1], rng), reverse=True)
+        convs.append((conv, {n for n, _ in ranked[:SGD_TURNS_PER_CONV]}))
+
+    for path in sorted((ROOT / "data/gap").glob("gap_*.jsonl")):
+        for line in path.open(encoding="utf-8"):
+            conv = json.loads(line)
+            cat = conv["meta"]["category"]
+            if conv["meta"].get("problems") or not conv["messages"]:
+                stats[f"gap dropped: failed checks ({cat})"] += 1
+                continue
+            opening = next(m["content"] for m in conv["messages"] if m["role"] == "user")
+            if leaks(opening, eval_openings):
+                stats["gap dropped: too close to an eval scenario"] += 1
+                continue
+            convs.append((conv, None))
+
+    rng.shuffle(convs)
+    n_val = max(1, int(len(convs) * VAL_SHARE))
+    out_dir = ROOT / "data/train"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    tokens = collections.Counter()
+    by_cat = collections.Counter()
+    with (out_dir / "train.jsonl").open("w", encoding="utf-8") as ftr, (out_dir / "val.jsonl").open("w", encoding="utf-8") as fva:
+        for k, (conv, turns) in enumerate(convs):
+            split = "val" if k < n_val else "train"
+            src = conv["meta"]["source"]
+            cat = conv["meta"].get("category", "sgd")
+            for s in fmt.encode(tok, conv, MAX_LEN, turns):
+                s.update(source=src, category=cat)
+                (fva if split == "val" else ftr).write(json.dumps(s) + "\n")
+                stats[f"{split} samples ({src})"] += 1
+                tokens[f"{split} tokens ({src})"] += len(s["input_ids"])
+                if split == "train":
+                    by_cat[cat] += 1
+
+    report = ["# Training data", "", "| item | count |", "|---|---|"]
+    report += [f"| {k} | {v:,} |" for k, v in sorted({**stats, **tokens}.items())]
+    report += ["", "## Train samples by category", "", "| category | samples |", "|---|---|"]
+    report += [f"| {k} | {v} |" for k, v in by_cat.most_common()]
+    (ROOT / "reports").mkdir(exist_ok=True)
+    (ROOT / "reports/dataset.md").write_text("\n".join(report) + "\n", encoding="utf-8")
+    print("\n".join(report))
+
+
+if __name__ == "__main__":
+    main()
