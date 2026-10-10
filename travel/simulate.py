@@ -121,7 +121,12 @@ def main():
     done = set()
     if out_path.exists():
         done = {json.loads(l)["meta"]["id"] for l in out_path.open(encoding="utf-8") if l.strip()}
-    todo = [s for s in scenarios.build() if s["id"] not in done and (not only or s["category"] in only.split(","))][:limit]
+    pending = [s for s in scenarios.build() if s["id"] not in done and (not only or s["category"] in only.split(","))]
+    by_cat = {}
+    for s in pending:
+        by_cat.setdefault(s["category"], []).append(s)
+    # round-robin across categories, so stopping early still leaves a balanced set
+    todo = [q.pop(0) for _ in range(max(map(len, by_cat.values()), default=0)) for q in by_cat.values() if q][:limit]
     print(f"{len(done)} done, {len(todo)} to generate", flush=True)
     lock, t0, n_ok = threading.Lock(), time.time(), [0, 0]
 
