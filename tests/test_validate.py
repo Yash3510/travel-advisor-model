@@ -171,3 +171,21 @@ def test_price_cap_derived_from_customer_budget_is_fine():
     c = conv(u("Something affordable in Puri 5 to 12 March for 2"),
              call("search_hotels", {"city": "Puri", "check_in": "2027-03-05", "check_out": "2027-03-12", "guests": 2, "max_price_per_night": 3000}))
     assert "invented_filter" in problems(c)
+
+
+def test_price_points_offered_in_a_question_are_not_claims():
+    assert "invented_amount" not in problems(conv(u("Hotels in Shillong are too pricey"),
+                                                  a("What range works for you: under ₹5,000 or under ₹7,000 a night?")))
+
+
+def test_lower_cap_after_cheaper_request_is_fine():
+    ctx = [u("Hotel in Amritsar 9 to 12 Dec for 2"),
+           call("search_hotels", {"city": "Amritsar", "check_in": "2026-12-09", "check_out": "2026-12-12", "guests": 2}),
+           res({"results": [{"offer_id": "H-1", "price_per_night_inr": 6800, "total_inr": 20400}]}),
+           a("Sapphire Stay is ₹20,400 for 3 nights."), u("Way too expensive, anything cheaper?")]
+    ok = call("search_hotels", {"city": "Amritsar", "check_in": "2026-12-09", "check_out": "2026-12-12", "guests": 2,
+                                "max_price_per_night": 4000}, "c2")
+    assert "invented_filter" not in problems(conv(*ctx, ok))
+    higher = call("search_hotels", {"city": "Amritsar", "check_in": "2026-12-09", "check_out": "2026-12-12", "guests": 2,
+                                    "max_price_per_night": 9000}, "c2")
+    assert "invented_filter" in problems(conv(*ctx, higher))

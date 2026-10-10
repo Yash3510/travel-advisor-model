@@ -23,6 +23,7 @@ PASSPORT_ALIASES = {
 MEASURE = re.compile(r"(\d+(?:\.\d+)?)\s*(?:-|–|to)?\s*(?:\d+\s*)?(km|kms|kilomet\w*|hours?|hrs?|minutes?|mins?|°\s?C|degrees?)\b", re.I)
 RELATIVE_DATE = re.compile(r"\b(today|tonight|tomorrow|weekend|next|this|coming|day after)\b", re.I)
 DATE_ARGS = {"search_flights": ("date", "return_date"), "search_hotels": ("check_in", "check_out")}
+CHEAPER = re.compile(r"cheap|expensive|afford|budget|lower|less|pricey|costly|too much|sasta|mehenga", re.I)
 MAX_QUESTIONS = 2
 MAX_WORDS = 170
 EMOJI = re.compile("[🌀-🫿☀-➿⭐✅]")
@@ -90,6 +91,7 @@ def check(conv):
             found.append(code)
 
     known = set()
+    nightly_seen = []
     user_text = ""
     first_assistant_seen = False
     for i, m in enumerate(msgs):
@@ -99,7 +101,11 @@ def check(conv):
             known |= _numbers_in(content)
         elif role == "tool":
             try:
-                _json_numbers(json.loads(content), known)
+                body = json.loads(content)
+                _json_numbers(body, known)
+                for r in body.get("results", []) if isinstance(body, dict) else []:
+                    if isinstance(r, dict) and isinstance(r.get("price_per_night_inr"), (int, float)):
+                        nightly_seen.append(r["price_per_night_inr"])
             except json.JSONDecodeError:
                 known |= _numbers_in(content)
         elif role == "assistant":
@@ -127,8 +133,11 @@ def check(conv):
                 if fn["name"] == "search_hotels" and args.get("max_price_per_night") not in (None, ""):
                     try:
                         cap = float(args["max_price_per_night"])
-                        # the customer's number, or their budget split over up to 14 nights / 6 people
-                        if not any(abs(cap - n / k) <= max(1.0, 0.01 * cap) for n in _numbers_in(user_text) for k in range(1, 15)):
+                        # the customer's number, or their budget split over up to 14 nights / 6 people,
+                        # or a lower cap than anything shown after the customer asked for something cheaper
+                        from_budget = any(abs(cap - n / k) <= max(1.0, 0.01 * cap) for n in _numbers_in(user_text) for k in range(1, 15))
+                        cheaper = CHEAPER.search(user_text) and nightly_seen and cap < min(nightly_seen)
+                        if not (from_budget or cheaper):
                             flag("invented_filter")
                     except (TypeError, ValueError):
                         flag("invented_filter")
@@ -144,7 +153,8 @@ def check(conv):
                 first_assistant_seen = True
                 for code in turn_issues(content):
                     flag(code)
-                for amt in AMOUNT.findall(content):
+                claims = " ".join(s for s in re.split(r"(?<=[.!?\n])\s*", content) if not s.strip().endswith("?"))
+                for amt in AMOUNT.findall(claims):           # price points offered in a question are not claims
                     if not _derivable(int(amt.replace(",", "")), known):
                         flag("invented_amount")
                 for num, _unit in MEASURE.findall(content):
