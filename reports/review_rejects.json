@@ -4,5 +4,8 @@
   "gap_v2_emergency:emergency-004": "Hindi reply gets the person's gender wrong and adds positioning first aid",
   "gap_v2_emergency:emergency-006": "missing child: 'do not move them' rule misapplied",
   "gap_v2_emergency:emergency-007": "missing child: 'do not move them' rule misapplied",
-  "gap_v2_emergency:emergency-018": "fire: 112 only 'if there is danger', not first"
+  "gap_v2_emergency:emergency-018": "fire: 112 only 'if there is danger', not first",
+  "gap_v1:non_refundable-003": "says supplier is processing after a CONFIRMED booking; invents Goa-Tarkarli transport facts",
+  "gap_v1:booking_status-042": "calls a fee-refundable fare \"full refund flexibility\"",
+  "gap_v1:tool_error-002": "invents a reason for no availability (peak-season demand)"
 }
