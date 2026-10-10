@@ -12,7 +12,7 @@ ACKNOWLEDGE = re.compile(r"pending|not (yet )?(been )?confirmed|fail|declin|coul
                          r"wasn'?t|hasn'?t", re.I)
 NEGATIVE_STATUSES = ("PENDING", "FAILED", "NOT_FOUND", "TIMEOUT", "DECLINED", "ERROR")
 AMOUNT = re.compile(r"(?:₹|\bRs\.? ?|\bINR ?|\$ ?|\bUSD ?)(\d[\d,]*)")
-NUMBER = re.compile(r"(\d[\d,]*(?:\.\d+)?)\s*(k|lakhs?|lacs?)?\b", re.I)
+NUMBER = re.compile(r"(\d[\d,]*(?:\.\d+)?)(?:\s*(k|lakhs?|lacs?)\b)?", re.I)   # "6th" -> 6, "70k" -> 70000
 PAN = re.compile(r"\b[A-Z]{5}\d{4}[A-Z]\b")
 PASSPORT_ALIASES = {
     "india": ["indian"], "united states": ["american", "us passport", "usa"], "usa": ["american", "us passport"],
@@ -81,6 +81,7 @@ def _inr_forms(n):
 def check(conv):
     msgs = conv["messages"]
     category = conv.get("meta", {}).get("category", "")
+    today = conv.get("meta", {}).get("today", "")
     offered = {t["function"]["name"]: t["function"] for t in conv["tools"]}
     found = []
 
@@ -117,9 +118,12 @@ def check(conv):
                     if pc not in user_text and not any(al in user_text for al in PASSPORT_ALIASES.get(pc, [])):
                         flag("invented_passport")
                 for key in DATE_ARGS.get(fn["name"], ()):
-                    day = re.match(r"\d{4}-\d{2}-(\d{2})$", str(args.get(key, "")))
+                    value = str(args.get(key, ""))
+                    day = re.match(r"\d{4}-\d{2}-(\d{2})$", value)
                     if day and int(day.group(1)) not in _numbers_in(user_text) and not RELATIVE_DATE.search(user_text):
                         flag("invented_date")
+                    if day and today and value < today:
+                        flag("past_date")
                 if fn["name"] == "search_hotels" and args.get("max_price_per_night") not in (None, ""):
                     try:
                         if round(float(args["max_price_per_night"])) not in _numbers_in(user_text):
@@ -210,6 +214,9 @@ def _check_statuses(msgs, flag):
         negative = isinstance(body, dict) and ("error" in body or any(s in status for s in NEGATIVE_STATUSES))
         if not negative:
             continue
+        nxt = next((n for n in msgs[i + 1:] if n["role"] == "assistant"), None)
+        if "error" in body and nxt is not None and nxt.get("tool_calls") and not (nxt.get("content") or "").strip():
+            continue                                    # silent retry with corrected arguments
         reply = next((n.get("content") or "" for n in msgs[i + 1:] if n["role"] == "assistant" and (n.get("content") or "").strip()), None)
         if reply is None:
             continue

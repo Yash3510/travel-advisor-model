@@ -140,3 +140,25 @@ def test_search_dates_must_come_from_the_customer():
     given = conv(u("Hotel in Puri from 15 to 18 February for 2"),
                  call("search_hotels", {"city": "Puri", "check_in": "2027-02-15", "check_out": "2027-02-18", "guests": 2}))
     assert "invented_date" not in problems(given)
+
+
+def test_ordinal_dates_count_as_customer_given():
+    c = conv(u("Hotel in Kutch from April 6th to 11th for my sister and me"),
+             call("search_hotels", {"city": "Kutch", "check_in": "2027-04-06", "check_out": "2027-04-11", "guests": 2}))
+    assert "invented_date" not in problems(c)
+
+
+def test_silent_successful_retry_after_tool_error_is_fine():
+    c = conv(u("Hotel in Shillong 16 to 21 January for 2"),
+             call("search_hotels", {"city": "Shillong", "check_in": "January 16", "check_out": "January 21", "guests": 2}),
+             res({"error": "INVALID_ARGUMENTS", "message": "check_in and check_out must be YYYY-MM-DD"}),
+             call("search_hotels", {"city": "Shillong", "check_in": "2027-01-16", "check_out": "2027-01-21", "guests": 2}, "c2"),
+             res({"results": []}, "c2"), a("I found no rooms for those dates."))
+    assert "status_not_reported" not in problems(c)
+
+
+def test_search_dates_in_the_past_fail():
+    c = conv(u("Hotel in Shillong 16 to 21 January for 2"),
+             call("search_hotels", {"city": "Shillong", "check_in": "2026-01-16", "check_out": "2026-01-21", "guests": 2}))
+    c["meta"]["today"] = "2026-11-27"
+    assert "past_date" in problems(c)

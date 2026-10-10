@@ -12,7 +12,7 @@ import sys
 
 from transformers import AutoTokenizer
 
-from travel import evaluate
+from travel import evaluate, validate
 from travel import format as fmt
 
 sys.stdout.reconfigure(encoding="utf-8")
@@ -51,11 +51,19 @@ def main():
         ranked = sorted(fmt.reply_segments(conv), key=lambda t: turn_score(t[1], rng), reverse=True)
         convs.append((conv, {n for n, _ in ranked[:SGD_TURNS_PER_CONV]}))
 
-    for path in sorted((ROOT / "data/gap").glob("gap_*.jsonl")):
+    gap_files = sorted((ROOT / "data/gap").glob("gap_*.jsonl"))
+    newest = {}                                  # a regenerated category (e.g. gap_v2_emergency) replaces older files' copies
+    for path in gap_files:
+        for line in path.open(encoding="utf-8"):
+            newest[json.loads(line)["meta"]["category"]] = path
+    for path in gap_files:
         for line in path.open(encoding="utf-8"):
             conv = json.loads(line)
             cat = conv["meta"]["category"]
-            if conv["meta"].get("problems") or not conv["messages"]:
+            if newest[cat] != path:
+                stats[f"gap superseded by a newer file ({cat})"] += 1
+                continue
+            if not conv["messages"] or validate.check(conv):     # re-check with the current rules
                 stats[f"gap dropped: failed checks ({cat})"] += 1
                 continue
             opening = next(m["content"] for m in conv["messages"] if m["role"] == "user")
