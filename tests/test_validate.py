@@ -162,3 +162,12 @@ def test_search_dates_in_the_past_fail():
              call("search_hotels", {"city": "Shillong", "check_in": "2026-01-16", "check_out": "2026-01-21", "guests": 2}))
     c["meta"]["today"] = "2026-11-27"
     assert "past_date" in problems(c)
+
+
+def test_price_cap_derived_from_customer_budget_is_fine():
+    c = conv(u("Hotel in Puri 5 to 12 March for 2, total budget ₹20,000"),
+             call("search_hotels", {"city": "Puri", "check_in": "2027-03-05", "check_out": "2027-03-12", "guests": 2, "max_price_per_night": 2857}))
+    assert "invented_filter" not in problems(c)
+    c = conv(u("Something affordable in Puri 5 to 12 March for 2"),
+             call("search_hotels", {"city": "Puri", "check_in": "2027-03-05", "check_out": "2027-03-12", "guests": 2, "max_price_per_night": 3000}))
+    assert "invented_filter" in problems(c)

@@ -126,7 +126,9 @@ def check(conv):
                         flag("past_date")
                 if fn["name"] == "search_hotels" and args.get("max_price_per_night") not in (None, ""):
                     try:
-                        if round(float(args["max_price_per_night"])) not in _numbers_in(user_text):
+                        cap = float(args["max_price_per_night"])
+                        # the customer's number, or their budget split over up to 14 nights / 6 people
+                        if not any(abs(cap - n / k) <= max(1.0, 0.01 * cap) for n in _numbers_in(user_text) for k in range(1, 15)):
                             flag("invented_filter")
                     except (TypeError, ValueError):
                         flag("invented_filter")
