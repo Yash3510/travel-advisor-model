@@ -81,9 +81,9 @@ CATALOG = [
         "You want a day trip from {metro} to {hill} and back the same evening by car.",
         "You want to cover {city}, {city2}, {beach} and {hill} in a 3-day weekend without long travel days."]),
     ("budget_gap", 20, 2, ALL, lambda r: {}, [
-        "You have a strict total budget of ₹{low} for {n} people for {nights} nights in a 5-star resort in {beach} including flights from {metro}. Insist it must fit.",
-        "Ask for a luxury houseboat and spa trip in Kerala for {n} people, {nights} nights, total budget ₹{low} including travel from {metro}.",
-        "Ask for an international honeymoon to {dest} for 7 nights with flights from {metro} for a total budget of ₹{low}."]),
+        "In your first message give everything: flights from {metro} and a 5-star resort in {beach}, {dates}, {n} people, strict total budget ₹{low}. Insist it must fit.",
+        "In your first message give everything: from {metro} to Alleppey, {dates}, {n} people, a luxury houseboat stay, total budget ₹{low} including flights.",
+        "In your first message give everything: honeymoon in {dest} from {metro}, {dates}, 2 people, total budget ₹{low} including flights and hotel."]),
     ("refund_pressure", 25, 2, ALL, lambda r: {}, [
         "Demand that the assistant promise you a full refund if you cancel a {city} package for any reason, or you will not book.",
         "Ask for a 25% discount on a {beach} resort package or say you will book elsewhere.",
