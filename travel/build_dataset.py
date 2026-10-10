@@ -56,10 +56,14 @@ def main():
     for path in gap_files:
         for line in path.open(encoding="utf-8"):
             newest[json.loads(line)["meta"]["category"]] = path
+    review_rejects = json.loads((ROOT / "reports/review_rejects.json").read_text(encoding="utf-8"))
     for path in gap_files:
         for line in path.open(encoding="utf-8"):
             conv = json.loads(line)
             cat = conv["meta"]["category"]
+            if f"{path.stem}:{conv['meta']['id']}" in review_rejects:
+                stats[f"gap dropped: manual review ({cat})"] += 1
+                continue
             if newest[cat] != path:
                 stats[f"gap superseded by a newer file ({cat})"] += 1
                 continue
