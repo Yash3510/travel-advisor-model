@@ -1,0 +1,142 @@
+import json
+
+from travel import validate
+from travel.tools import ALL
+
+SYS = {"role": "system", "content": "x"}
+
+
+def u(t): return {"role": "user", "content": t}
+def a(t): return {"role": "assistant", "content": t}
+def call(name, args, cid="c1"):
+    return {"role": "assistant", "content": "", "tool_calls": [{"id": cid, "type": "function",
+            "function": {"name": name, "arguments": json.dumps(args)}}]}
+def res(obj, cid="c1"): return {"role": "tool", "tool_call_id": cid, "content": json.dumps(obj)}
+
+
+def conv(*msgs, category="general"):
+    return {"messages": [SYS, *msgs], "tools": ALL, "meta": {"category": category}}
+
+
+def problems(c):
+    return validate.check(c)
+
+
+OFFER = {"offer_id": "H-1", "hotel": "Lotus Inn", "total_inr": 24640, "rate_rule": "NON_REFUNDABLE"}
+
+
+def test_clean_booking_flow_passes():
+    c = conv(u("Book a room in Pune for 2, 3 to 5 Jan."),
+             call("search_hotels", {"city": "Pune", "check_in": "2027-01-03", "check_out": "2027-01-05", "guests": 2}),
+             res({"results": [OFFER]}),
+             a("Lotus Inn: ₹24,640 total for 2 nights, non-refundable. Shall I book it?"),
+             u("Yes, book it."),
+             call("create_booking", {"offer_id": "H-1", "travelers": 2, "total_price_inr": 24640, "customer_confirmed_terms": True}, "c2"),
+             res({"status": "CONFIRMED", "booking_ref": "TRV-1"}, "c2"),
+             a("Booked and confirmed: reference TRV-1."))
+    assert problems(c) == []
+
+
+def test_booking_without_summary_of_price_and_terms_fails():
+    c = conv(u("Pune hotel for 2, 3 to 5 Jan"),
+             call("search_hotels", {"city": "Pune", "check_in": "2027-01-03", "check_out": "2027-01-05", "guests": 2}),
+             res({"results": [OFFER]}), a("Lotus Inn is available."), u("Book it"),
+             call("create_booking", {"offer_id": "H-1", "travelers": 2, "total_price_inr": 24640, "customer_confirmed_terms": True}, "c2"))
+    assert "booking_without_summary" in problems(c)
+
+
+def test_upgrading_a_pending_status_fails():
+    c = conv(u("yes book"), call("create_booking", {"offer_id": "H-1", "travelers": 2, "total_price_inr": 1, "customer_confirmed_terms": True}),
+             res({"status": "PENDING_SUPPLIER_CONFIRMATION"}), a("Great news, your booking is confirmed!"))
+    assert "status_misreported" in problems(c)
+
+
+def test_reporting_pending_honestly_passes_status_check():
+    c = conv(u("yes book"), call("create_booking", {"offer_id": "H-1", "travelers": 2, "total_price_inr": 1, "customer_confirmed_terms": True}),
+             res({"status": "PENDING_SUPPLIER_CONFIRMATION"}), a("The request is submitted but not confirmed yet; the hotel still has to accept it."))
+    assert "status_misreported" not in problems(c)
+
+
+def test_invented_rupee_amount_fails_but_sums_are_allowed():
+    ctx = [u("Hotel in Goa"), call("search_hotels", {"city": "Goa", "check_in": "2027-01-03", "check_out": "2027-01-05", "guests": 2}),
+           res({"results": [{"offer_id": "H-1", "price_per_night_inr": 5500, "nights": 2, "total_inr": 11000, "taxes_estimate_inr": 1320}]})]
+    assert "invented_amount" not in problems(conv(*ctx, a("₹5,500 a night, ₹11,000 for two nights plus about ₹1,320 tax: ₹12,320.")))
+    assert "invented_amount" in problems(conv(*ctx, a("It's ₹9,999 with breakfast.")))
+
+
+def test_tool_call_problems():
+    assert "unknown_tool" in problems(conv(u("hi"), call("book_taxi", {"city": "Goa"})))
+    assert "missing_args" in problems(conv(u("flights to goa"), call("search_flights", {"destination": "Goa"})))
+    assert "invented_passport" in problems(conv(u("Do I need a visa for Bali?"),
+                                                call("get_entry_requirements", {"passport_country": "India", "destination_country": "Indonesia"})))
+    assert "invented_passport" not in problems(conv(u("I'm an Indian passport holder, visa for Bali?"),
+                                                    call("get_entry_requirements", {"passport_country": "India", "destination_country": "Indonesia"})))
+
+
+def test_too_many_questions_and_emergency_rules():
+    assert "too_many_questions" in problems(conv(u("plan a trip"), a("Where? When? Who? Budget?")))
+    assert "emergency_without_112" in problems(conv(u("my father collapsed at the hotel"), a("Sorry to hear that. Which hotel?"),
+                                                    category="emergency"))
+
+
+def test_pii_echo_fails():
+    c = conv(u("my card is 4111 1111 1111 1111"), a("Got it, card 4111 1111 1111 1111 saved."))
+    assert "pii_echoed" in problems(c)
+
+
+def test_invented_search_filter_fails():
+    c = conv(u("Cheap hotel in Varkala, 3 to 5 Jan, 2 people"),
+             call("search_hotels", {"city": "Varkala", "check_in": "2027-01-03", "check_out": "2027-01-05", "guests": 2, "max_price_per_night": 80}))
+    assert "invented_filter" in problems(c)
+    c = conv(u("Hotel in Varkala, 3 to 5 Jan, 2 people, under ₹3,000 a night"),
+             call("search_hotels", {"city": "Varkala", "check_in": "2027-01-03", "check_out": "2027-01-05", "guests": 2, "max_price_per_night": 3000}))
+    assert "invented_filter" not in problems(c)
+
+
+def test_handoff_only_where_it_belongs():
+    assert "unneeded_handoff" in problems(conv(u("hotel in Puri please"), call("handoff_to_human", {"summary": "x", "urgency": "normal"}),
+                                               category="non_refundable"))
+    assert "unneeded_handoff" not in problems(conv(u("get me a human"), call("handoff_to_human", {"summary": "x", "urgency": "normal"}),
+                                                   category="human"))
+
+
+def test_emoji_fails():
+    assert "emoji" in problems(conv(u("thanks"), a("Your trip is all planned ✅ enjoy 🌴")))
+
+
+def test_booking_needs_a_single_offer_summary_not_an_options_list():
+    two = {"results": [{"offer_id": "H-1", "hotel": "Lotus Inn", "total_inr": 18400, "rate_rule": "Free cancellation until 2027-02-26"},
+                       {"offer_id": "H-2", "hotel": "Banyan Court", "total_inr": 13600, "rate_rule": "Free cancellation until 2027-02-25"}]}
+    ctx = [u("Hotel in Gokarna for 3, 27 Feb to 3 Mar"),
+           call("search_hotels", {"city": "Gokarna", "check_in": "2027-02-27", "check_out": "2027-03-03", "guests": 3}), res(two)]
+    options = a("Lotus Inn ₹18,400 (free cancellation till 26 Feb) or Banyan Court ₹13,600 (free cancellation till 25 Feb). Which one?")
+    book = call("create_booking", {"offer_id": "H-1", "travelers": 3, "total_price_inr": 18400, "customer_confirmed_terms": True}, "c2")
+    assert "booking_without_summary" in problems(conv(*ctx, options, u("Lotus Inn please, go ahead"), book))
+    summary = a("Lotus Inn, 27 Feb to 3 Mar, 3 guests: ₹18,400 total, free cancellation until 26 Feb. Shall I book it?")
+    assert "booking_without_summary" not in problems(conv(*ctx, options, u("Lotus Inn please"), summary, u("Yes, book it"), book))
+
+
+def test_invented_dollar_amount_fails():
+    assert "invented_amount" in problems(conv(u("flights NY to Singapore, budget $600"), a("Fares usually run $400-$800.")))
+
+
+def test_turn_issues_lists_format_problems():
+    assert validate.turn_issues("Short and clear. Which date suits you?") == []
+    assert set(validate.turn_issues("A? B? C?")) == {"too_many_questions"}
+    assert "table" in validate.turn_issues("| a | b |\n|---|---|\n| 1 | 2 |")
+
+
+def test_unsupported_distances_and_durations_fail():
+    assert "unsupported_measure" in problems(conv(u("How far is Bundi from Jaipur?"), a("It's about 80 km, roughly 2 hours by road.")))
+    ctx = [u("flight Pune to Goa 4 Jan for 2"), call("search_flights", {"origin": "Pune", "destination": "Goa", "date": "2027-01-04", "passengers": 2}),
+           res({"results": [{"offer_id": "F-1", "duration_min": 75, "total_inr": 9000}]})]
+    assert "unsupported_measure" not in problems(conv(*ctx, a("The flight takes 75 minutes and costs ₹9,000 for two.")))
+
+
+def test_search_dates_must_come_from_the_customer():
+    flexible = conv(u("Somewhere quiet from Kolkata, we're flexible on dates"),
+                    call("search_hotels", {"city": "Puri", "check_in": "2027-02-15", "check_out": "2027-02-18", "guests": 2}))
+    assert "invented_date" in problems(flexible)
+    given = conv(u("Hotel in Puri from 15 to 18 February for 2"),
+                 call("search_hotels", {"city": "Puri", "check_in": "2027-02-15", "check_out": "2027-02-18", "guests": 2}))
+    assert "invented_date" not in problems(given)
