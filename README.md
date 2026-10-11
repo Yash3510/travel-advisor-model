@@ -17,7 +17,7 @@ A small language model (**Qwen3.5-0.8B**, fine-tuned) that works as a **travel a
 - the model cannot book without a Confirm action
 - booking outcomes come from the system, not the model
 
-Integrating it into an app: see [docs/INTEGRATION.md](docs/INTEGRATION.md).
+Integrating it into an app: see [docs/INTEGRATION.md](docs/INTEGRATION.md). Full history, decisions, open work and how to restore the setup: [docs/PROJECT_LOG.md](docs/PROJECT_LOG.md).
 
 ## What is in this repo
 
