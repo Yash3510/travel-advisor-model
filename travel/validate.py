@@ -2,7 +2,8 @@
 import json
 import re
 
-AFFIRM = re.compile(r"\b(yes|yeah|yep|confirm(ed)?|go ahead|book it|please book|proceed|haan|ha|ok(ay)?|sure|done|theek hai)\b", re.I)
+AFFIRM = re.compile(r"\b(yes|yeah|yep|confirm(ed)?|go ahead|book it|please book|proceed|haan|ha|ok(ay)?|sure|done|theek hai|kar do|karo)\b"
+                    r"|हाँ|हां|जी|ठीक है|कर दो|करो|बुक कर", re.I)
 CANCEL_TERMS = re.compile(r"refund|cancel", re.I)
 POSITIVE = re.compile(r"\b(is|are|has been|have been|now|all) (confirmed|booked)\b|\bbooking (is )?(confirmed|complete)\b|"
                       r"\bsuccessfully (booked|reserved)\b|\byou'?re (all set|booked)\b|\bgreat news\b", re.I)

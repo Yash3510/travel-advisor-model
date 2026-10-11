@@ -208,3 +208,12 @@ def test_claiming_a_recheck_without_a_new_tool_call_fails():
                   call("search_flights", {"origin": "Mumbai", "destination": "Bagdogra", "date": "2026-11-15", "passengers": 2}),
                   res({"error": "UPSTREAM_TIMEOUT"}), a("The search timed out, so I could not check availability. Shall I try again?"))
     assert "phantom_check" not in problems(honest)
+
+
+def test_hindi_yes_counts_as_confirmation():
+    for yes in ["हाँ, यह ऑफर सही है", "हां बुक कर दो", "ji haan, kar do", "theek hai, book karo"]:
+        c = conv(u("Hotel in Pune 3 to 5 Jan for 2"),
+                 call("search_hotels", {"city": "Pune", "check_in": "2027-01-03", "check_out": "2027-01-05", "guests": 2}),
+                 res({"results": [OFFER]}), a("Lotus Inn: ₹24,640 total for 2 nights, non-refundable. Shall I book it?"), u(yes),
+                 call("create_booking", {"offer_id": "H-1", "travelers": 2, "total_price_inr": 24640, "customer_confirmed_terms": True}, "c2"))
+        assert "booking_without_yes" not in problems(c), yes

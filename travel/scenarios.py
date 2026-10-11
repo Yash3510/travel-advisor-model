@@ -225,8 +225,8 @@ def build(seed=0, catalog="v1"):
             if "booking_record" in cfg and cfg["booking_record"]:
                 cfg["booking_record"] = {**cfg["booking_record"], "booking_ref": slots["ref"]}
             slots["condition"] = rng.choice(CONDITIONS)
-            if "pregnant" in slots["condition"] and slots["relation"] not in ("wife", "sister", "daughter", "mother"):
-                slots["relation"] = rng.choice(["wife", "sister", "daughter"])
+            if "pregnant" in slots["condition"]:
+                slots["relation"] = "wife"           # 'daughter' got role-played as a child
             out.append({"id": f"{category}-{k:03d}", "category": category, "today": today.isoformat(),
                         "situation": rng.choice(templates).format(**slots), "style": rng.choice(STYLES),
                         "user_turns": user_turns, "tools": [t["function"]["name"] for t in tool_set],
