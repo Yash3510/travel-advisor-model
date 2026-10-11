@@ -106,7 +106,8 @@ class Backend:
             oid = f"H-{self.rng.randint(100, 999)}"
             offer = {"offer_id": oid, "hotel": india.hotel_name(self.rng, city), "city": city, "room": self.rng.choice(
                      ["Standard Double", "Deluxe Room", "Superior Twin", "Family Room"]), "price_per_night_inr": price,
-                     "nights": nights, "guests": guests, "amenities": sorted(set(amen)), "rate_rule": rule}
+                     "nights": nights, "guests": guests, "check_in": check_in, "check_out": check_out,
+                     "amenities": sorted(set(amen)), "rate_rule": rule}
             if self.cfg.get("taxes_excluded") and k == 0:
                 offer.update(total_inr=price * nights, taxes_included=False, taxes_estimate_inr=round(price * nights * 0.12))
             else:
@@ -123,6 +124,9 @@ class Backend:
             self.offers[twin["offer_id"]] = twin
             results.insert(1, twin)
         return {"checked_at": self.now, "results": results}
+
+    def get_offer(self, offer_id):
+        return self.offers.get(offer_id)
 
     def create_booking(self, offer_id, travelers, total_price_inr, customer_confirmed_terms, **_):
         offer = self.offers.get(offer_id)
