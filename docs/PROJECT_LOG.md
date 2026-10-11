@@ -135,7 +135,8 @@ That way the model stops guessing seasons and routes, and unknown places come ba
 | What | Where |
 |---|---|
 | Code, docs, reports, eval results, generated conversations, Indian SGD set, Wikivoyage cache, v1/v2 LoRA adapters | GitHub `Yash3510/travel-advisor-model` (private) |
-| Trained GGUFs (v1, v2), merged models, teacher and base GGUFs, base training weights, raw SGD, tokenised training set | Medicat USB: `D:\Personal_Files\travel-advisor-model\` |
+| Trained GGUFs (v1, v2), merged models, teacher and base GGUFs | Medicat USB: `D:\Personal_Files\travel-advisor-model\` |
+| Base training weights, raw SGD, tokenised training set (and the rest of the PC) | Full-PC backup on the same USB: `D:\Personal_Files\Models\` and `D:\Personal_Files\Dev\` |
 | The old legal-model design spec | `C:\Dev\india-legal-agent` (local) |
 
 ## 7. Restoring after a Windows reinstall
