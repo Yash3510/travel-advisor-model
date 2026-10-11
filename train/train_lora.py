@@ -22,10 +22,17 @@ def arg(name, default, cast=str):
     return cast(sys.argv[sys.argv.index(name) + 1]) if name in sys.argv else default
 
 
-def load(path):
-    rows = [json.loads(l) for l in open(path, encoding="utf-8")]
+def load(path, max_len=MAX_LEN):
+    rows = [r for r in (json.loads(l) for l in open(path, encoding="utf-8")) if len(r["input_ids"]) <= max_len]
     return Dataset.from_list([{"input_ids": r["input_ids"], "labels": r["labels"], "attention_mask": [1] * len(r["input_ids"])}
                               for r in rows])
+
+
+class FreeCache(TrainerCallback):
+    """Release cached GPU memory after each step so one long batch cannot keep the 6 GB card spilling into RAM."""
+
+    def on_step_end(self, args, state, control, **kw):
+        torch.cuda.empty_cache()
 
 
 class JsonLog(TrainerCallback):
@@ -49,7 +56,8 @@ def main():
         model, r=16, lora_alpha=16, lora_dropout=0, bias="none", random_state=3407, use_gradient_checkpointing=(True if arg("--gc", "unsloth") == "true" else arg("--gc", "unsloth")),
         target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"])
 
-    train, val = load(ROOT / "data/train/train.jsonl"), load(ROOT / "data/train/val.jsonl")
+    max_len = arg("--max-len", MAX_LEN, int)
+    train, val = load(ROOT / "data/train/train.jsonl", max_len), load(ROOT / "data/train/val.jsonl", max_len)
     print(f"train {len(train)} samples, val {len(val)} samples", flush=True)
     text_tok = getattr(tok, "tokenizer", tok)        # Qwen3.5 loads as a multimodal processor; padding needs its tokenizer
     collator = DataCollatorForSeq2Seq(text_tok, padding=True, label_pad_token_id=-100, pad_to_multiple_of=arg("--pad", 512, int))   # few distinct shapes = few kernel re-tunes
@@ -61,7 +69,7 @@ def main():
         save_strategy="steps", save_steps=100, save_total_limit=2, report_to="none", seed=3407,
         dataloader_num_workers=0, remove_unused_columns=False)
     trainer = Trainer(model=model, args=args, train_dataset=train, eval_dataset=val, data_collator=collator,
-                      callbacks=[JsonLog(out / "log.jsonl")])
+                      callbacks=[JsonLog(out / "log.jsonl"), FreeCache()])
     torch.cuda.reset_peak_memory_stats()
     trainer.train()
     print(f"peak VRAM {torch.cuda.max_memory_allocated() / 2**30:.2f} GiB", flush=True)
