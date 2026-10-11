@@ -5,6 +5,7 @@ Qwen3.5-4B; these briefs are never training text. Places and details avoid the 3
 (no Andaman-by-train, Kashmir safety, Taj Lake Palace, Crystal Sky Bridge, Lakeside Haveli, etc.).
 """
 import datetime as dt
+import re
 import random
 
 from travel import tools
@@ -231,4 +232,65 @@ def build(seed=0, catalog="v1"):
                         "situation": rng.choice(templates).format(**slots), "style": rng.choice(STYLES),
                         "user_turns": user_turns, "tools": [t["function"]["name"] for t in tool_set],
                         "backend": cfg, "seed": rng.randint(0, 10**9)})
+    return out
+
+
+# v3: the destination guide (get_destination_info). Pools come from the knowledge base, so every brief points at a
+# place with real facts. Eval places are kept out: no Ladakh/Leh season questions, no Andaman trips, no Pune/Lonavala.
+V3_EXCLUDE = {"leh", "ladakh", "andaman and nicobar islands", "port blair", "havelock island", "neil island", "pune", "lonavala"}
+
+
+def build_v3(seed=0):
+    from travel import kb
+    rng = random.Random(seed)
+    entries = {k: v for k, v in kb.load().items() if k not in V3_EXCLUDE}
+    names = lambda keys: [entries[k]["destination"] for k in keys]
+    seasonal = names(k for k, v in entries.items() if v.get("best_months"))
+    reachable = names(k for k, v in entries.items() if any((v.get("get_in") or {}).values()))
+    no_rail = names(k for k, v in entries.items() if re.search(r"no (rail|train)|nearest (railway |train )?station|railhead",
+                                                                  str((v.get("get_in") or {}).get("rail") or ""), re.I))
+    closures = names(k for k, v in entries.items() if v.get("seasonal_closures"))
+    permits = names(k for k, v in entries.items() if v.get("permits"))
+    islands = names(k for k in entries if k in ("lakshadweep",))
+    pools = {"seasonal": seasonal, "reachable": reachable, "no_rail": no_rail or reachable, "closures": closures or seasonal,
+             "permits": permits or reachable, "islands": islands or no_rail or reachable}
+    catalog = [
+        ("season_question", 30, 2, "seasonal", [
+            "Ask when is the best time to visit {place}, nothing else.",
+            "Ask whether {month} is a good month to visit {place} with your family.",
+            "Say you are going to {place} in {month}; ask what the weather will be like and what to keep in mind."]),
+        ("how_to_reach", 30, 2, "reachable", [
+            "Ask how to get to {place} from {metro}, and whether there is a direct train.",
+            "Ask what the nearest airport to {place} is and how far it is from the town.",
+            "Ask whether you can drive from {metro} to {place}, or what the best way to get there is."]),
+        ("infeasible_route", 25, 2, "no_rail", [
+            "Ask to book a direct train from {metro} to {place} for next week, as if it is obvious that one exists.",
+            "Insist that you want to reach {place} only by train, no flights or buses."]),
+        ("closure_season", 15, 2, "closures", [
+            "Ask to plan a road trip to {place} in {month}, assuming the roads are open.",
+            "Ask if you can visit {place} in {month}; you have heard something about closures."]),
+        ("island_access", 10, 2, "islands", [
+            "Ask to drive from {metro} to {place}, or take a bus.",
+            "Ask how to get to {place} and whether you need any permission."]),
+        ("permits", 20, 2, "permits", [
+            "Ask whether you need any permit to visit {place}. If asked, say you are an Indian citizen.",
+            "Say you are a {passport} citizen planning a trip to {place}; ask what permissions you need."]),
+        ("unknown_place", 25, 2, None, [
+            "Ask for the best time to visit the {fake} and how to get there; say a friend recommended it.",
+            "Ask to plan a weekend around the {fake}. If asked where it is, say you think it is near {city}."]),
+        ("plan_with_facts", 25, 2, "seasonal", [
+            "Ask for a {days}-day trip to {place} in {month} for {n} people. No dates yet; ask what to expect then.",
+            "Ask if {place} or {place2} is better to visit in {month}, for a relaxed trip."]),
+    ]
+    out = []
+    for category, count, user_turns, pool, templates in catalog:
+        for k in range(count):
+            today = dt.date(2026, 10, 1) + dt.timedelta(days=rng.randint(0, 150))
+            slots = _fill(rng, today)
+            if pool:
+                slots["place"], slots["place2"] = rng.sample(pools[pool] * 2 if len(pools[pool]) < 2 else pools[pool], 2)
+            out.append({"id": f"{category}-{k:03d}", "category": category, "today": today.isoformat(),
+                        "situation": rng.choice(templates).format(**slots), "style": rng.choice(STYLES),
+                        "user_turns": user_turns, "tools": [t["function"]["name"] for t in ALL], "backend": {},
+                        "seed": rng.randint(0, 10**9)})
     return out

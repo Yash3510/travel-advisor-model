@@ -217,3 +217,25 @@ def test_hindi_yes_counts_as_confirmation():
                  res({"results": [OFFER]}), a("Lotus Inn: ₹24,640 total for 2 nights, non-refundable. Shall I book it?"), u(yes),
                  call("create_booking", {"offer_id": "H-1", "travelers": 2, "total_price_inr": 24640, "customer_confirmed_terms": True}, "c2"))
         assert "booking_without_yes" not in problems(c), yes
+
+
+def test_season_claims_need_the_destination_guide():
+    assert "unsupported_months" in problems(conv(u("When should I visit Munnar?"),
+                                                 a("The best time is September to March, avoid June to August.")))
+    guided = conv(u("When should I visit Munnar?"),
+                  call("get_destination_info", {"destination": "Munnar"}),
+                  res({"destination": "Munnar", "best_months": ["September", "October", "November", "December", "January",
+                                                                "February", "March"], "avoid": [{"months": ["June", "July", "August"], "reason": "monsoon"}]}),
+                  a("The guide says September to March is best; June to August is monsoon."))
+    assert "unsupported_months" not in problems(guided)
+    dates = conv(u("Hotel in Munnar 12 to 15 December for 2"), a("Shall I search 12 to 15 December for 2 guests?"))
+    assert "unsupported_months" not in problems(dates)
+
+
+def test_no_rail_claims_need_a_source():
+    assert "unsupported_route" in problems(conv(u("Train from Chennai to Neil Island?"), a("There is no train to Neil Island.")))
+    sourced = conv(u("Train from Chennai to Neil Island?"), call("get_destination_info", {"destination": "Neil Island"}),
+                   res({"destination": "Neil Island", "get_in": {"rail": None, "sea": "Ferries from Port Blair", "air": None,
+                                                               "road": None}, "notes": ["There is no railway in the islands"]}),
+                   a("There is no train: the islands have no railway. You reach Neil Island by ferry from Port Blair."))
+    assert "unsupported_route" not in problems(sourced)

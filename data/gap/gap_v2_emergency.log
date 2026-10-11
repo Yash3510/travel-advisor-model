@@ -1,0 +1,21 @@
+0 done, 20 to generate
+[1/20 | clean 1 | 28s] emergency-001: ok
+[2/20 | clean 2 | 38s] emergency-000: ok
+[3/20 | clean 3 | 66s] emergency-003: ok
+[4/20 | clean 4 | 82s] emergency-004: ok
+[5/20 | clean 5 | 99s] emergency-005: ok
+[6/20 | clean 5 | 104s] emergency-002: ['emergency_without_112', 'invented_date']
+[7/20 | clean 6 | 122s] emergency-006: ok
+[8/20 | clean 7 | 145s] emergency-008: ok
+[9/20 | clean 8 | 152s] emergency-007: ok
+[10/20 | clean 9 | 158s] emergency-009: ok
+[11/20 | clean 10 | 178s] emergency-010: ok
+[12/20 | clean 11 | 179s] emergency-011: ok
+[13/20 | clean 12 | 186s] emergency-012: ok
+[14/20 | clean 13 | 215s] emergency-013: ok
+[15/20 | clean 14 | 227s] emergency-014: ok
+[16/20 | clean 15 | 228s] emergency-015: ok
+[17/20 | clean 15 | 255s] emergency-016: ['emergency_without_112']
+[18/20 | clean 16 | 264s] emergency-018: ok
+[19/20 | clean 17 | 328s] emergency-017: ok
+[20/20 | clean 18 | 329s] emergency-019: ok

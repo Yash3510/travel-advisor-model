@@ -2,9 +2,17 @@
 __pycache__/
 *.pyc
 .env
-data/
-outputs/
-models/
-*.gguf
-*.safetensors
 unsloth_compiled_cache/
+
+# large and re-downloadable or regenerable
+data/raw/sgd/
+data/train/
+models/
+outputs/smoke/
+outputs/*/merged/
+outputs/*/checkpoints/
+*.gguf
+
+# model weights: only the small LoRA adapters are kept (GGUF builds live in GitHub Releases)
+*.safetensors
+!outputs/*/lora/adapter_model.safetensors

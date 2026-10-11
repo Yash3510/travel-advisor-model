@@ -1,0 +1,68 @@
+W1010 21:26:29.743000 15420 Lib\site-packages\torch\distributed\elastic\multiprocessing\redirects.py:29] NOTE: Redirects are currently not supported in Windows or MacOs.
+C:\Users\kumar\.unsloth\studio\unsloth_studio\Lib\site-packages\unsloth\_gpu_init.py:450: UserWarning: torchcodec 0.11.1 came from the default index while torch 2.11.0+cu126 is a cu126 build, so the codec may be built for a different accelerator; audio is disabled. Try `pip install --force-reinstall --no-deps --index-url https://download.pytorch.org/whl/cu126 'torchcodec>=0.11,<0.12.0'`. If that does not help, the failure is likely FFmpeg rather than the wheel: torchcodec needs libavutil / libavcodec from FFmpeg 4 through 8.
+  disable_torchcodec_if_broken()
+C:\Users\kumar\.unsloth\studio\unsloth_studio\Lib\site-packages\unsloth\_gpu_init.py:450: UserWarning: Unsloth: torchcodec is installed but cannot load its FFmpeg libraries; install an FFmpeg full-shared build only if you need torchcodec itself; audio datasets decode through soundfile and PyAV instead (wav/flac/mp3/ogg, m4a/aac/webm).
+  disable_torchcodec_if_broken()
+The fast path is not available because one of the required library is not installed. Falling back to torch implementation. To install follow https://github.com/fla-org/flash-linear-attention#installation and https://github.com/Dao-AILab/causal-conv1d
+🦥 Unsloth: Will patch your computer to enable 2x faster free finetuning.
+🦥 Unsloth Zoo will now patch everything to make training faster!
+==((====))==  Unsloth 2026.10.2: Fast Qwen3_5 patching. Transformers: 5.5.0.
+   \\   /|    NVIDIA GeForce RTX 4050 Laptop GPU. Num GPUs = 1. Max memory: 5.997 GB. Platform: Windows.
+O^O/ \_/ \    Torch: 2.11.0+cu126. CUDA: 8.9. CUDA Toolkit: 12.6. Triton: 3.6.0
+\        /    Bfloat16 = TRUE. FA [Xformers = 0.0.35. FA2 = False]
+ "-____-"     Free license: http://github.com/unslothai/unsloth
+Unsloth: Fast downloading is enabled - ignore downloading bars which are red colored!
+Loading weights:   0%|          | 0/473 [00:00<?, ?it/s]Loading weights:   0%|          | 1/473 [00:00<06:26,  1.22it/s]Loading weights:   5%|▌         | 24/473 [00:00<00:12, 35.04it/s]Loading weights:  10%|▉         | 45/473 [00:01<00:06, 65.42it/s]Loading weights:  14%|█▍        | 66/473 [00:01<00:04, 92.35it/s]Loading weights:  19%|█▉        | 90/473 [00:01<00:03, 121.95it/s]Loading weights:  24%|██▍       | 114/473 [00:01<00:02, 141.24it/s]Loading weights:  28%|██▊       | 134/473 [00:01<00:02, 154.10it/s]Loading weights:  33%|███▎      | 154/473 [00:01<00:01, 161.27it/s]Loading weights:  37%|███▋      | 173/473 [00:01<00:01, 158.91it/s]Loading weights:  40%|████      | 191/473 [00:01<00:01, 142.43it/s]Loading weights:  44%|████▍     | 207/473 [00:02<00:02, 97.21it/s] Loading weights:  47%|████▋     | 223/473 [00:02<00:02, 104.25it/s]Loading weights:  51%|█████     | 241/473 [00:02<00:01, 119.67it/s]Loading weights:  58%|█████▊    | 273/473 [00:02<00:01, 159.97it/s]Loading weights:  63%|██████▎   | 299/473 [00:02<00:00, 178.52it/s]Loading weights:  67%|██████▋   | 319/473 [00:02<00:00, 177.91it/s]Loading weights:  77%|███████▋  | 362/473 [00:02<00:00, 241.54it/s]Loading weights:  86%|████████▌ | 407/473 [00:02<00:00, 294.37it/s]Loading weights:  93%|█████████▎| 439/473 [00:03<00:00, 294.18it/s]Loading weights:  99%|█████████▉| 470/473 [00:03<00:00, 146.20it/s]Loading weights: 100%|██████████| 473/473 [00:03<00:00, 133.02it/s]
+Unsloth: Explicit target_modules are constrained by the finetune_(vision|language|attention|mlp) filters; adapters attach only where both select.
+train 2670 samples, val 137 samples
+warmup_ratio is deprecated and will be removed in v5.2. Use `warmup_steps` instead.
+==((====))==  Unsloth - 2x faster free finetuning | Num GPUs used = 1
+   \\   /|    Num examples = 2,670 | Num Epochs = 1 | Total steps = 12
+O^O/ \_/ \    Batch size per device = 1 | Gradient accumulation steps = 16
+\        /    Data Parallel GPUs = 1 | Total batch size (1 x 16 x 1) = 16
+ "-____-"     Trainable parameters = 6,389,760 of 859,375,680 (0.74% trained)
+  0%|          | 0/12 [00:00<?, ?it/s]  8%|▊         | 1/12 [00:37<06:48, 37.11s/it]Unsloth: Will smartly offload gradients to save VRAM!
+Unsloth: Double buffering enabled (parallel H2D + compute) for backward pass.
+step 1: {'loss': 0.40634649991989136, 'grad_norm': 0.9438631534576416, 'learning_rate': 0.0, 'epoch': 0.00599250936329588}
+                                                8%|▊         | 1/12 [00:37<06:48, 37.11s/it] 17%|█▋        | 2/12 [01:08<05:36, 33.65s/it]{'loss': '0.4063', 'grad_norm': '0.9439', 'learning_rate': '0', 'epoch': '0.005993'}
+step 2: {'loss': 0.3354332745075226, 'grad_norm': 1.1329635381698608, 'learning_rate': 0.0002, 'epoch': 0.01198501872659176}
+                                               17%|█▋        | 2/12 [01:08<05:36, 33.65s/it] 25%|██▌       | 3/12 [01:39<04:51, 32.36s/it]{'loss': '0.3354', 'grad_norm': '1.133', 'learning_rate': '0.0002', 'epoch': '0.01199'}
+step 3: {'loss': 0.273542195558548, 'grad_norm': 0.6230290532112122, 'learning_rate': 0.00019594929736144976, 'epoch': 0.017977528089887642}
+                                               25%|██▌       | 3/12 [01:39<04:51, 32.36s/it] 33%|███▎      | 4/12 [02:06<04:03, 30.49s/it]{'loss': '0.2735', 'grad_norm': '0.623', 'learning_rate': '0.0001959', 'epoch': '0.01798'}
+step 4: {'loss': 0.2599346935749054, 'grad_norm': 0.6350293159484863, 'learning_rate': 0.00018412535328311814, 'epoch': 0.02397003745318352}
+                                               33%|███▎      | 4/12 [02:06<04:03, 30.49s/it] 42%|████▏     | 5/12 [02:32<03:21, 28.76s/it]{'loss': '0.2599', 'grad_norm': '0.635', 'learning_rate': '0.0001841', 'epoch': '0.02397'}
+step 5: {'loss': 0.2886100113391876, 'grad_norm': 0.4663824737071991, 'learning_rate': 0.00016548607339452853, 'epoch': 0.0299625468164794}
+                                               42%|████▏     | 5/12 [02:32<03:21, 28.76s/it] 50%|█████     | 6/12 [02:59<02:48, 28.02s/it]{'loss': '0.2886', 'grad_norm': '0.4664', 'learning_rate': '0.0001655', 'epoch': '0.02996'}
+step 6: {'loss': 0.40275368094444275, 'grad_norm': 0.5411145687103271, 'learning_rate': 0.00014154150130018866, 'epoch': 0.035955056179775284}
+                                               50%|█████     | 6/12 [02:59<02:48, 28.02s/it] 58%|█████▊    | 7/12 [03:26<02:18, 27.69s/it]{'loss': '0.4028', 'grad_norm': '0.5411', 'learning_rate': '0.0001415', 'epoch': '0.03596'}
+step 7: {'loss': 0.23028643429279327, 'grad_norm': 0.3939174711704254, 'learning_rate': 0.00011423148382732853, 'epoch': 0.041947565543071164}
+                                               58%|█████▊    | 7/12 [03:26<02:18, 27.69s/it] 67%|██████▋   | 8/12 [03:53<01:50, 27.60s/it]{'loss': '0.2303', 'grad_norm': '0.3939', 'learning_rate': '0.0001142', 'epoch': '0.04195'}
+step 8: {'loss': 0.18046654760837555, 'grad_norm': 0.3252260982990265, 'learning_rate': 8.57685161726715e-05, 'epoch': 0.04794007490636704}
+                                               67%|██████▋   | 8/12 [03:53<01:50, 27.60s/it] 75%|███████▌  | 9/12 [04:20<01:22, 27.43s/it]{'loss': '0.1805', 'grad_norm': '0.3252', 'learning_rate': '8.577e-05', 'epoch': '0.04794'}
+step 9: {'loss': 0.19727563858032227, 'grad_norm': 0.30459049344062805, 'learning_rate': 5.845849869981137e-05, 'epoch': 0.05393258426966292}
+                                               75%|███████▌  | 9/12 [04:20<01:22, 27.43s/it] 83%|████████▎ | 10/12 [04:45<00:53, 26.66s/it]{'loss': '0.1973', 'grad_norm': '0.3046', 'learning_rate': '5.846e-05', 'epoch': '0.05393'}
+step 10: {'loss': 0.16166119277477264, 'grad_norm': 0.30788543820381165, 'learning_rate': 3.45139266054715e-05, 'epoch': 0.0599250936329588}
+                                                83%|████████▎ | 10/12 [04:45<00:53, 26.66s/it] 92%|█████████▏| 11/12 [05:08<00:25, 25.40s/it]{'loss': '0.1617', 'grad_norm': '0.3079', 'learning_rate': '3.451e-05', 'epoch': '0.05993'}
+step 11: {'loss': 0.20552535355091095, 'grad_norm': 0.3108798861503601, 'learning_rate': 1.587464671688187e-05, 'epoch': 0.06591760299625468}
+                                                92%|█████████▏| 11/12 [05:08<00:25, 25.40s/it]100%|██████████| 12/12 [05:29<00:00, 24.30s/it]{'loss': '0.2055', 'grad_norm': '0.3109', 'learning_rate': '1.587e-05', 'epoch': '0.06592'}
+step 12: {'loss': 0.24482502043247223, 'grad_norm': 0.4050598740577698, 'learning_rate': 4.050702638550275e-06, 'epoch': 0.07191011235955057}
+                                               100%|██████████| 12/12 [05:29<00:00, 24.30s/it]Unsloth: Restored added_tokens_decoder metadata in outputs\smoke\checkpoints\checkpoint-12\tokenizer_config.json.
+{'loss': '0.2448', 'grad_norm': '0.4051', 'learning_rate': '4.051e-06', 'epoch': '0.07191'}
+step 12: {'train_runtime': 330.8659, 'train_samples_per_second': 0.58, 'train_steps_per_second': 0.036, 'total_flos': 2515089710579712.0, 'train_loss': 0.26555504525701207, 'epoch': 0.07191011235955057}
+                                               100%|██████████| 12/12 [05:30<00:00, 24.30s/it]100%|██████████| 12/12 [05:30<00:00, 27.57s/it]
+{'train_runtime': '330.9', 'train_samples_per_second': '0.58', 'train_steps_per_second': '0.036', 'train_loss': '0.2656', 'epoch': '0.07191'}
+peak VRAM 3.51 GiB
+Unsloth: Restored added_tokens_decoder metadata in outputs\smoke\lora\tokenizer_config.json.
+Unsloth: Restored added_tokens_decoder metadata in outputs\smoke\merged\tokenizer_config.json.
+Found HuggingFace hub cache directory: C:\Users\kumar\.cache\huggingface\hub
+Fetching 1 files:   0%|          | 0/1 [00:00<?, ?it/s]Fetching 1 files: 100%|██████████| 1/1 [00:00<00:00,  4.01it/s]Fetching 1 files: 100%|██████████| 1/1 [00:00<00:00,  3.99it/s]
+Checking cache directory for required files...
+Unsloth: Copying 1 files from cache to `outputs\smoke\merged`:   0%|          | 0/1 [00:00<?, ?it/s]Unsloth: Copying 1 files from cache to `outputs\smoke\merged`: 100%|██████████| 1/1 [00:01<00:00,  1.62s/it]Unsloth: Copying 1 files from cache to `outputs\smoke\merged`: 100%|██████████| 1/1 [00:01<00:00,  1.62s/it]
+Successfully copied all 1 files from cache to `outputs\smoke\merged`
+Checking cache directory for required files...
+Cache check failed: tokenizer.model not found in local cache.
+Not all required files found in cache. Will proceed with downloading.
+Unsloth: Preparing safetensor model files:   0%|          | 0/1 [00:00<?, ?it/s]Unsloth: Preparing safetensor model files: 100%|██████████| 1/1 [00:00<00:00, 1286.99it/s]
+Unsloth: Merging weights into 16bit:   0%|          | 0/1 [00:00<?, ?it/s]Unsloth: Merging weights into 16bit: 100%|██████████| 1/1 [00:03<00:00,  3.55s/it]Unsloth: Merging weights into 16bit: 100%|██████████| 1/1 [00:03<00:00,  3.55s/it]
+Unsloth: Merge process complete. Saved to `C:\Dev\travel-advisor-model\outputs\smoke\merged`
+saved adapter and merged model in outputs\smoke

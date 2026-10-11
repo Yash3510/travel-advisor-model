@@ -1,0 +1,623 @@
+0 done, 617 to generate
+[1/617 | clean 1 | 28s] emergency-001: ok
+[2/617 | clean 2 | 39s] emergency-000: ok
+[3/617 | clean 3 | 66s] emergency-003: ok
+[4/617 | clean 3 | 76s] emergency-002: ['emergency_without_112', 'invented_date']
+[5/617 | clean 3 | 112s] emergency-004: ['emergency_without_112']
+[6/617 | clean 4 | 116s] emergency-005: ok
+[7/617 | clean 4 | 150s] emergency-007: ['emergency_without_112']
+[8/617 | clean 5 | 160s] emergency-006: ok
+[9/617 | clean 6 | 205s] emergency-009: ok
+[10/617 | clean 7 | 208s] emergency-008: ok
+[11/617 | clean 8 | 234s] emergency-010: ok
+[12/617 | clean 9 | 246s] emergency-011: ok
+[13/617 | clean 10 | 262s] emergency-012: ok
+[14/617 | clean 11 | 280s] emergency-013: ok
+[15/617 | clean 12 | 301s] emergency-014: ok
+[16/617 | clean 13 | 309s] emergency-015: ok
+[17/617 | clean 14 | 350s] emergency-016: ok
+[18/617 | clean 14 | 375s] emergency-017: ['emergency_without_112']
+[19/617 | clean 15 | 389s] emergency-018: ok
+[20/617 | clean 16 | 407s] emergency-019: ok
+[21/617 | clean 17 | 472s] accessibility-000: ok
+[22/617 | clean 17 | 503s] accessibility-001: ['invented_date']
+[23/617 | clean 17 | 575s] accessibility-002: ['invented_date']
+[24/617 | clean 17 | 611s] accessibility-003: ['invented_date']
+[25/617 | clean 18 | 677s] accessibility-004: ok
+[26/617 | clean 18 | 713s] accessibility-005: ['invented_filter']
+[27/617 | clean 19 | 824s] accessibility-007: ok
+[28/617 | clean 19 | 837s] accessibility-006: ['invented_date', 'invented_filter']
+[29/617 | clean 20 | 932s] accessibility-008: ok
+[30/617 | clean 20 | 948s] accessibility-009: ['status_not_reported']
+[31/617 | clean 20 | 1013s] accessibility-010: ['invented_date']
+[32/617 | clean 20 | 1046s] accessibility-011: ['too_many_questions']
+[33/617 | clean 21 | 1086s] accessibility-012: ok
+[34/617 | clean 21 | 1116s] accessibility-013: ['invented_date', 'booking_without_summary']
+34 done, 583 to generate
+[1/583 | clean 1 | 98s] accessibility-015: ok
+[2/583 | clean 1 | 124s] accessibility-016: ['past_date']
+[3/583 | clean 1 | 126s] accessibility-014: ['status_not_reported']
+[4/583 | clean 2 | 206s] accessibility-018: ok
+[5/583 | clean 3 | 227s] accessibility-019: ok
+[6/583 | clean 3 | 258s] accessibility-017: ['invented_filter']
+[7/583 | clean 4 | 303s] accessibility-021: ok
+[8/583 | clean 5 | 324s] accessibility-020: ok
+[9/583 | clean 5 | 369s] accessibility-022: ['invented_filter', 'invented_amount']
+[10/583 | clean 6 | 408s] accessibility-024: ok
+[11/583 | clean 7 | 412s] accessibility-023: ok
+[12/583 | clean 8 | 479s] accessibility-025: ok
+[13/583 | clean 9 | 508s] accessibility-026: ok
+[14/583 | clean 9 | 554s] accessibility-027: ['unneeded_handoff']
+[15/583 | clean 10 | 598s] accessibility-028: ok
+[16/583 | clean 10 | 620s] accessibility-029: ['past_date']
+[17/583 | clean 11 | 669s] health-001: ok
+[18/583 | clean 12 | 686s] health-000: ok
+52 done, 565 to generate
+52 done, 565 to generate
+[1/565 | clean 1 | 92s] fictional-000: ok
+[2/565 | clean 1 | 113s] visa-000: ['invented_amount']
+[3/565 | clean 1 | 132s] health-002: ['invented_filter']
+[4/565 | clean 2 | 161s] infeasible-000: ok
+[5/565 | clean 3 | 204s] refund_pressure-000: ok
+[6/565 | clean 3 | 213s] budget_gap-000: ['invented_filter', 'invented_amount']
+[7/565 | clean 4 | 239s] human-000: ok
+[8/565 | clean 5 | 240s] stop_selling-000: ok
+60 done, 557 to generate
+[1/557 | clean 1 | 58s] fictional-001: ok
+[2/557 | clean 2 | 64s] health-003: ok
+[3/557 | clean 2 | 150s] infeasible-001: ['unsupported_measure']
+[4/557 | clean 2 | 165s] visa-001: ['invented_passport']
+[5/557 | clean 2 | 168s] budget_gap-001: ['invented_amount']
+[6/557 | clean 2 | 208s] stop_selling-001: ['invented_amount']
+[7/557 | clean 3 | 240s] competitor-000: ok
+[8/557 | clean 4 | 242s] human-001: ok
+[9/557 | clean 4 | 243s] refund_pressure-001: ['past_date', 'invented_filter', 'invented_amount']
+[10/557 | clean 5 | 266s] pii-000: ok
+[11/557 | clean 5 | 299s] tool_error-000: ['status_not_reported']
+[12/557 | clean 6 | 360s] non_refundable-000: ok
+[13/557 | clean 7 | 373s] booking_status-000: ok
+[14/557 | clean 8 | 374s] two_suppliers-000: ok
+[15/557 | clean 9 | 462s] change_after_proposal-000: ok
+[16/557 | clean 10 | 475s] well_specified-000: ok
+[17/557 | clean 11 | 527s] not_found-000: ok
+[18/557 | clean 12 | 539s] disruption-000: ok
+[19/557 | clean 12 | 601s] safety_guarantee-000: ['too_many_questions']
+[20/557 | clean 12 | 628s] vague_prefs-000: ['invented_amount', 'invented_filter', 'invented_passport']
+[21/557 | clean 13 | 683s] no_inventory-000: ok
+[22/557 | clean 14 | 710s] upsell_question-000: ok
+[23/557 | clean 14 | 724s] inspiration-000: ['past_date', 'invented_amount']
+[24/557 | clean 14 | 817s] price_objection-000: ['invented_filter']
+[25/557 | clean 14 | 820s] budget_scope-000: ['invented_date', 'invented_filter']
+[26/557 | clean 15 | 848s] broad-000: ok
+[27/557 | clean 16 | 898s] think_about_it-000: ok
+[28/557 | clean 16 | 943s] health-004: ['invented_passport']
+[29/557 | clean 17 | 951s] visa-002: ok
+[30/557 | clean 18 | 955s] fictional-002: ok
+[31/557 | clean 19 | 1029s] infeasible-002: ok
+[32/557 | clean 20 | 1032s] refund_pressure-002: ok
+[33/557 | clean 20 | 1070s] stop_selling-002: ['unsupported_measure']
+[34/557 | clean 20 | 1102s] budget_gap-002: ['invented_amount']
+[35/557 | clean 21 | 1104s] competitor-001: ok
+[36/557 | clean 22 | 1113s] human-002: ok
+[37/557 | clean 22 | 1149s] pii-001: ['invented_amount']
+[38/557 | clean 23 | 1201s] tool_error-001: ok
+[39/557 | clean 23 | 1213s] non_refundable-001: ['booking_without_summary']
+[40/557 | clean 23 | 1230s] booking_status-001: ['booking_without_summary', 'status_not_reported']
+[41/557 | clean 23 | 1281s] two_suppliers-001: ['booking_without_summary']
+[42/557 | clean 23 | 1306s] vague_prefs-001: ['past_date']
+[43/557 | clean 24 | 1311s] change_after_proposal-001: ok
+[44/557 | clean 25 | 1353s] not_found-001: ok
+[45/557 | clean 26 | 1361s] disruption-001: ok
+[46/557 | clean 26 | 1408s] upsell_question-001: ['invented_amount']
+[47/557 | clean 27 | 1428s] safety_guarantee-001: ok
+[48/557 | clean 28 | 1470s] inspiration-001: ok
+[49/557 | clean 28 | 1486s] no_inventory-001: ['unneeded_handoff']
+[50/557 | clean 28 | 1515s] well_specified-001: ['invented_filter', 'booking_without_summary', 'booking_without_yes']
+[51/557 | clean 28 | 1603s] budget_scope-001: ['invented_filter']
+[52/557 | clean 28 | 1644s] price_objection-001: ['invented_filter', 'invented_amount']
+[53/557 | clean 29 | 1662s] think_about_it-001: ok
+[54/557 | clean 29 | 1693s] broad-001: ['too_many_questions', 'invented_date']
+[55/557 | clean 30 | 1713s] visa-003: ok
+[56/557 | clean 31 | 1740s] health-005: ok
+[57/557 | clean 31 | 1805s] budget_gap-003: ['invented_amount']
+[58/557 | clean 31 | 1831s] fictional-003: ['unsupported_measure', 'unneeded_handoff']
+[59/557 | clean 31 | 1842s] infeasible-003: ['booking_without_summary', 'booking_without_yes', 'status_not_reported']
+[60/557 | clean 32 | 1870s] stop_selling-003: ok
+[61/557 | clean 33 | 1915s] refund_pressure-003: ok
+[62/557 | clean 33 | 1946s] human-003: ['past_date']
+[63/557 | clean 33 | 1949s] competitor-002: ['past_date', 'invented_date', 'invented_amount', 'status_not_reported']
+[64/557 | clean 34 | 1980s] pii-002: ok
+[65/557 | clean 34 | 2022s] tool_error-002: ['invented_amount']
+[66/557 | clean 35 | 2070s] non_refundable-002: ok
+[67/557 | clean 36 | 2111s] two_suppliers-002: ok
+[68/557 | clean 36 | 2136s] booking_status-002: ['past_date', 'invented_amount']
+[69/557 | clean 37 | 2179s] vague_prefs-002: ok
+[70/557 | clean 37 | 2221s] change_after_proposal-002: ['past_date']
+[71/557 | clean 38 | 2259s] disruption-002: ok
+[72/557 | clean 39 | 2273s] not_found-002: ok
+[73/557 | clean 40 | 2333s] upsell_question-002: ok
+[74/557 | clean 41 | 2347s] safety_guarantee-002: ok
+[75/557 | clean 41 | 2363s] well_specified-002: ['invented_amount', 'invented_filter']
+[76/557 | clean 41 | 2414s] inspiration-002: ['invented_amount']
+[77/557 | clean 41 | 2416s] broad-002: ['invented_amount']
+[78/557 | clean 41 | 2443s] no_inventory-002: ['unneeded_handoff']
+[79/557 | clean 41 | 2487s] think_about_it-002: ['past_date']
+[80/557 | clean 41 | 2524s] budget_scope-002: ['invented_date', 'invented_filter', 'invented_amount']
+[81/557 | clean 41 | 2526s] price_objection-002: ['invented_filter', 'invented_amount']
+[82/557 | clean 42 | 2570s] fictional-004: ok
+[83/557 | clean 43 | 2572s] health-006: ok
+[84/557 | clean 44 | 2573s] visa-004: ok
+[85/557 | clean 45 | 2654s] refund_pressure-004: ok
+[86/557 | clean 45 | 2673s] budget_gap-004: ['invented_date', 'past_date', 'invented_amount']
+[87/557 | clean 45 | 2694s] stop_selling-004: ['unsupported_measure']
+[88/557 | clean 45 | 2707s] infeasible-004: ['invented_amount']
+[89/557 | clean 46 | 2715s] competitor-003: ok
+[90/557 | clean 47 | 2723s] human-004: ok
+[91/557 | clean 47 | 2758s] pii-003: ['invented_amount']
+[92/557 | clean 48 | 2770s] tool_error-003: ok
+[93/557 | clean 49 | 2819s] booking_status-003: ok
+[94/557 | clean 50 | 2834s] two_suppliers-003: ok
+[95/557 | clean 51 | 2863s] non_refundable-003: ok
+[96/557 | clean 52 | 2890s] vague_prefs-003: ok
+[97/557 | clean 53 | 2933s] disruption-003: ok
+[98/557 | clean 53 | 2936s] change_after_proposal-003: ['invented_filter']
+[99/557 | clean 53 | 2983s] not_found-003: ['status_not_reported']
+[100/557 | clean 54 | 2997s] safety_guarantee-003: ok
+[101/557 | clean 54 | 3033s] upsell_question-003: ['invented_amount']
+[102/557 | clean 54 | 3057s] inspiration-003: ['invented_amount']
+[103/557 | clean 54 | 3075s] no_inventory-003: ['unneeded_handoff']
+[104/557 | clean 54 | 3077s] well_specified-003: ['invented_date', 'invented_filter', 'invented_amount']
+[105/557 | clean 54 | 3178s] budget_scope-003: ['invented_amount']
+[106/557 | clean 54 | 3187s] price_objection-003: ['past_date']
+[107/557 | clean 54 | 3252s] think_about_it-003: ['unneeded_handoff', 'invented_filter']
+[108/557 | clean 54 | 3290s] broad-003: ['invented_filter', 'invented_amount']
+[109/557 | clean 55 | 3340s] health-007: ok
+[110/557 | clean 56 | 3349s] fictional-005: ok
+[111/557 | clean 57 | 3410s] infeasible-005: ok
+[112/557 | clean 58 | 3417s] visa-005: ok
+[113/557 | clean 58 | 3428s] budget_gap-005: ['invented_amount']
+[114/557 | clean 59 | 3458s] stop_selling-005: ok
+[115/557 | clean 60 | 3495s] human-005: ok
+[116/557 | clean 61 | 3497s] refund_pressure-005: ok
+[117/557 | clean 62 | 3539s] pii-004: ok
+[118/557 | clean 62 | 3554s] competitor-004: ['invented_date', 'invented_filter']
+[119/557 | clean 62 | 3562s] tool_error-004: ['invented_date']
+[120/557 | clean 63 | 3622s] two_suppliers-004: ok
+[121/557 | clean 63 | 3645s] non_refundable-004: ['booking_without_summary']
+[122/557 | clean 63 | 3695s] booking_status-004: ['past_date', 'booking_without_summary']
+[123/557 | clean 64 | 3708s] change_after_proposal-004: ok
+[124/557 | clean 64 | 3715s] vague_prefs-004: ['too_many_questions']
+[125/557 | clean 64 | 3750s] not_found-004: ['status_not_reported']
+[126/557 | clean 65 | 3763s] disruption-004: ok
+[127/557 | clean 66 | 3801s] upsell_question-004: ok
+[128/557 | clean 67 | 3810s] safety_guarantee-004: ok
+[129/557 | clean 68 | 3849s] inspiration-004: ok
+[130/557 | clean 68 | 3852s] no_inventory-004: ['unneeded_handoff']
+[131/557 | clean 68 | 3909s] broad-004: ['invented_amount']
+[132/557 | clean 68 | 3915s] well_specified-004: ['invented_passport', 'invented_amount', 'invented_filter']
+[133/557 | clean 68 | 3926s] budget_scope-004: ['invented_filter']
+[134/557 | clean 68 | 3974s] think_about_it-004: ['past_date']
+[135/557 | clean 69 | 4014s] health-008: ok
+[136/557 | clean 70 | 4039s] visa-006: ok
+[137/557 | clean 70 | 4057s] price_objection-004: ['invented_amount', 'invented_filter']
+[138/557 | clean 70 | 4062s] fictional-006: ['invented_amount', 'unsupported_measure']
+[139/557 | clean 71 | 4106s] infeasible-006: ok
+[140/557 | clean 72 | 4109s] refund_pressure-006: ok
+[141/557 | clean 73 | 4132s] stop_selling-006: ok
+[142/557 | clean 74 | 4180s] human-006: ok
+[143/557 | clean 75 | 4213s] competitor-005: ok
+[144/557 | clean 75 | 4226s] pii-005: ['too_many_questions', 'invented_amount']
+[145/557 | clean 75 | 4231s] budget_gap-006: ['invented_filter']
+[146/557 | clean 76 | 4264s] tool_error-005: ok
+206 done, 411 to generate
+[1/411 | clean 1 | 52s] fictional-007: ok
+[2/411 | clean 2 | 56s] visa-007: ok
+[3/411 | clean 3 | 84s] health-009: ok
+[4/411 | clean 4 | 175s] refund_pressure-007: ok
+[5/411 | clean 4 | 177s] infeasible-007: ['invented_date']
+[6/411 | clean 4 | 213s] stop_selling-007: ['unsupported_measure']
+[7/411 | clean 5 | 244s] human-007: ok
+[8/411 | clean 6 | 266s] competitor-006: ok
+[9/411 | clean 6 | 299s] budget_gap-007: ['invented_date', 'invented_filter']
+[10/411 | clean 7 | 300s] pii-006: ok
+[11/411 | clean 8 | 324s] tool_error-006: ok
+[12/411 | clean 9 | 340s] non_refundable-005: ok
+[13/411 | clean 10 | 397s] two_suppliers-005: ok
+[14/411 | clean 10 | 431s] change_after_proposal-005: ['invented_filter']
+[15/411 | clean 10 | 447s] booking_status-005: ['past_date']
+[16/411 | clean 10 | 498s] vague_prefs-005: ['invented_date', 'invented_amount']
+[17/411 | clean 11 | 556s] not_found-005: ok
+[18/411 | clean 11 | 567s] disruption-005: ['invented_date']
+[19/411 | clean 11 | 577s] well_specified-005: ['past_date', 'booking_without_summary']
+[20/411 | clean 12 | 628s] upsell_question-005: ok
+[21/411 | clean 12 | 635s] safety_guarantee-005: ['invented_passport']
+[22/411 | clean 13 | 672s] no_inventory-005: ok
+[23/411 | clean 14 | 685s] broad-005: ok
+[24/411 | clean 14 | 686s] inspiration-005: ['invented_filter']
+[25/411 | clean 15 | 719s] budget_scope-005: ok
+[26/411 | clean 16 | 752s] think_about_it-005: ok
+[27/411 | clean 16 | 773s] price_objection-005: ['invented_filter']
+[28/411 | clean 17 | 816s] visa-008: ok
+[29/411 | clean 17 | 843s] health-010: ['invented_passport']
+[30/411 | clean 17 | 886s] fictional-008: ['invented_date', 'invented_passport', 'invented_amount']
+[31/411 | clean 18 | 897s] infeasible-008: ok
+[32/411 | clean 19 | 955s] refund_pressure-008: ok
+[33/411 | clean 20 | 960s] competitor-007: ok
+[34/411 | clean 21 | 990s] human-008: ok
+[35/411 | clean 22 | 998s] stop_selling-008: ok
+[36/411 | clean 23 | 1035s] pii-007: ok
+[37/411 | clean 23 | 1045s] tool_error-007: ['status_not_reported']
+[38/411 | clean 23 | 1062s] budget_gap-008: ['invented_amount']
+[39/411 | clean 23 | 1090s] non_refundable-006: ['past_date', 'invented_filter']
+[40/411 | clean 23 | 1117s] booking_status-006: ['booking_without_summary']
+[41/411 | clean 24 | 1140s] two_suppliers-006: ok
+[42/411 | clean 25 | 1189s] vague_prefs-006: ok
+[43/411 | clean 25 | 1250s] change_after_proposal-006: ['past_date']
+[44/411 | clean 26 | 1262s] disruption-006: ok
+[45/411 | clean 27 | 1280s] not_found-006: ok
+[46/411 | clean 28 | 1322s] upsell_question-006: ok
+[47/411 | clean 28 | 1331s] well_specified-006: ['invented_filter']
+[48/411 | clean 29 | 1339s] safety_guarantee-006: ok
+[49/411 | clean 30 | 1372s] no_inventory-006: ok
+[50/411 | clean 31 | 1379s] inspiration-006: ok
+[51/411 | clean 32 | 1455s] broad-006: ok
+[52/411 | clean 32 | 1461s] price_objection-006: ['invented_amount']
+[53/411 | clean 32 | 1479s] budget_scope-006: ['invented_amount']
+[54/411 | clean 33 | 1531s] think_about_it-006: ok
+[55/411 | clean 33 | 1537s] health-011: ['unsupported_measure']
+[56/411 | clean 34 | 1545s] visa-009: ok
+[57/411 | clean 35 | 1594s] fictional-009: ok
+[58/411 | clean 36 | 1618s] infeasible-009: ok
+[59/411 | clean 37 | 1662s] refund_pressure-009: ok
+[60/411 | clean 37 | 1673s] budget_gap-009: ['invented_filter']
+[61/411 | clean 37 | 1696s] stop_selling-009: ['unsupported_measure']
+[62/411 | clean 38 | 1696s] human-009: ok
+[63/411 | clean 39 | 1712s] competitor-008: ok
+[64/411 | clean 39 | 1739s] tool_error-008: ['status_not_reported']
+[65/411 | clean 40 | 1754s] pii-008: ok
+[66/411 | clean 40 | 1789s] non_refundable-007: ['booking_without_summary', 'booking_without_yes']
+[67/411 | clean 41 | 1803s] booking_status-007: ok
+[68/411 | clean 41 | 1845s] two_suppliers-007: ['booking_without_summary']
+[69/411 | clean 42 | 1850s] vague_prefs-007: ok
+[70/411 | clean 43 | 1881s] change_after_proposal-007: ok
+[71/411 | clean 44 | 1919s] disruption-007: ok
+[72/411 | clean 45 | 1928s] not_found-007: ok
+[73/411 | clean 46 | 1939s] well_specified-007: ok
+[74/411 | clean 46 | 2006s] upsell_question-007: ['invented_filter']
+[75/411 | clean 46 | 2013s] inspiration-007: ['invented_amount']
+[76/411 | clean 47 | 2044s] no_inventory-007: ok
+[77/411 | clean 47 | 2126s] safety_guarantee-007: ['invented_amount']
+[78/411 | clean 48 | 2132s] budget_scope-007: ok
+[79/411 | clean 48 | 2142s] broad-007: ['invented_amount', 'past_date']
+[80/411 | clean 49 | 2180s] think_about_it-007: ok
+[81/411 | clean 50 | 2214s] health-012: ok
+[82/411 | clean 50 | 2255s] visa-010: ['invented_filter']
+[83/411 | clean 50 | 2260s] price_objection-007: ['invented_amount', 'invented_filter']
+[84/411 | clean 50 | 2265s] fictional-010: ['invented_amount', 'unsupported_measure']
+[85/411 | clean 51 | 2329s] refund_pressure-010: ok
+[86/411 | clean 51 | 2333s] infeasible-010: ['unsupported_measure', 'unneeded_handoff']
+[87/411 | clean 51 | 2372s] budget_gap-010: ['invented_amount']
+[88/411 | clean 52 | 2375s] stop_selling-010: ok
+[89/411 | clean 53 | 2409s] human-010: ok
+[90/411 | clean 54 | 2428s] competitor-009: ok
+[91/411 | clean 54 | 2445s] pii-009: ['invented_filter']
+[92/411 | clean 55 | 2470s] tool_error-009: ok
+[93/411 | clean 56 | 2528s] two_suppliers-008: ok
+[94/411 | clean 56 | 2532s] booking_status-008: ['unneeded_handoff']
+[95/411 | clean 57 | 2554s] non_refundable-008: ok
+[96/411 | clean 57 | 2659s] change_after_proposal-008: ['booking_without_summary']
+[97/411 | clean 57 | 2684s] well_specified-008: ['booking_without_summary']
+[98/411 | clean 58 | 2709s] vague_prefs-008: ok
+[99/411 | clean 59 | 2712s] not_found-008: ok
+[100/411 | clean 60 | 2738s] disruption-008: ok
+[101/411 | clean 61 | 2759s] upsell_question-008: ok
+[102/411 | clean 62 | 2775s] safety_guarantee-008: ok
+[103/411 | clean 63 | 2832s] inspiration-008: ok
+[104/411 | clean 64 | 2860s] no_inventory-008: ok
+[105/411 | clean 64 | 2909s] broad-008: ['past_date']
+[106/411 | clean 65 | 2913s] budget_scope-008: ok
+[107/411 | clean 65 | 2937s] price_objection-008: ['invented_filter']
+[108/411 | clean 66 | 2977s] think_about_it-008: ok
+[109/411 | clean 67 | 2983s] health-013: ok
+[110/411 | clean 67 | 3006s] visa-011: ['invented_passport']
+[111/411 | clean 68 | 3017s] fictional-011: ok
+[112/411 | clean 68 | 3063s] infeasible-011: ['invented_amount']
+[113/411 | clean 69 | 3072s] refund_pressure-011: ok
+[114/411 | clean 70 | 3111s] stop_selling-011: ok
+[115/411 | clean 71 | 3125s] competitor-010: ok
+[116/411 | clean 71 | 3142s] budget_gap-011: ['invented_date', 'invented_amount']
+[117/411 | clean 71 | 3145s] human-011: ['status_not_reported']
+[118/411 | clean 72 | 3165s] pii-010: ok
+[119/411 | clean 73 | 3203s] tool_error-010: ok
+[120/411 | clean 73 | 3247s] non_refundable-009: ['past_date', 'invented_amount', 'booking_without_summary', 'status_misreported', 'status_not_reported']
+[121/411 | clean 73 | 3262s] booking_status-009: ['booking_without_summary']
+[122/411 | clean 74 | 3283s] two_suppliers-009: ok
+[123/411 | clean 75 | 3320s] change_after_proposal-009: ok
+[124/411 | clean 76 | 3378s] well_specified-009: ok
+[125/411 | clean 77 | 3389s] disruption-009: ok
+[126/411 | clean 77 | 3418s] vague_prefs-009: ['invented_amount']
+[127/411 | clean 78 | 3422s] not_found-009: ok
+[128/411 | clean 78 | 3450s] safety_guarantee-009: ['missing_args']
+[129/411 | clean 79 | 3484s] upsell_question-009: ok
+[130/411 | clean 80 | 3534s] broad-009: ok
+[131/411 | clean 80 | 3545s] inspiration-009: ['invented_amount']
+[132/411 | clean 81 | 3546s] no_inventory-009: ok
+[133/411 | clean 82 | 3592s] think_about_it-009: ok
+[134/411 | clean 82 | 3595s] budget_scope-009: ['invented_amount']
+[135/411 | clean 82 | 3648s] price_objection-009: ['invented_filter']
+[136/411 | clean 83 | 3663s] health-014: ok
+[137/411 | clean 84 | 3678s] visa-012: ok
+[138/411 | clean 85 | 3689s] fictional-012: ok
+[139/411 | clean 86 | 3741s] infeasible-012: ok
+[140/411 | clean 87 | 3758s] refund_pressure-012: ok
+[141/411 | clean 88 | 3793s] budget_gap-012: ok
+[142/411 | clean 89 | 3810s] stop_selling-012: ok
+[143/411 | clean 90 | 3832s] human-012: ok
+[144/411 | clean 91 | 3858s] pii-011: ok
+[145/411 | clean 92 | 3888s] tool_error-011: ok
+[146/411 | clean 92 | 3903s] competitor-011: ['too_many_questions', 'invented_amount']
+[147/411 | clean 92 | 3962s] booking_status-010: ['booking_without_summary']
+[148/411 | clean 93 | 3975s] two_suppliers-010: ok
+[149/411 | clean 93 | 3982s] non_refundable-010: ['booking_without_summary']
+[150/411 | clean 94 | 4026s] vague_prefs-010: ok
+[151/411 | clean 95 | 4042s] change_after_proposal-010: ok
+[152/411 | clean 96 | 4067s] well_specified-010: ok
+[153/411 | clean 96 | 4078s] disruption-010: ['unsupported_measure']
+[154/411 | clean 97 | 4109s] upsell_question-010: ok
+[155/411 | clean 98 | 4114s] safety_guarantee-010: ok
+[156/411 | clean 99 | 4170s] budget_scope-010: ok
+[157/411 | clean 99 | 4191s] inspiration-010: ['invented_amount']
+[158/411 | clean 100 | 4258s] no_inventory-010: ok
+[159/411 | clean 100 | 4263s] price_objection-010: ['invented_filter', 'invented_amount']
+[160/411 | clean 101 | 4272s] health-015: ok
+[161/411 | clean 102 | 4326s] visa-013: ok
+[162/411 | clean 103 | 4340s] fictional-013: ok
+[163/411 | clean 104 | 4352s] infeasible-013: ok
+[164/411 | clean 105 | 4393s] refund_pressure-013: ok
+[165/411 | clean 106 | 4417s] stop_selling-013: ok
+[166/411 | clean 107 | 4421s] competitor-012: ok
+[167/411 | clean 108 | 4441s] human-013: ok
+[168/411 | clean 108 | 4444s] budget_gap-013: ['past_date']
+[169/411 | clean 109 | 4474s] pii-012: ok
+[170/411 | clean 109 | 4500s] tool_error-012: ['invented_filter', 'invented_amount']
+[171/411 | clean 109 | 4559s] booking_status-011: ['booking_without_summary', 'booking_without_yes']
+[172/411 | clean 110 | 4570s] two_suppliers-011: ok
+[173/411 | clean 110 | 4589s] non_refundable-011: ['booking_without_summary', 'booking_without_yes']
+[174/411 | clean 110 | 4636s] change_after_proposal-011: ['booking_without_summary']
+[175/411 | clean 111 | 4661s] vague_prefs-011: ok
+[176/411 | clean 112 | 4695s] disruption-011: ok
+[177/411 | clean 113 | 4731s] upsell_question-011: ok
+[178/411 | clean 113 | 4741s] well_specified-011: ['booking_without_summary']
+[179/411 | clean 113 | 4778s] safety_guarantee-011: ['past_date', 'invented_filter', 'invented_amount']
+[180/411 | clean 114 | 4784s] no_inventory-011: ok
+[181/411 | clean 114 | 4860s] inspiration-011: ['invented_date', 'invented_filter', 'invented_amount']
+[182/411 | clean 115 | 4885s] budget_scope-011: ok
+[183/411 | clean 115 | 4896s] price_objection-011: ['invented_filter']
+[184/411 | clean 116 | 4951s] fictional-014: ok
+[185/411 | clean 117 | 4980s] health-016: ok
+[186/411 | clean 118 | 4995s] visa-014: ok
+[187/411 | clean 118 | 5029s] infeasible-014: ['unsupported_measure']
+[188/411 | clean 119 | 5058s] budget_gap-014: ok
+[189/411 | clean 120 | 5079s] stop_selling-014: ok
+[190/411 | clean 120 | 5095s] refund_pressure-014: ['past_date', 'invented_filter']
+[191/411 | clean 121 | 5103s] human-014: ok
+[192/411 | clean 121 | 5150s] pii-013: ['invented_date']
+[193/411 | clean 121 | 5151s] competitor-013: ['invented_date', 'invented_filter']
+[194/411 | clean 121 | 5182s] tool_error-013: ['status_not_reported']
+[195/411 | clean 122 | 5210s] non_refundable-012: ok
+[196/411 | clean 122 | 5242s] two_suppliers-012: ['booking_without_summary']
+[197/411 | clean 122 | 5254s] booking_status-012: ['booking_without_summary', 'booking_without_yes']
+[198/411 | clean 123 | 5337s] change_after_proposal-012: ok
+[199/411 | clean 123 | 5341s] well_specified-012: ['invented_filter', 'invented_amount']
+[200/411 | clean 123 | 5357s] vague_prefs-012: ['invented_amount']
+[201/411 | clean 124 | 5382s] disruption-012: ok
+[202/411 | clean 125 | 5398s] upsell_question-012: ok
+[203/411 | clean 126 | 5407s] safety_guarantee-012: ok
+[204/411 | clean 127 | 5450s] inspiration-012: ok
+[205/411 | clean 127 | 5491s] price_objection-012: ['invented_filter', 'invented_amount']
+[206/411 | clean 127 | 5514s] budget_scope-012: ['invented_amount', 'past_date']
+[207/411 | clean 127 | 5532s] health-017: ['invented_passport']
+[208/411 | clean 128 | 5564s] visa-015: ok
+[209/411 | clean 129 | 5575s] fictional-015: ok
+[210/411 | clean 129 | 5596s] infeasible-015: ['unsupported_measure']
+[211/411 | clean 129 | 5662s] refund_pressure-015: ['status_not_reported']
+[212/411 | clean 129 | 5679s] budget_gap-015: ['invented_amount']
+[213/411 | clean 129 | 5702s] competitor-014: ['invented_amount']
+[214/411 | clean 130 | 5729s] pii-014: ok
+[215/411 | clean 130 | 5737s] tool_error-014: ['invented_filter', 'invented_amount']
+[216/411 | clean 131 | 5769s] non_refundable-013: ok
+[217/411 | clean 132 | 5801s] booking_status-013: ok
+[218/411 | clean 133 | 5830s] two_suppliers-013: ok
+[219/411 | clean 134 | 5882s] change_after_proposal-013: ok
+[220/411 | clean 135 | 5891s] vague_prefs-013: ok
+[221/411 | clean 136 | 5906s] well_specified-013: ok
+[222/411 | clean 137 | 5946s] disruption-013: ok
+[223/411 | clean 137 | 5962s] upsell_question-013: ['unsupported_measure']
+[224/411 | clean 138 | 5997s] inspiration-013: ok
+[225/411 | clean 139 | 6007s] budget_scope-013: ok
+[226/411 | clean 140 | 6018s] safety_guarantee-013: ok
+[227/411 | clean 141 | 6067s] health-018: ok
+[228/411 | clean 142 | 6089s] visa-016: ok
+[229/411 | clean 142 | 6096s] price_objection-013: ['invented_filter', 'invented_amount']
+[230/411 | clean 143 | 6117s] fictional-016: ok
+[231/411 | clean 144 | 6159s] infeasible-016: ok
+[232/411 | clean 144 | 6206s] pii-015: ['invented_amount']
+[233/411 | clean 144 | 6250s] refund_pressure-016: ['invented_date']
+[234/411 | clean 144 | 6254s] budget_gap-016: ['invented_date', 'invented_filter']
+[235/411 | clean 145 | 6257s] tool_error-015: ok
+[236/411 | clean 145 | 6323s] non_refundable-014: ['invented_amount', 'booking_without_summary']
+[237/411 | clean 146 | 6330s] two_suppliers-014: ok
+[238/411 | clean 147 | 6364s] booking_status-014: ok
+[239/411 | clean 147 | 6424s] vague_prefs-014: ['invented_filter', 'invented_amount']
+[240/411 | clean 148 | 6437s] change_after_proposal-014: ok
+[241/411 | clean 149 | 6469s] disruption-014: ok
+[242/411 | clean 149 | 6476s] well_specified-014: ['past_date', 'unneeded_handoff']
+[243/411 | clean 149 | 6508s] safety_guarantee-014: ['past_date']
+[244/411 | clean 150 | 6524s] upsell_question-014: ok
+[245/411 | clean 151 | 6564s] budget_scope-014: ok
+[246/411 | clean 151 | 6602s] inspiration-014: ['invented_filter']
+[247/411 | clean 151 | 6623s] price_objection-014: ['invented_filter']
+[248/411 | clean 152 | 6665s] fictional-017: ok
+[249/411 | clean 153 | 6665s] health-019: ok
+[250/411 | clean 154 | 6671s] visa-017: ok
+[251/411 | clean 154 | 6736s] infeasible-017: ['invented_amount']
+[252/411 | clean 155 | 6740s] refund_pressure-017: ok
+[253/411 | clean 155 | 6786s] budget_gap-017: ['invented_amount']
+[254/411 | clean 156 | 6789s] pii-016: ok
+[255/411 | clean 156 | 6792s] tool_error-016: ['status_not_reported']
+[256/411 | clean 156 | 6848s] booking_status-015: ['status_not_reported']
+[257/411 | clean 156 | 6877s] non_refundable-015: ['booking_without_summary']
+[258/411 | clean 157 | 6884s] change_after_proposal-015: ok
+[259/411 | clean 158 | 6905s] vague_prefs-015: ok
+[260/411 | clean 159 | 6951s] disruption-015: ok
+[261/411 | clean 160 | 7014s] health-020: ok
+[262/411 | clean 160 | 7022s] well_specified-015: ['invented_amount', 'invented_filter', 'unneeded_handoff']
+[263/411 | clean 161 | 7069s] inspiration-015: ok
+[264/411 | clean 162 | 7086s] fictional-018: ok
+[265/411 | clean 162 | 7125s] visa-018: ['invented_date']
+[266/411 | clean 162 | 7180s] infeasible-018: ['unsupported_measure']
+[267/411 | clean 163 | 7208s] refund_pressure-018: ok
+[268/411 | clean 163 | 7232s] pii-017: ['past_date']
+[269/411 | clean 163 | 7252s] budget_gap-018: ['invented_date', 'invented_amount', 'invented_filter']
+[270/411 | clean 163 | 7264s] tool_error-017: ['invented_date']
+[271/411 | clean 164 | 7335s] non_refundable-016: ok
+[272/411 | clean 165 | 7336s] booking_status-016: ok
+[273/411 | clean 165 | 7341s] change_after_proposal-016: ['past_date']
+[274/411 | clean 166 | 7394s] disruption-016: ok
+[275/411 | clean 167 | 7413s] well_specified-016: ok
+[276/411 | clean 168 | 7468s] vague_prefs-016: ok
+[277/411 | clean 169 | 7509s] inspiration-016: ok
+[278/411 | clean 170 | 7511s] visa-019: ok
+[279/411 | clean 170 | 7530s] health-021: ['past_date']
+[280/411 | clean 170 | 7597s] fictional-019: ['unsupported_measure', 'past_date']
+[281/411 | clean 171 | 7597s] infeasible-019: ok
+[282/411 | clean 171 | 7603s] budget_gap-019: ['invented_amount']
+[283/411 | clean 172 | 7645s] pii-018: ok
+[284/411 | clean 173 | 7648s] refund_pressure-019: ok
+[285/411 | clean 174 | 7658s] tool_error-018: ok
+[286/411 | clean 175 | 7690s] non_refundable-017: ok
+[287/411 | clean 176 | 7745s] vague_prefs-017: ok
+[288/411 | clean 176 | 7746s] change_after_proposal-017: ['past_date', 'invented_filter']
+[289/411 | clean 177 | 7782s] booking_status-017: ok
+[290/411 | clean 177 | 7825s] well_specified-017: ['invented_filter']
+[291/411 | clean 178 | 7832s] disruption-017: ok
+[292/411 | clean 179 | 7835s] inspiration-017: ok
+[293/411 | clean 180 | 7891s] infeasible-020: ok
+[294/411 | clean 181 | 7919s] visa-020: ok
+[295/411 | clean 181 | 7946s] health-022: ['invented_amount', 'invented_passport']
+[296/411 | clean 181 | 7951s] refund_pressure-020: ['pii_echoed']
+[297/411 | clean 182 | 7957s] pii-019: ok
+[298/411 | clean 182 | 7997s] tool_error-019: ['status_not_reported']
+[299/411 | clean 182 | 8000s] non_refundable-018: ['past_date']
+[300/411 | clean 183 | 8054s] booking_status-018: ok
+[301/411 | clean 184 | 8076s] vague_prefs-018: ok
+[302/411 | clean 185 | 8091s] change_after_proposal-018: ok
+[303/411 | clean 185 | 8148s] disruption-018: ['invented_date']
+[304/411 | clean 185 | 8198s] inspiration-018: ['invented_amount', 'status_not_reported']
+[305/411 | clean 186 | 8203s] health-023: ok
+[306/411 | clean 186 | 8244s] well_specified-018: ['invented_passport']
+[307/411 | clean 186 | 8273s] visa-021: ['invented_passport']
+[308/411 | clean 187 | 8285s] infeasible-021: ok
+[309/411 | clean 188 | 8324s] refund_pressure-021: ok
+[310/411 | clean 189 | 8333s] tool_error-020: ok
+[311/411 | clean 189 | 8384s] non_refundable-019: ['booking_without_summary']
+[312/411 | clean 189 | 8401s] change_after_proposal-019: ['booking_without_summary']
+[313/411 | clean 190 | 8420s] booking_status-019: ok
+[314/411 | clean 191 | 8478s] well_specified-019: ok
+[315/411 | clean 192 | 8485s] disruption-019: ok
+[316/411 | clean 193 | 8525s] vague_prefs-019: ok
+[317/411 | clean 194 | 8578s] visa-022: ok
+[318/411 | clean 194 | 8582s] inspiration-019: ['unsupported_measure', 'invented_filter']
+[319/411 | clean 195 | 8584s] health-024: ok
+[320/411 | clean 196 | 8636s] tool_error-021: ok
+[321/411 | clean 197 | 8655s] infeasible-022: ok
+[322/411 | clean 198 | 8667s] refund_pressure-022: ok
+[323/411 | clean 198 | 8716s] non_refundable-020: ['booking_without_summary']
+[324/411 | clean 198 | 8744s] vague_prefs-020: ['invented_filter']
+[325/411 | clean 199 | 8814s] disruption-020: ok
+[326/411 | clean 199 | 8817s] well_specified-020: ['booking_without_summary']
+[327/411 | clean 200 | 8883s] infeasible-023: ok
+[328/411 | clean 200 | 8906s] booking_status-020: ['past_date', 'booking_without_summary', 'booking_without_yes', 'unneeded_handoff']
+[329/411 | clean 201 | 8915s] visa-023: ok
+[330/411 | clean 201 | 8948s] tool_error-022: ['status_not_reported']
+[331/411 | clean 202 | 8953s] refund_pressure-023: ok
+[332/411 | clean 202 | 8994s] booking_status-021: ['past_date']
+[333/411 | clean 202 | 9001s] non_refundable-021: ['invented_date']
+[334/411 | clean 203 | 9047s] disruption-021: ok
+[335/411 | clean 203 | 9107s] vague_prefs-021: ['invented_date']
+[336/411 | clean 204 | 9109s] visa-024: ok
+[337/411 | clean 205 | 9113s] well_specified-021: ok
+[338/411 | clean 206 | 9168s] tool_error-023: ok
+[339/411 | clean 206 | 9206s] infeasible-024: ['unsupported_measure']
+[340/411 | clean 206 | 9262s] refund_pressure-024: ['invented_date']
+[341/411 | clean 206 | 9275s] non_refundable-022: ['booking_without_summary']
+[342/411 | clean 207 | 9277s] booking_status-022: ok
+[343/411 | clean 208 | 9360s] well_specified-022: ok
+[344/411 | clean 209 | 9373s] disruption-022: ok
+[345/411 | clean 210 | 9418s] vague_prefs-022: ok
+[346/411 | clean 211 | 9436s] visa-025: ok
+[347/411 | clean 211 | 9479s] tool_error-024: ['status_not_reported']
+[348/411 | clean 211 | 9534s] non_refundable-023: ['invented_amount']
+[349/411 | clean 211 | 9547s] infeasible-025: ['unsupported_measure']
+[350/411 | clean 211 | 9548s] booking_status-023: ['status_not_reported']
+[351/411 | clean 212 | 9606s] disruption-023: ok
+[352/411 | clean 213 | 9624s] well_specified-023: ok
+[353/411 | clean 214 | 9654s] visa-026: ok
+[354/411 | clean 215 | 9675s] vague_prefs-023: ok
+[355/411 | clean 216 | 9705s] infeasible-026: ok
+[356/411 | clean 216 | 9717s] tool_error-025: ['status_not_reported']
+[357/411 | clean 216 | 9743s] booking_status-024: ['booking_without_summary']
+[358/411 | clean 217 | 9785s] vague_prefs-024: ok
+[359/411 | clean 217 | 9792s] non_refundable-024: ['invented_amount', 'booking_without_summary']
+[360/411 | clean 217 | 9802s] well_specified-024: ['booking_without_summary']
+[361/411 | clean 218 | 9833s] disruption-024: ok
+[362/411 | clean 218 | 9864s] visa-027: ['status_not_reported']
+[363/411 | clean 219 | 9873s] tool_error-026: ok
+[364/411 | clean 220 | 9888s] infeasible-027: ok
+[365/411 | clean 220 | 9927s] non_refundable-025: ['invented_filter']
+[366/411 | clean 220 | 9940s] booking_status-025: ['invented_filter']
+[367/411 | clean 220 | 10003s] disruption-025: ['unsupported_measure']
+[368/411 | clean 221 | 10015s] well_specified-025: ok
+[369/411 | clean 221 | 10051s] visa-028: ['invented_passport', 'invented_date']
+[370/411 | clean 221 | 10063s] tool_error-027: ['past_date']
+[371/411 | clean 222 | 10118s] booking_status-026: ok
+[372/411 | clean 223 | 10162s] non_refundable-026: ok
+[373/411 | clean 223 | 10201s] well_specified-026: ['booking_without_yes']
+[374/411 | clean 223 | 10224s] disruption-026: ['unsupported_measure']
+[375/411 | clean 223 | 10282s] infeasible-029: ['unsupported_measure']
+[376/411 | clean 223 | 10314s] infeasible-028: ['invented_amount']
+[377/411 | clean 223 | 10318s] visa-029: ['invented_amount']
+[378/411 | clean 223 | 10340s] tool_error-028: ['unsupported_measure', 'status_not_reported']
+[379/411 | clean 224 | 10435s] well_specified-027: ok
+[380/411 | clean 224 | 10453s] booking_status-027: ['booking_without_summary', 'unneeded_handoff', 'status_not_reported']
+[381/411 | clean 225 | 10456s] non_refundable-027: ok
+[382/411 | clean 226 | 10493s] disruption-027: ok
+[383/411 | clean 227 | 10511s] tool_error-029: ok
+[384/411 | clean 227 | 10561s] non_refundable-028: ['booking_without_summary']
+[385/411 | clean 228 | 10592s] booking_status-028: ok
+[386/411 | clean 229 | 10628s] disruption-028: ok
+[387/411 | clean 230 | 10633s] well_specified-028: ok
+[388/411 | clean 230 | 10677s] booking_status-029: ['invented_date', 'past_date']
+[389/411 | clean 231 | 10693s] non_refundable-029: ok
+[390/411 | clean 231 | 10708s] well_specified-029: ['past_date']
+[391/411 | clean 231 | 10747s] disruption-029: ['status_not_reported']
+[392/411 | clean 232 | 10794s] well_specified-030: ok
+[393/411 | clean 232 | 10795s] booking_status-030: ['status_not_reported']
+[394/411 | clean 233 | 10857s] booking_status-032: ok
+[395/411 | clean 233 | 10882s] booking_status-031: ['booking_without_summary']
+[396/411 | clean 234 | 10907s] well_specified-031: ok
+[397/411 | clean 234 | 10962s] well_specified-032: ['past_date']
+[398/411 | clean 235 | 11001s] booking_status-033: ok
+[399/411 | clean 236 | 11005s] well_specified-033: ok
+[400/411 | clean 237 | 11062s] well_specified-034: ok
+[401/411 | clean 238 | 11070s] booking_status-034: ok
+[402/411 | clean 239 | 11122s] booking_status-035: ok
+[403/411 | clean 240 | 11150s] booking_status-037: ok
+[404/411 | clean 241 | 11179s] booking_status-038: ok
+[405/411 | clean 241 | 11182s] booking_status-036: ['invented_filter', 'booking_without_summary']
+[406/411 | clean 242 | 11221s] booking_status-039: ok
+[407/411 | clean 242 | 11250s] booking_status-041: ['past_date']
+[408/411 | clean 243 | 11294s] booking_status-040: ok
+[409/411 | clean 244 | 11296s] booking_status-042: ok
+[410/411 | clean 245 | 11402s] booking_status-043: ok
+[411/411 | clean 245 | 11451s] booking_status-044: ['booking_without_summary', 'status_not_reported']

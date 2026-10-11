@@ -1,0 +1,15 @@
+  leh                          best=Jun,Sep,Oct                              rail=- permits=yes
+  ladakh                       best=Sep                                      rail=- permits=yes
+  srinagar                     best=Dec,Mar                                  rail=yes permits=-
+  gulmarg                      best=Mar                                      rail=- permits=-
+  pahalgam                     best=Mar                                      rail=yes permits=-
+  manali                       best=Oct,Nov,Dec,Jan,Feb,Mar,Jul              rail=yes permits=-
+  shimla                       best=Apr,Oct                                  rail=yes permits=-
+  dharamsala                   best=Jan,Mar                                  rail=yes permits=-
+  mcleod ganj                  best=Jan,Mar,Jun                              rail=yes permits=-
+  spiti                        best=Jul,Aug                                  rail=- permits=yes
+  kullu                        best=-                                        rail=- permits=-
+  rishikesh                    best=Feb,Mar,Aug,Oct                          rail=yes permits=-
+  haridwar                     best=-                                        rail=yes permits=-
+  mussoorie                    best=Jul,Sep                                  rail=yes permits=-
+  nainital                     best=May,Jun,Jul                              rail=yes permits=-

@@ -137,7 +137,8 @@ def main():
     done = set()
     if out_path.exists():
         done = {json.loads(l)["meta"]["id"] for l in out_path.open(encoding="utf-8") if l.strip()}
-    pending = [s for s in scenarios.build(catalog=catalog) if s["id"] not in done and (not only or s["category"] in only.split(","))]
+    built = scenarios.build_v3() if catalog == "v3" else scenarios.build(catalog=catalog)
+    pending = [s for s in built if s["id"] not in done and (not only or s["category"] in only.split(","))]
     by_cat = {}
     for s in pending:
         by_cat.setdefault(s["category"], []).append(s)

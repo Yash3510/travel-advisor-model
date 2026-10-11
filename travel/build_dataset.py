@@ -12,7 +12,7 @@ import sys
 
 from transformers import AutoTokenizer
 
-from travel import evaluate, validate
+from travel import evaluate, tools, validate
 from travel import format as fmt
 
 sys.stdout.reconfigure(encoding="utf-8")
@@ -24,6 +24,23 @@ SGD_SEARCH_CONVS = 300
 VAL_SHARE = 0.05
 LEAK_JACCARD = 0.5
 REPEAT = {"book_it_quick": 2, "non_refundable": 2, "two_suppliers": 2, "health_reveal": 2}   # v1's weakest behaviours, seen twice
+
+
+def refresh(conv, runtime_prompt):
+    """Give a stored conversation today's runtime prompt (keeping its own date) and the current tool list."""
+    conv = {**conv, "messages": [dict(m) for m in conv["messages"]]}
+    system = conv["messages"][0]["content"]
+    context = system[system.index("\n\nDEPLOYMENT CONTEXT"):] if "\n\nDEPLOYMENT CONTEXT" in system else ""
+    conv["messages"][0]["content"] = runtime_prompt + context
+    names = [t["function"]["name"] for t in conv["tools"]]
+    if conv["meta"].get("source") == "sgd" or not set(names) <= set(tools.BY_NAME):
+        extra = [] if "get_destination_info" in names else [tools.GET_DESTINATION_INFO]
+        conv["tools"] = conv["tools"] + extra
+    elif "search_hotels" in names:
+        conv["tools"] = tools.ALL
+    else:
+        conv["tools"] = tools.NO_INVENTORY
+    return conv
 
 
 def words(text):
@@ -49,7 +66,8 @@ def main():
     eval_openings = [words(o) for o in evaluate.opening_messages()]
     stats, convs = collections.Counter(), []
 
-    sgd = [json.loads(line) for line in (ROOT / "data/processed/sgd_india.jsonl").open(encoding="utf-8")]
+    runtime_prompt = (ROOT / "prompts/runtime_system_prompt.txt").read_text(encoding="utf-8").strip()
+    sgd = [refresh(json.loads(line), runtime_prompt) for line in (ROOT / "data/processed/sgd_india.jsonl").open(encoding="utf-8")]
     rng.shuffle(sgd)
     sgd = ([c for c in sgd if c["meta"]["has_booking"]][:SGD_BOOKING_CONVS]
            + [c for c in sgd if not c["meta"]["has_booking"]][:SGD_SEARCH_CONVS])
@@ -65,6 +83,8 @@ def main():
         for line in path.open(encoding="utf-8"):
             conv = json.loads(line)
             cat = conv["meta"]["category"]
+            if conv["messages"]:
+                conv = refresh(conv, runtime_prompt)
             if f"{path.stem}:{conv['meta']['id']}" in review_rejects:
                 stats[f"gap dropped: manual review ({cat})"] += 1
                 continue

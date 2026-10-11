@@ -31,6 +31,12 @@ GET_TRAVEL_ADVISORY = _fn("get_travel_advisory", "Current official travel adviso
 HANDOFF_TO_HUMAN = _fn("handoff_to_human", "Transfer the conversation to a human travel agent with a case summary.",
                        {"summary": _S, "urgency": {"type": "string", "enum": ["normal", "urgent"]}}, ["summary", "urgency"])
 
-ALL = [SEARCH_FLIGHTS, SEARCH_HOTELS, CREATE_BOOKING, GET_BOOKING, GET_ENTRY_REQUIREMENTS, GET_TRAVEL_ADVISORY, HANDOFF_TO_HUMAN]
-NO_INVENTORY = [GET_ENTRY_REQUIREMENTS, GET_TRAVEL_ADVISORY, HANDOFF_TO_HUMAN]
+GET_DESTINATION_INFO = _fn("get_destination_info", "Travel-guide facts about a place in India: best and worst months, how to get "
+                           "there (nearest airport, railway or no railway, road, sea), permits, seasonal closures and altitude. "
+                           "Use it for seasons, routes and whether a trip is possible. Returns found=false for places it does not know.",
+                           {"destination": _S}, ["destination"])
+
+ALL = [SEARCH_FLIGHTS, SEARCH_HOTELS, CREATE_BOOKING, GET_BOOKING, GET_ENTRY_REQUIREMENTS, GET_TRAVEL_ADVISORY, HANDOFF_TO_HUMAN,
+       GET_DESTINATION_INFO]
+NO_INVENTORY = [GET_ENTRY_REQUIREMENTS, GET_TRAVEL_ADVISORY, HANDOFF_TO_HUMAN, GET_DESTINATION_INFO]
 BY_NAME = {t["function"]["name"]: t for t in ALL}

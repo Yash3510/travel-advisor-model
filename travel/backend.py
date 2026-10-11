@@ -7,7 +7,11 @@ import datetime as dt
 import json
 import random
 
-from travel import india
+import functools
+
+from travel import india, kb
+
+_KB = functools.lru_cache(maxsize=1)(kb.load)
 
 AIRLINES = ["IndiGo", "Air India", "Akasa Air", "SpiceJet", "Air India Express"]
 INTL_AIRLINES = ["Air India", "IndiGo", "Emirates", "Singapore Airlines", "Qatar Airways", "Etihad Airways", "Thai Airways", "Lufthansa"]
@@ -172,6 +176,13 @@ class Backend:
                 "closure": "Some high-altitude roads closed for the season; check the state transport department before travel.",
                 "unrest": "Local restrictions in parts of the region; follow district administration notices."}[kind]
         return {"source": "official state and central advisories", "checked_at": self.now, "destination": destination, "advisory": text}
+
+    def get_destination_info(self, destination, **_):
+        entry = kb.lookup(_KB(), destination)
+        if entry is None:
+            return {"found": False, "destination": destination,
+                    "message": "No travel-guide entry for this place. It may not exist, or it may be too small to be covered."}
+        return {"found": True, **entry}
 
     def handoff_to_human(self, summary, urgency="normal", **_):
         return {"status": "TRANSFERRED", "queue": urgency, "expected_wait_minutes": 2 if urgency == "urgent" else self.rng.choice([5, 10, 15])}

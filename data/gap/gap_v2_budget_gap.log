@@ -1,0 +1,21 @@
+0 done, 20 to generate
+[1/20 | clean 1 | 106s] budget_gap-000: ok
+[2/20 | clean 1 | 131s] budget_gap-002: ['past_date', 'invented_filter', 'invented_amount']
+[3/20 | clean 2 | 179s] budget_gap-001: ok
+[4/20 | clean 2 | 228s] budget_gap-003: ['unneeded_handoff']
+[5/20 | clean 2 | 260s] budget_gap-004: ['invented_passport', 'invented_amount']
+[6/20 | clean 2 | 308s] budget_gap-005: ['past_date', 'invented_date', 'invented_filter']
+[7/20 | clean 3 | 338s] budget_gap-006: ok
+[8/20 | clean 4 | 360s] budget_gap-007: ok
+[9/20 | clean 4 | 466s] budget_gap-008: ['invented_amount', 'invented_passport']
+[10/20 | clean 4 | 477s] budget_gap-009: ['invented_filter', 'invented_amount']
+[11/20 | clean 4 | 494s] budget_gap-010: ['past_date', 'invented_amount']
+[12/20 | clean 4 | 590s] budget_gap-013: ['invented_amount', 'unneeded_handoff']
+[13/20 | clean 4 | 629s] budget_gap-011: ['invented_date', 'invented_filter']
+[14/20 | clean 4 | 640s] budget_gap-012: ['invented_filter']
+[15/20 | clean 4 | 746s] budget_gap-016: ['past_date', 'invented_amount']
+[16/20 | clean 4 | 770s] budget_gap-015: ['past_date', 'invented_amount', 'invented_filter']
+[17/20 | clean 4 | 844s] budget_gap-014: ['past_date']
+[18/20 | clean 4 | 881s] budget_gap-017: ['invented_filter']
+[19/20 | clean 4 | 952s] budget_gap-019: ['invented_amount', 'unneeded_handoff']
+[20/20 | clean 4 | 974s] budget_gap-018: ['past_date']

@@ -2,6 +2,8 @@
 import json
 import re
 
+from travel import kb
+
 AFFIRM = re.compile(r"\b(yes|yeah|yep|confirm(ed)?|go ahead|book it|please book|proceed|haan|ha|ok(ay)?|sure|done|theek hai|kar do|karo)\b"
                     r"|हाँ|हां|जी|ठीक है|कर दो|करो|बुक कर", re.I)
 CANCEL_TERMS = re.compile(r"refund|cancel", re.I)
@@ -28,6 +30,10 @@ CHEAPER = re.compile(r"cheap|expensive|afford|budget|lower|less|pricey|costly|to
 DANGER = re.compile(r"injur|bleed|collaps|unconscious|not respond|isn'?t respond|unresponsive|fire|smoke|accident|attack|assault|"
                     r"missing|can'?t breathe|not breathing|drown|hit by|fell|fallen|jawab nahi", re.I)
 RECHECK = re.compile(r"\b(checked again|re-?checked|tried again|searched again|i'?ve checked|i have checked)\b", re.I)
+NO_ROUTE = re.compile(r"\bno (direct )?(train|rail|railway|road)s?\b|not (connected|reachable|accessible) by (rail|train|road)|"
+                      r"can'?t (drive|take a train)|cannot (drive|take a train|go by train)", re.I)
+ROUTE_SOURCE = re.compile(r"no rail|no train|no railway|not connected by rail|no road|ferr|ship|boat|by sea|only by air|"
+                          r"nearest (railway |train )?station|nearest railhead|closed", re.I)
 MAX_QUESTIONS = 2
 MAX_WORDS = 170
 EMOJI = re.compile("[🌀-🫿☀-➿⭐✅]")
@@ -97,9 +103,13 @@ def check(conv):
     known = set()
     nightly_seen = []
     user_text = ""
+    context = ""                               # user and tool text, with ISO dates also spelled as month names
     first_assistant_seen = False
     for i, m in enumerate(msgs):
         role, content = m["role"], m.get("content") or ""
+        if role in ("user", "tool"):
+            context += " " + content + " " + " ".join(kb.MONTHS[int(mm) - 1] for mm in re.findall(r"\b\d{4}-(\d{2})-\d{2}\b", content)
+                                                     if 1 <= int(mm) <= 12)
         if role == "user":
             user_text += " " + content.lower()
             known |= _numbers_in(content)
@@ -160,6 +170,10 @@ def check(conv):
                 if category != "emergency" and re.search(r"\b112\b", content) and not DANGER.search(user_text):
                     flag("misplaced_112")
                 claims = " ".join(s for s in re.split(r"(?<=[.!?\n])\s*", content) if not s.strip().endswith("?"))
+                if kb.months_in(claims) - kb.months_in(context):
+                    flag("unsupported_months")              # seasons and dates must come from the customer or a tool
+                if NO_ROUTE.search(claims) and not ROUTE_SOURCE.search(context):
+                    flag("unsupported_route")
                 for amt in AMOUNT.findall(claims):           # price points offered in a question are not claims
                     if not _derivable(int(amt.replace(",", "")), known):
                         flag("invented_amount")
