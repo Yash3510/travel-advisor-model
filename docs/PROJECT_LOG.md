@@ -156,6 +156,8 @@ That way the model stops guessing seasons and routes, and unknown places come ba
    | `base-Qwen3.5-0.8B-GGUF` | `C:\Users\kumar\.lmstudio\models\unsloth\Qwen3.5-0.8B-GGUF\` |
    | `trained-v*-merged` | `outputs\v*\merged\` (only needed for re-exporting) |
 
-   The base training weights re-download automatically (`unsloth/Qwen3.5-0.8B`) on first training, or copy `base-Qwen3.5-0.8B-hf-weights` into the Hugging Face cache.
-5. **Copy the data back:** USB `data\raw-sgd` → `data\raw\sgd\`, and `data\train` → `data\train\` (or rebuild it with `uv run python -I -m travel.build_dataset`).
+   The base training weights (`unsloth/Qwen3.5-0.8B`) re-download automatically on first training. They are also in the full-PC backup on the same USB under `D:\Personal_Files\Models\` (the Hugging Face cache).
+5. **Copy the data back.** Raw SGD and the tokenised training set are in the full-PC backup of `C:\Dev` at `D:\Personal_Files\Dev\travel-advisor-model\data\`:
+   - Copy `raw\sgd` to `data\raw\sgd\`. It can also be re-downloaded from Google's GitHub.
+   - Copy `train` to `data\train\`, or rebuild it with `uv run python -I -m travel.build_dataset`.
 6. **Check it works:** `uv run pytest` (currently fails only in the v3 KB parts listed in §5), then `bash scripts/serve.sh <v2 gguf> 8091 cpu` and `uv run python -I -m travel.chat`.
