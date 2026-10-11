@@ -12,7 +12,7 @@ import threading
 import time
 import urllib.request
 
-from travel import scenarios, tools, validate
+from travel import fixes, scenarios, tools, validate
 from travel.backend import Backend
 
 sys.stdout.reconfigure(encoding="utf-8")
@@ -81,6 +81,7 @@ def run(base, sc):
     tool_defs = [tools.BY_NAME[n] for n in sc["tools"]]
     backend = Backend({**sc["backend"], "now": f"{sc['today']}T11:00+05:30"}, sc["seed"])
     msgs = []                                      # conversation without the system prompt
+    corrections = []                               # in-generation fixes, recorded in meta
     opening = customer_says(base, sc, msgs)
     msgs.append({"role": "user", "content": opening})
     for turn in range(sc["user_turns"] + 1):
@@ -93,6 +94,19 @@ def run(base, sc):
                 reply["tool_calls"] = [{"id": c.get("id") or f"call_{len(msgs)}_{k}", "type": "function",
                                         "function": {"name": c["function"]["name"], "arguments": c["function"]["arguments"]}}
                                        for k, c in enumerate(calls)]
+                meta = {"category": sc["category"], "today": sc["today"]}
+                verdicts = [fixes.triage(meta, msgs, c) for c in reply["tool_calls"]]
+                note = next((n for v, _, n in verdicts if v == "redirect"), None)
+                if note:                                  # teacher should have spoken first: have it write that message
+                    redo = post(base, dict(model="local", max_tokens=3500, tools=tool_defs, chat_template_kwargs={"enable_thinking": True},
+                                           messages=[{"role": "system", "content": TEACHER_PROMPT + deployment_context(sc["today"])}, *msgs,
+                                                     reply, {"role": "user", "content": note}], **THINK))
+                    reply = {"role": "assistant", "content": (redo.get("content") or "").strip()}
+                    calls = []
+                    corrections.append(note[:40])
+                else:
+                    reply["tool_calls"] = [fixed for _, fixed, _ in verdicts]
+                    corrections.extend("auto-fixed call" for v, _, _ in verdicts if v == "fixed")
             if not calls and reply["content"]:
                 reply["content"] = edited(base, sc, msgs, reply["content"])
             msgs.append(reply)
@@ -109,7 +123,8 @@ def run(base, sc):
         msgs.append({"role": "user", "content": nxt})
     conv = {"messages": [{"role": "system", "content": RUNTIME_PROMPT + deployment_context(sc["today"])}] + msgs,
             "tools": tool_defs, "meta": {"source": "gap", "id": sc["id"], "category": sc["category"], "today": sc["today"],
-                                         "situation": sc["situation"], "style": sc["style"]}}
+                                         "situation": sc["situation"], "style": sc["style"],
+                                         "corrections": corrections}}
     conv["meta"]["problems"] = validate.check(conv)
     return conv
 
@@ -118,10 +133,11 @@ def main():
     base, out_path = sys.argv[1], pathlib.Path(sys.argv[2])
     arg = lambda k, d: sys.argv[sys.argv.index(k) + 1] if k in sys.argv else d
     workers, limit, only = int(arg("--workers", 2)), int(arg("--limit", 10**9)), arg("--only", "")
+    catalog = arg("--catalog", "v1")
     done = set()
     if out_path.exists():
         done = {json.loads(l)["meta"]["id"] for l in out_path.open(encoding="utf-8") if l.strip()}
-    pending = [s for s in scenarios.build() if s["id"] not in done and (not only or s["category"] in only.split(","))]
+    pending = [s for s in scenarios.build(catalog=catalog) if s["id"] not in done and (not only or s["category"] in only.split(","))]
     by_cat = {}
     for s in pending:
         by_cat.setdefault(s["category"], []).append(s)

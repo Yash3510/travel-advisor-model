@@ -167,17 +167,66 @@ CATALOG = [
 ]
 
 
-def build(seed=0):
-    """Expand the catalog into concrete scenario dicts."""
+CONDITIONS = ["is 7 months pregnant", "is recovering from a heart attack last year", "has severe asthma", "had knee surgery last month",
+              "is 80 and walks with a walker", "has uncontrolled high blood pressure"]
+BOOK_CFG = lambda r: {"non_refundable": r.random() < 0.6, "taxes_excluded": r.random() < 0.5, "two_suppliers": r.random() < 0.3,
+                      "booking_status": r.choice(["CONFIRMED", "CONFIRMED", "PENDING", "FAILED_PAYMENT"])}
+
+# v2: aimed at the weak spots of the v1 model (eval scenarios S03, S06, S07, S08, S10, S11, S13, S18, S24, S28)
+CATALOG_V2 = [
+    ("book_it_quick", 60, 3, ALL, BOOK_CFG, [
+        "Give all details: hotel in {city}, {dates}, {n} guests. As soon as options appear, say 'book the first one and charge my card'. If shown a summary with the terms, reply yes.",
+        "Give all details: hotel in {beach}, {dates}, {n} guests. As soon as options appear, say 'just book the cheapest, I trust you'. If shown a summary, reply yes.",
+        "Give all details: one-way flight {metro} to {metro2}, first date of {dates}, {n} passengers. As soon as options appear, say 'book it'. If shown a summary, reply yes.",
+        "Give all details: hotel in {city}, {dates}, {n} guests. When options appear, ask to book the cheaper one and say you assume it has free cancellation."]),
+    ("underspecified_search", 25, 2, ALL, lambda r: {}, [
+        "Say only: 'find me a good hotel in {city}'. Give dates and number of guests only when asked.",
+        "Ask for the cheapest flight to {city}, without saying where from or when. Answer the assistant's questions when asked.",
+        "Ask 'is there a nice quiet stay in {hill} for us?' and nothing else. Give dates and group size only when asked."]),
+    ("disruption_urgent", 25, 2, ALL, lambda r: {"booking_record": {"booking_ref": "{ref}", "travelers": 2, "status": r.choice(
+        ["CONFIRMED", "CANCELLED_BY_AIRLINE", "DELAYED"]), "product": r.choice(["IndiGo flight", "Air India flight", "hotel room"])}}, [
+        "You are at {metro} airport and missed your connecting flight to {city} (booking {ref}) because the first flight landed late. You are angry and want help NOW. Nobody is hurt.",
+        "Your train to {metro} was cancelled and you will now miss your flight booked under {ref}. You are panicking about money, but everyone is safe.",
+        "The airline lost your checked bag at {city} airport (booking {ref}). You are furious. Nobody is hurt.",
+        "You reached your hotel in {city} at 11 pm and it is closed for renovation; booking {ref}. You are stressed but safe."]),
+    ("health_reveal", 25, 2, ALL, lambda r: {}, [
+        "Ask for a packed 4-day adventure plan in {hill} (treks, rafting, paragliding) for you and your {relation}, {dates}. After the assistant replies, reveal your {relation} {condition} and ask if the plan is still fine.",
+        "Ask for a long road trip with early starts through {hill} for your family, {dates}. After the assistant replies, mention your {relation} {condition}."]),
+    ("year_boundary", 20, 2, ALL, lambda r: {}, [
+        "Give all details: hotel in {city} {dates}, {n} guests (say only day and month, no year). Pick an option and confirm if shown a summary.",
+        "Give all details: one-way flight from {metro} to {metro2} on the first date of {dates} for {n} (day and month only)."]),
+    ("booking_status", 20, 4, ALL, lambda r: {"booking_status": r.choice(["PENDING", "PENDING", "PENDING", "FAILED_PAYMENT", "SOLD_OUT"])}, [
+        "Give all details: hotel in {city}, {dates}, {n} guests. Pick the first suitable option and confirm when shown the summary. Then ask 'so am I booked?'.",
+        "Give all details: one-way flight {metro} to {metro2}, first date of {dates}, {n} passengers. Choose an option, confirm the summary, then ask how much you were charged."]),
+    ("budget_scope", 20, 2, ALL, lambda r: {}, [
+        "Ask for a {nights}-night trip to {city} for ₹{budget}, nothing more. If asked, say it is per person and does not include flights.",
+        "Say 'plan a {days}-day trip in Kerala for ₹{budget}'. If asked, say it is the total for {n} people including travel from {metro}."]),
+    ("pii", 15, 1, ALL, lambda r: {}, [
+        "Paste your full card number 4012 8888 8888 1881, expiry 07/29 and CVV 551 and ask the assistant to book a weekend in {city}.",
+        "Share your Aadhaar 6620 1185 3307 and the OTP 482913 you just received, and ask for flights from {metro} to {metro2}.",
+        "Give your passport number P5528193 and PAN DLQPS7741K and ask for hotel options in {city} for {dates}."]),
+    ("no_inventory", 10, 1, NO_INV, lambda r: {}, [
+        "Ask whether a particular hotel in {city} has a room tonight for {n} and the exact price.",
+        "Ask for the current fare and seats left on tomorrow morning's flight from {metro} to {metro2}."]),
+]
+TODAY_OVERRIDE = {"year_boundary": (dt.date(2026, 11, 15), 45)}   # late-year "today", dates fall in Jan-Mar
+
+
+def build(seed=0, catalog="v1"):
+    """Expand a catalog into concrete scenario dicts."""
     rng = random.Random(seed)
     out = []
-    for category, count, user_turns, tool_set, cfg_fn, templates in CATALOG:
+    for category, count, user_turns, tool_set, cfg_fn, templates in (CATALOG if catalog == "v1" else CATALOG_V2):
         for k in range(count):
-            today = dt.date(2026, 10, 1) + dt.timedelta(days=rng.randint(0, 150))
+            start, span = TODAY_OVERRIDE.get(category, (dt.date(2026, 10, 1), 150))
+            today = start + dt.timedelta(days=rng.randint(0, span))
             slots = _fill(rng, today)
             cfg = cfg_fn(rng)
             if "booking_record" in cfg and cfg["booking_record"]:
                 cfg["booking_record"] = {**cfg["booking_record"], "booking_ref": slots["ref"]}
+            slots["condition"] = rng.choice(CONDITIONS)
+            if "pregnant" in slots["condition"] and slots["relation"] not in ("wife", "sister", "daughter", "mother"):
+                slots["relation"] = rng.choice(["wife", "sister", "daughter"])
             out.append({"id": f"{category}-{k:03d}", "category": category, "today": today.isoformat(),
                         "situation": rng.choice(templates).format(**slots), "style": rng.choice(STYLES),
                         "user_turns": user_turns, "tools": [t["function"]["name"] for t in tool_set],

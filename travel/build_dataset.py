@@ -23,6 +23,7 @@ SGD_BOOKING_CONVS = 700
 SGD_SEARCH_CONVS = 300
 VAL_SHARE = 0.05
 LEAK_JACCARD = 0.5
+REPEAT = {"book_it_quick": 2, "non_refundable": 2, "two_suppliers": 2, "health_reveal": 2}   # v1's weakest behaviours, seen twice
 
 
 def words(text):
@@ -57,10 +58,8 @@ def main():
         convs.append((conv, {n for n, _ in ranked[:SGD_TURNS_PER_CONV]}))
 
     gap_files = sorted((ROOT / "data/gap").glob("gap_*.jsonl"))
-    newest = {}                                  # a regenerated category (e.g. gap_v2_emergency) replaces older files' copies
-    for path in gap_files:
-        for line in path.open(encoding="utf-8"):
-            newest[json.loads(line)["meta"]["category"]] = path
+    # gap_v2_<category> is a regeneration that replaces that category in other files; any other file adds examples
+    replaced = {p.stem[len("gap_v2_"):]: p for p in gap_files if p.stem.startswith("gap_v2_")}
     review_rejects = json.loads((ROOT / "reports/review_rejects.json").read_text(encoding="utf-8"))
     for path in gap_files:
         for line in path.open(encoding="utf-8"):
@@ -69,7 +68,7 @@ def main():
             if f"{path.stem}:{conv['meta']['id']}" in review_rejects:
                 stats[f"gap dropped: manual review ({cat})"] += 1
                 continue
-            if newest[cat] != path:
+            if cat in replaced and replaced[cat] != path:
                 stats[f"gap superseded by a newer file ({cat})"] += 1
                 continue
             if not conv["messages"] or validate.check(conv):     # re-check with the current rules
@@ -94,7 +93,8 @@ def main():
             cat = conv["meta"].get("category", "sgd")
             for s in fmt.encode(tok, conv, MAX_LEN, turns):
                 s.update(source=src, category=cat)
-                (fva if split == "val" else ftr).write(json.dumps(s) + "\n")
+                for _ in range(1 if split == "val" else REPEAT.get(cat, 1)):
+                    (fva if split == "val" else ftr).write(json.dumps(s) + "\n")
                 stats[f"{split} samples ({src})"] += 1
                 tokens[f"{split} tokens ({src})"] += len(s["input_ids"])
                 if split == "train":

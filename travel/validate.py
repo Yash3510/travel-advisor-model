@@ -24,6 +24,9 @@ MEASURE = re.compile(r"(\d+(?:\.\d+)?)\s*(?:-|–|to)?\s*(?:\d+\s*)?(km|kms|kilo
 RELATIVE_DATE = re.compile(r"\b(today|tonight|tomorrow|weekend|next|this|coming|day after)\b", re.I)
 DATE_ARGS = {"search_flights": ("date", "return_date"), "search_hotels": ("check_in", "check_out")}
 CHEAPER = re.compile(r"cheap|expensive|afford|budget|lower|less|pricey|costly|too much|sasta|mehenga", re.I)
+DANGER = re.compile(r"injur|bleed|collaps|unconscious|not respond|isn'?t respond|unresponsive|fire|smoke|accident|attack|assault|"
+                    r"missing|can'?t breathe|not breathing|drown|hit by|fell|fallen|jawab nahi", re.I)
+RECHECK = re.compile(r"\b(checked again|re-?checked|tried again|searched again|i'?ve checked|i have checked)\b", re.I)
 MAX_QUESTIONS = 2
 MAX_WORDS = 170
 EMOJI = re.compile("[🌀-🫿☀-➿⭐✅]")
@@ -153,6 +156,8 @@ def check(conv):
                 first_assistant_seen = True
                 for code in turn_issues(content):
                     flag(code)
+                if category != "emergency" and re.search(r"\b112\b", content) and not DANGER.search(user_text):
+                    flag("misplaced_112")
                 claims = " ".join(s for s in re.split(r"(?<=[.!?\n])\s*", content) if not s.strip().endswith("?"))
                 for amt in AMOUNT.findall(claims):           # price points offered in a question are not claims
                     if not _derivable(int(amt.replace(",", "")), known):
@@ -229,6 +234,8 @@ def _check_statuses(msgs, flag):
         nxt = next((n for n in msgs[i + 1:] if n["role"] == "assistant"), None)
         if "error" in body and nxt is not None and nxt.get("tool_calls") and not (nxt.get("content") or "").strip():
             continue                                    # silent retry with corrected arguments
+        if nxt is not None and not nxt.get("tool_calls") and RECHECK.search(nxt.get("content") or ""):
+            flag("phantom_check")                       # claims a new check that never happened
         reply = next((n.get("content") or "" for n in msgs[i + 1:] if n["role"] == "assistant" and (n.get("content") or "").strip()), None)
         if reply is None:
             continue

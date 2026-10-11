@@ -189,3 +189,22 @@ def test_lower_cap_after_cheaper_request_is_fine():
     higher = call("search_hotels", {"city": "Amritsar", "check_in": "2026-12-09", "check_out": "2026-12-12", "guests": 2,
                                     "max_price_per_night": 9000}, "c2")
     assert "invented_filter" in problems(conv(*ctx, higher))
+
+
+def test_112_only_for_real_emergencies():
+    c = conv(u("I missed my connecting flight in Delhi and I'm stuck at the airport, help!"),
+             a("Please call 112 right now and stay calm."), category="disruption_urgent")
+    assert "misplaced_112" in problems(c)
+    c = conv(u("My father collapsed at the hotel"), a("Call 112 now and stay with him."), category="emergency")
+    assert "misplaced_112" not in problems(c)
+
+
+def test_claiming_a_recheck_without_a_new_tool_call_fails():
+    c = conv(u("flights Mumbai to Bagdogra 15 Nov for 2"),
+             call("search_flights", {"origin": "Mumbai", "destination": "Bagdogra", "date": "2026-11-15", "passengers": 2}),
+             res({"error": "UPSTREAM_TIMEOUT"}), a("The search timed out. I've checked again and there is no availability."))
+    assert "phantom_check" in problems(c)
+    honest = conv(u("flights Mumbai to Bagdogra 15 Nov for 2"),
+                  call("search_flights", {"origin": "Mumbai", "destination": "Bagdogra", "date": "2026-11-15", "passengers": 2}),
+                  res({"error": "UPSTREAM_TIMEOUT"}), a("The search timed out, so I could not check availability. Shall I try again?"))
+    assert "phantom_check" not in problems(honest)
