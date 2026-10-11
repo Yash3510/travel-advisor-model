@@ -24,14 +24,14 @@ This guide is for putting the model behind a real product: a website chat, a Wha
 **llama.cpp** (what the tests use; CPU only, 8 threads was fastest on an i7-13650HX):
 
 ```bash
-llama-server -m travel-advisor-qwen3.5-0.8b-Q8_0.gguf -ngl 0 -t 8 --jinja -c 16384 --host 127.0.0.1 --port 8091
+llama-server -m travel-advisor-qwen3.5-0.8b-v2-Q8_0.gguf -ngl 0 -t 8 --jinja -c 16384 --host 127.0.0.1 --port 8091
 ```
 
 `scripts/serve.sh <gguf> <port> cpu` does the same with Unsloth Studio's bundled llama.cpp.
 
 **`--jinja` is required.** Tool calling depends on the model's own chat template.
 
-**LM Studio / Bionic:** load *local / travel-advisor-qwen3.5-0.8b*. If your build has the OpenAI-compatible local server, point the harness's `OpenAIClient` at it (LM Studio's default is `http://localhost:1234`). Settings:
+**LM Studio / Bionic:** load *local / travel-advisor-qwen3.5-0.8b-v2*. If your build has the OpenAI-compatible local server, point the harness's `OpenAIClient` at it (LM Studio's default is `http://localhost:1234`). Settings:
 - thinking off
 - temperature about 0.7
 - context of at least 8k

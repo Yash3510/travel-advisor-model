@@ -44,25 +44,26 @@ All tests use the 30 pre-deployment scenarios in spec §17, scored 0–4 with th
 | Model | Average | Critical failures | Median reply time on CPU |
 |---|---|---|---|
 | Qwen3.5-0.8B base, full spec prompt | 0.80 | 7 | 32.9 s |
-| Qwen3.5-0.8B base, short prompt | 0.70 | 6 | — |
-| **v1 fine-tune**, short prompt | **1.60** | **4** | **6.4 s** |
+| v1 fine-tune, deployed settings | 1.50 | 3 | 6.4 s |
+| **v2 fine-tune, deployed settings** | **2.13** | **2** | ~6 s |
+| **v2 + guardrail harness** | ~2.5 (projected) | **0** | ~6 s |
 | Teacher Qwen3.5-4B (thinking, GPU), full spec prompt | 2.97 | 0 | — |
 
-Reports: [reports/v1_REPORT.md](reports/v1_REPORT.md). v2 adds about 180 targeted conversations aimed at v1's failures, and in-generation corrections.
+"Deployed settings" means temperature 0.7, as the harness uses. Reports: [reports/v2_REPORT.md](reports/v2_REPORT.md) and [reports/v1_REPORT.md](reports/v1_REPORT.md).
 
-**On its own, the model does not meet the release gate yet. Use it behind the harness.** The harness removes every critical-failure type seen in testing: unconfirmed bookings, misreported status, and missed emergencies.
+**Use v2, behind the harness.** On its own the model does not meet the release gate yet. Its two remaining critical failures are both "book it" calls, which the harness blocks: verified end to end with the real model. Below the gate, its weak spots are facts and plan feasibility (see Limitations).
 
 ## Quick start
 
 1. **Run the model on CPU.** Requires Unsloth Studio's bundled llama.cpp:
    ```bash
-   bash scripts/serve.sh "$HOME/.lmstudio/models/local/travel-advisor-qwen3.5-0.8b/travel-advisor-qwen3.5-0.8b-Q8_0.gguf" 8091 cpu -c 16384
+   bash scripts/serve.sh "$HOME/.lmstudio/models/local/travel-advisor-qwen3.5-0.8b-v2/travel-advisor-qwen3.5-0.8b-v2-Q8_0.gguf" 8091 cpu -c 16384
    ```
 2. **Chat with it through the harness**, with mock flights and hotels:
    ```bash
    uv run python -I -m travel.chat --server http://127.0.0.1:8091
    ```
-3. **Or use it in LM Studio / Bionic.** It appears under *local / travel-advisor-qwen3.5-0.8b*.
+3. **Or use it in LM Studio / Bionic.** It appears under *local / travel-advisor-qwen3.5-0.8b-v2* (v1 is kept beside it).
    - Set the system prompt to `prompts/runtime_system_prompt.txt` plus the deployment line from [docs/INTEGRATION.md](docs/INTEGRATION.md#2-system-prompt).
    - Turn thinking off.
 
@@ -92,7 +93,7 @@ uv run python -I -m travel.build_sgd data/raw/sgd data/processed/sgd_india.jsonl
 uv run python -I -m travel.simulate http://127.0.0.1:8093 data/gap/gap_v1.jsonl --workers 3
 uv run python -I -m travel.simulate http://127.0.0.1:8093 data/gap/gap_v3_targeted.jsonl --catalog v2 --workers 3
 uv run python -I -m travel.build_dataset
-~/.unsloth/studio/unsloth_studio/Scripts/python.exe train/train_lora.py outputs/v2 --bs 1 --pad 512 --epochs 2
+~/.unsloth/studio/unsloth_studio/Scripts/python.exe train/train_lora.py outputs/v2 --bs 1 --pad 512 --epochs 2 --max-len 3584
 bash train/export_gguf.sh outputs/v2/merged travel-advisor-qwen3.5-0.8b-v2
 uv run python -I -m travel.evaluate http://127.0.0.1:8091 eval/results/out.json --system-file prompts/runtime_system_prompt.txt
 ```

@@ -155,6 +155,8 @@ def main():
     # Qwen3.5 model-card sampling, text mode
     sampling = (dict(temperature=1.0, top_p=0.95, top_k=20, min_p=0.0, presence_penalty=1.5) if thinking
                 else dict(temperature=1.0, top_p=1.0, top_k=20, min_p=0.0, presence_penalty=2.0))
+    if "--deploy-sampling" in sys.argv:          # the settings travel.harness.OpenAIClient uses
+        sampling = dict(temperature=0.7, top_p=0.8, top_k=20, min_p=0.0, presence_penalty=0.0)
     run_all(base, out_path, system, thinking, sampling)
 
 
