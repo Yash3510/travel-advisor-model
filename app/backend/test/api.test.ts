@@ -390,6 +390,30 @@ describe('drop-in client (client/takeoff-api.ts)', () => {
     expect(storage.getItem('takeoff.sessionId')).not.toBe('stale-session');
   });
 
+  it('reads and edits the profile, and reads the trip and plan of a thread', async () => {
+    const api = createTakeoffApi({ baseUrl: base, storage: memory() });
+    expect(await api.profile()).toMatchObject({ interests: [], dislikes: [], sourceByField: {} });
+    const edited = await api.updateProfile({ travelStyle: 'relaxed', interests: ['beach', 'food'] });
+    expect(edited).toMatchObject({ travelStyle: 'relaxed', interests: ['beach', 'food'], sourceByField: { travelStyle: 'explicit' } });
+    expect(await api.profile()).toEqual(edited);
+    await expect(api.updateProfile({ travelStyle: 'fast' as never })).rejects.toMatchObject({ code: 'invalid_profile', status: 400 });
+
+    let reply = await api.chat('Plan a trip to Goa');
+    reply = await api.chat('15 to 16 December, 2 of us', { threadId: reply.threadId });
+    expect(reply.planning).toMatchObject({ action: 'ask', state: 'high_value_refinement' });
+    reply = await api.chat('about 50k', { threadId: reply.threadId });
+    expect(reply.planning).toMatchObject({ action: 'draft', state: 'draft_ready' });
+    expect(reply.itinerary!.days.map((d) => d.date)).toEqual(['2026-12-15', '2026-12-16']);
+    expect(reply.insights).toEqual([]);
+    expect(await api.trip(reply.threadId)).toMatchObject({ destination: 'Goa', startDate: '2026-12-15', travelers: 2, status: 'drafted', itineraryVersion: 1 });
+    expect(await api.itinerary(reply.threadId)).toEqual(reply.itinerary);
+    await expect(api.trip(reply.threadId + 999)).rejects.toMatchObject({ code: 'thread_not_found', status: 404 });
+
+    const reset = await api.resetProfile();
+    expect(reset).toMatchObject({ interests: [], sourceByField: {} });
+    expect(reset.travelStyle).toBeUndefined();
+  });
+
   it('reports backend errors with their codes', async () => {
     const api = createTakeoffApi({ baseUrl: base, storage: memory() });
     stub.queue = ['fail'];

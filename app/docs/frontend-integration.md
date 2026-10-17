@@ -103,6 +103,24 @@ for a deal the server sent in that thread.
 Replace the four hard-coded expeditions with `await api.threads()`. On click, load `await api.messages(thread.id)`
 into `messages` and set `threadIdRef.current = thread.id`.
 
+## 5a. The plan, its insights and the traveller's preferences
+
+When the planner builds or revises a plan, the reply from `api.chat` also carries:
+
+- `reply.itinerary` (`ItineraryDraft`): days, timed blocks (`activity`, `meal`, `rest`), reasons, warnings,
+  assumptions, alternatives and `sources`. It is the source of truth; `reply.message` is only its text rendering.
+  Show `sources` wherever the plan is shown: the OpenStreetMap credit is required by its licence.
+- `reply.insights` (`TripInsight[]`): weather, season notes, and the things that were **not checked** (events,
+  closures, advisories, entry rules). Show `not_checked` as "not checked", never as "all clear".
+- `reply.planning`: `action` is `ask`, `draft`, `revise` or `converse`; `field` is the question the planner asked.
+
+Travel legs (`item.travelToNext`) say `isEstimate`; label those "about N min (estimated)". Revisions ("make it cheaper",
+"skip the fort") go through `api.chat` like any message and come back as a new `itinerary.version`.
+
+To restore a thread, `await api.itinerary(threadId)` (null before the first plan) and `await api.trip(threadId)`. A
+preferences screen uses `await api.profile()`, `await api.updateProfile({ travelStyle: 'relaxed', interests: ['beach'] })`
+(a list replaces the saved list, `null` clears a field) and `await api.resetProfile()`.
+
 ## 6. Error codes
 
 | `err.code` | When | What to show |
@@ -113,6 +131,9 @@ into `messages` and set `threadIdRef.current = thread.id`.
 | `message_too_long` | over 4,000 characters | `errorText(err)` |
 | `aborted` | Stop or New journey | nothing |
 | `network`, `stream_ended` | connection dropped | `errorText(err)` and Retry |
+| `invalid_profile` | `updateProfile` with an unknown field or value | the field's error next to it (`err.message`) |
+| `thread_not_found` | `trip` / `itinerary` / `messages` for a thread this session doesn't own | drop the thread from the sidebar |
+| `bad_response` | a `done` event without its message | `errorText(err)` and Retry |
 
 `session_not_found` is handled inside the client (it starts a new session once).
 
@@ -120,8 +141,8 @@ into `messages` and set `threadIdRef.current = thread.id`.
 
 These parts of the UI have no backend behind them; decide whether to hide them or build them:
 
-- **The itinerary dossier** (`TripState`: day plans, hotels, activities, totals, "Open Canvas"). The backend returns chat
-  text, deals (with `cityHotelStay` and `activities`), and hotel or flight offers, but no day-by-day plan.
+- **Hotels and totals in the itinerary dossier.** Day plans now come from `reply.itinerary` (section 5a), for
+  destinations with place data (Goa so far); hotels, transport and trip totals are not part of it.
 - **Suggestion chips** under replies, hotel swap cards, multi-currency prices.
 - **The checkout drawer** ("Pay ₹10,000 refundable token"): there is no payment system. It must not collect names,
   emails or phone numbers, or show a success alert, until there's a backend that receives and stores them.
