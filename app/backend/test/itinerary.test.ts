@@ -122,10 +122,17 @@ describe('buildItinerary', () => {
   });
 
   it('offers cheaper, more relaxed and more adventurous alternatives from the same places', () => {
-    const d = build(tripWith({ destination: 'Goa', durationDays: 2, travelers: 2 }), profileWith({ set: { travelStyle: 'packed' }, add: { interests: ['history'] } }));
-    const kinds = d.alternatives.map((a) => a.kind);
-    expect(kinds).toContain('more_relaxed');
+    const d = build(tripWith({ destination: 'Goa', durationDays: 2, travelers: 2 }), profileWith({ set: { travelStyle: 'balanced' }, add: { interests: ['history'] } }));
+    expect(d.alternatives.map((a) => a.kind)).toContain('more_relaxed');
     expect(d.alternatives.every((a) => a.changes.length > 0)).toBe(true);
+    // one step slower, like "make it more relaxed": from balanced that is relaxed, which has the rest break
+    expect(d.alternatives.find((a) => a.kind === 'more_relaxed')!.summary).toBe('Fewer stops a day, with a rest break');
+  });
+
+  it('offers an alternative only when it changes the plan, one pace step at a time', () => {
+    const packed = build(tripWith({ destination: 'Goa', durationDays: 2, travelers: 2 }), profileWith({ set: { travelStyle: 'packed' }, add: { interests: ['history'] } }));
+    // on this small town, one step slower (balanced) gives the same days, so it isn't offered
+    expect(packed.alternatives.map((a) => a.kind)).not.toContain('more_relaxed');
   });
 
   it('is deterministic', () => {

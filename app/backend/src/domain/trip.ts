@@ -16,6 +16,8 @@ export interface TripContext extends TripFacts {
   dayPace: Record<number, TravelStyle>;
   paceOverride?: TravelStyle;
   budgetStyleOverride?: BudgetStyle;
+  /** interests a revision added for this trip only ("make it more adventurous") */
+  addedInterests?: string[];
   itineraryVersion: number;
   updatedAt: string;
 }

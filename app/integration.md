@@ -355,14 +355,15 @@ out.
 ## 8. Revisions and alternatives
 
 Revisions are ordinary chat messages. The backend rebuilds the plan and sends a new `itinerary` with `version` one
-higher and `planning.action: 'revise'`. The saved preferences stay as they are ("make it cheaper" is for this trip
-only). Phrases the planner recognises:
+higher and `planning.action: 'revise'`. The saved preferences stay as they are ("make it cheaper" or "more
+adventurous" is for this trip only). Phrases the planner recognises:
 
 | The customer wants | Send (or let them type) |
 |---|---|
 | A cheaper plan | `Make it cheaper` |
 | A slower trip, or one slower day | `Make it more relaxed`, `Make day 2 more relaxed` |
 | A busier trip | `See more`, `Add more stops` |
+| A more adventurous trip | `Make it more adventurous`, `More nature and adventure` |
 | To drop a place in the plan | `Skip Chapora Fort`, `I don't want to go to Chapora Fort` |
 | Other dates or party size | `Move it to 21 to 23 December`, `We are 4 people now` |
 
@@ -374,10 +375,11 @@ when one is tapped:
 |---|---|
 | `cheaper` | `Make it cheaper` |
 | `more_relaxed` | `Make it more relaxed` |
-| `more_adventurous` | `Add more nature and adventure and see more` |
+| `more_adventurous` | `Make it more adventurous` |
 
-Use exactly these messages. "Make it more adventurous", for example, is answered as a question and does not rebuild
-the plan.
+Each of these gives exactly the plan that the alternative's `changes` described (the scenario tests check it).
+"More relaxed" and "more adventurous" move the pace one step (packed, balanced, relaxed), and the adventure, nature and
+trekking interests that "more adventurous" adds are for this trip only.
 
 ## 9. Preferences screen (profile)
 
@@ -505,7 +507,7 @@ With the backend running (section 2) and the frontend on `bun run dev`:
 3. `around 60k`: a three-day plan appears in the dossier within about 15 seconds, with times, travel between stops
    marked "(estimated)", warnings, a "Before you go" panel and the OpenStreetMap credit.
 4. Type `Make day 2 more relaxed`: day 2 is rebuilt with fewer stops, and the plan is version 2. (The "Fewer stops a
-   day" chip sends `Make it more relaxed`, which relaxes every day.)
+   day" chip sends `Make it more relaxed`, which slows every day by one step.)
 5. Reload the page: the conversation is in the sidebar, and opening it restores the messages and the latest plan.
 6. Save `relaxed` and `beach` in preferences, start a New journey and type `Plan a trip to Goa`: Kodi says it will use
    your saved preferences and doesn't ask about pace.

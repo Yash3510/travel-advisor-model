@@ -53,7 +53,7 @@
     {
       "name": "10. cheaper revision",
       "turns": ["Packed 2 day Goa trip for 2, 15 to 16 December, we love history", "make it cheaper"],
-      "expect": { "draftOnTurn": 1, "versions": 2, "costNotAbove": true, "profileUnchanged": ["budgetStyle"] }
+      "expect": { "draftOnTurn": 1, "versions": 2, "costNotAbove": true, "matchesAlternative": "cheaper", "profileUnchanged": ["budgetStyle"] }
     },
     {
       "name": "11. slower revision for one day",
@@ -83,6 +83,16 @@
       ],
       "turns": ["Goa for 2 from 15 to 16 December, we love beaches"],
       "expect": { "draftOnTurn": 1, "renderedMatch": "Not checked: weather", "renderedMatch2": "from an older forecast", "outdoorOnDate": "2026-12-15" }
+    },
+    {
+      "name": "16. more adventurous, in the alternative's own words",
+      "turns": ["Plan a 2 day trip to Goa from 15 to 16 December for 2, we like beaches and history", "More nature and adventure, at a quicker pace"],
+      "expect": { "draftOnTurn": 1, "versions": 2, "matchesAlternative": "more_adventurous", "finalTrip": { "paceOverride": "packed", "addedInterests": ["adventure", "nature", "trekking"] }, "profileUnchanged": ["interests", "travelStyle"] }
+    },
+    {
+      "name": "17. a packed trip's \"more relaxed\" chip gives the plan it previewed",
+      "turns": ["Packed 2 day Goa trip for 2, 15 to 16 December, we love history", "Make it more relaxed"],
+      "expect": { "draftOnTurn": 1, "versions": 2, "matchesAlternative": "more_relaxed", "finalTrip": { "paceOverride": "balanced" }, "profileUnchanged": ["travelStyle"] }
     }
   ]
 }

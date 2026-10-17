@@ -109,3 +109,9 @@ Decisions log — newest at bottom. Never delete an entry; strike through if rev
 - **Failure:** timeout, non-200 or malformed reply → the estimate, labelled "road routing unavailable", one warning per plan; one failure stops further calls for that plan. The public demo server is refused in production.
 - **Confidence:** a stop's confidence uses the confidence of the leg into it (road 0.8, estimate 0.5, unknown start 0.5); the validator recomputes legs, confidence and the travel assumption from the times it checked.
 - **Wire:** `travelToNext` keeps `minutes`, `km`, `basis` and adds `source`, `isEstimate`, `confidence`; `basis` can now be `road`. `/ready` adds `data` and `routing`. Additive.
+
+## D-017 — An alternative and its revision are the same change
+- **Problem:** the plan offers cheaper, more relaxed and more adventurous alternatives, but "make it more adventurous" (even the alternative's own summary) wasn't a revision, and on a packed trip "more relaxed" stepped to balanced while the alternative previewed relaxed. A chip could promise one plan and deliver another.
+- **Rule:** the alternative builds exactly what its message does. "More relaxed" and "more adventurous" move the pace one step (`slowerPace`, `fasterPace`); "more adventurous" also adds adventure, nature and trekking. The relaxed summary mentions the rest break only when the step reaches relaxed. An alternative that doesn't change the plan isn't offered.
+- **Trip only:** the added interests live on the trip (`addedInterests`) and count as explicit for that plan; the saved profile doesn't learn them from this message, as with cheaper and slower.
+- **Check:** `matchesAlternative` scenarios rebuild the plan from the message and compare it with the alternative's `changes`.

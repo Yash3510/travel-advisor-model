@@ -5,17 +5,17 @@ import type { LatLon } from '../domain/geo.js';
 import type { TripInsight } from '../domain/insights.js';
 import type { ItineraryDraft, TravelLeg } from '../domain/itinerary.js';
 import type { PointOfInterest } from '../domain/poi.js';
-import type { TravelerProfile } from '../domain/profile.js';
+import { withInterests, type TravelerProfile } from '../domain/profile.js';
 import type { TripContext } from '../domain/trip.js';
 import { estimateTravel, type TravelLookup } from './constraints.js';
 import { buildItinerary, type ItineraryRequest } from './itineraryService.js';
 import { repairItinerary } from './itineraryValidator.js';
 import { toLeg, travelTimeProvider, type TravelTimeProvider } from './travelTime.js';
 
-/** "Make it cheaper" or "slower" apply to this trip only; the saved profile stays as it is. */
-export const forThisTrip = (p: TravelerProfile, t: TripContext): TravelerProfile => ({
+/** "Make it cheaper", "slower" or "more adventurous" apply to this trip only; the saved profile stays as it is. */
+export const forThisTrip = (p: TravelerProfile, t: TripContext): TravelerProfile => withInterests({
   ...p, ...(t.paceOverride ? { travelStyle: t.paceOverride } : {}), ...(t.budgetStyleOverride ? { budgetStyle: t.budgetStyleOverride } : {}),
-});
+}, t.addedInterests ?? []);
 
 /** Rounds of "ask the provider about the plan's legs, then plan again with the answers". */
 const ROUTING_ROUNDS = 3;

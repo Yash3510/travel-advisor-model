@@ -143,6 +143,20 @@ describe('revisions after the first plan', () => {
     expect(r.profile).toMatchObject({ interests: ['history'], dislikes: [] });
   });
 
+  it('makes the trip more adventurous for this trip only, also from the alternative\'s own words', () => {
+    const saved = mergeProfile(emptyProfile(), { set: { travelStyle: 'relaxed' }, add: { interests: ['beach'] } }, 'explicit', NOW);
+    for (const m of ['Make it more adventurous', 'More nature and adventure, at a quicker pace', 'add more adventure please', 'Add more nature and adventure and see more']) {
+      const r = after(m, saved);
+      expect(r.route, m).toMatchObject({ action: 'revise', state: 'revision', revision: { kind: 'adventurous' } });
+      expect(r.trip, m).toMatchObject({ paceOverride: 'balanced', addedInterests: ['adventure', 'nature', 'trekking'] });
+      // the saved profile keeps its pace and tastes: liking adventure on this trip isn't a lasting preference
+      expect(r.profile, m).toMatchObject({ travelStyle: 'relaxed', interests: ['beach'] });
+      expect(Object.keys(r.profile.sourceByField), m).not.toContain('interests:adventure');
+    }
+    expect(after('less adventurous, please').route.revision?.kind).not.toBe('adventurous');
+    expect(after('a quicker pace please').route.revision).toMatchObject({ kind: 'faster' });
+  });
+
   it('replans when the party size or dates change', () => {
     expect(after('we are 4 people now').route.revision).toMatchObject({ kind: 'replan' });
     expect(after('move it to 21 to 24 December').trip).toMatchObject({ startDate: '2026-12-21', endDate: '2026-12-24' });

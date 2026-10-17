@@ -7,7 +7,7 @@ import type { TripInsight } from '../domain/insights.js';
 import { blockOf, toClock, type ItineraryAlternative, type ItineraryDay, type ItineraryDraft, type ItineraryItem, type ItinerarySource } from '../domain/itinerary.js';
 import { isOpen } from '../domain/openingHours.js';
 import type { PoiCategory, PointOfInterest } from '../domain/poi.js';
-import type { TravelerProfile, TravelStyle } from '../domain/profile.js';
+import { ADVENTURE_INTERESTS, fasterPace, slowerPace, withInterests, type TravelerProfile, type TravelStyle } from '../domain/profile.js';
 import type { TripContext } from '../domain/trip.js';
 import { activityConfidence, blockedOn, dayPlanRules, eligibility, estimateTravel, MAX_LEG_MINUTES, type DayRules, type TravelEstimate, type TravelLookup } from './constraints.js';
 import { labelTravel } from './itineraryValidator.js';
@@ -285,7 +285,8 @@ export function buildItinerary(req: ItineraryRequest): ItineraryDraft {
 
 const stopsByDay = (d: ItineraryDraft) => d.days.map((day) => day.items.filter((i) => i.kind === 'activity').map((i) => i.title));
 
-function diff(base: ItineraryDraft, alt: ItineraryDraft): string[] {
+/** What changes between two plans, day by day; an alternative's `changes`. */
+export function diff(base: ItineraryDraft, alt: ItineraryDraft): string[] {
   const a = stopsByDay(base);
   const b = stopsByDay(alt);
   const changes: string[] = [];
@@ -311,9 +312,11 @@ function alternatives(req: ItineraryRequest, base: ItineraryDraft): ItineraryAlt
   if (base.days.some((d) => d.items.some((i) => i.costInr !== undefined)) || p.budgetStyle === 'premium' || p.budgetStyle === 'comfort') {
     add('cheaper', 'Favour free places over paid entries', variant({ ...p, budgetStyle: 'budget' }));
   }
-  if (p.travelStyle !== 'relaxed') add('more_relaxed', 'Fewer stops a day, with a rest break', variant({ ...p, travelStyle: 'relaxed' }));
-  const faster: TravelStyle = p.travelStyle === 'packed' ? 'packed' : p.travelStyle === 'balanced' ? 'packed' : 'balanced';
+  // one step slower, as "make it more relaxed" does; only a relaxed day has the rest break
+  const slower = slowerPace(p.travelStyle ?? 'balanced');
+  if (p.travelStyle !== 'relaxed') add('more_relaxed', slower === 'relaxed' ? 'Fewer stops a day, with a rest break' : 'Fewer stops a day', variant({ ...p, travelStyle: slower }));
+  // the "make it more adventurous" revision builds this same plan (promptRouter.ts, planBuilder.ts)
   add('more_adventurous', 'More nature and adventure, at a quicker pace',
-    variant({ ...p, travelStyle: faster, interests: [...new Set([...p.interests, 'adventure', 'nature', 'trekking'])], sourceByField: { ...p.sourceByField, 'interests:adventure': 'explicit', 'interests:nature': 'explicit', 'interests:trekking': 'explicit' } }));
+    variant({ ...withInterests(p, ADVENTURE_INTERESTS), travelStyle: fasterPace(p.travelStyle ?? 'balanced') }));
   return out;
 }

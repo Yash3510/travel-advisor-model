@@ -9,14 +9,14 @@
 
 import { inrAmount } from '../harness.js';
 import { extractFacts, type Extraction } from '../domain/extract.js';
-import { hasPreferences, mergeProfile, profileSummary, type TravelerProfile, type TravelStyle } from '../domain/profile.js';
+import { ADVENTURE_INTERESTS, fasterPace, hasPreferences, mergeProfile, profileSummary, slowerPace, type TravelerProfile } from '../domain/profile.js';
 import { mergeTrip, type TripContext } from '../domain/trip.js';
 
 export type RouteState = 'profile_context' | 'trip_basics' | 'high_value_refinement' | 'draft_ready' | 'revision';
 export type PlanField = 'destination' | 'when' | 'travelers' | 'budget' | 'pace' | 'interests';
 export type AskField = PlanField | 'tradeoff:luxury_budget' | 'tradeoff:pace';
 
-export interface Revision { kind: 'cheaper' | 'slower' | 'faster' | 'remove' | 'replan'; day?: number; poiId?: string; detail: string }
+export interface Revision { kind: 'cheaper' | 'slower' | 'faster' | 'adventurous' | 'remove' | 'replan'; day?: number; poiId?: string; detail: string }
 
 export interface Route {
   action: 'ask' | 'draft' | 'revise' | 'converse';
@@ -69,12 +69,12 @@ const ASSUMPTIONS: Record<PlanField, string> = {
 // revisions of an existing plan
 const CHEAPER = /\b(?:cheaper|less expensive|lower (?:the )?(?:cost|budget|price)|budget[- ]friendly|save (?:some )?money|cut (?:the )?costs?|reduce (?:the )?costs?)\b/i;
 const SLOWER = /\b(?:slower|slow (?:it|things) down|more relaxed|less (?:packed|rushed|hectic)|fewer (?:stops|activities|places)|relax(?:ed)? pace|take it easy|lighter)\b/i;
-const FASTER = /\b(?:more packed|more activities|busier|see more|faster pace|more stops|pack (?:it|more) in)\b/i;
+const FASTER = /\b(?:more packed|more activities|busier|see more|(?:faster|quicker) pace|more stops|pack (?:it|more) in)\b/i;
+// the plan's own "more adventurous" alternative: a quicker pace plus adventure, nature and trekking
+const ADVENTUROUS = /\b(?:more adventur\w*|(?:make|keep) (?:it|this|the trip) adventurous|(?:nature|outdoors?) and adventure|adventure and (?:nature|outdoors?)|more (?:nature|outdoors?|thrills?))\b/i;
 const REMOVE = /\b(?:remove|skip|drop|replace|swap out|take out|cut out|don'?t (?:want to (?:go to|visit|see)|want|like)|not interested in|no more)\s+(?:the\s+|visiting\s+|going to\s+)?(.+?)(?=[.,!?;]|\band\b|$)/i;
 const STOP_WORDS = new Set(['the', 'a', 'an', 'to', 'of', 'at', 'in', 'visit', 'go', 'please']);
 const TRIP_KEYS = ['destination', 'startDate', 'endDate', 'month', 'durationDays', 'travelers', 'budgetInr', 'purpose'] as const;
-export const slowerPace = (p: TravelStyle): TravelStyle => (p === 'packed' ? 'balanced' : 'relaxed');
-export const fasterPace = (p: TravelStyle): TravelStyle => (p === 'relaxed' ? 'balanced' : 'packed');
 
 function detectRevision(message: string, before: TripContext, after: TripContext, scheduled: { poiId: string; name: string }[], ex: Extraction): Revision | undefined {
   const target = REMOVE.exec(message)?.[1]?.toLowerCase();
@@ -86,6 +86,7 @@ function detectRevision(message: string, before: TripContext, after: TripContext
   const day = Number(/\bday\s*(\d{1,2})\b/i.exec(message)?.[1]) || undefined;
   if (CHEAPER.test(message)) return { kind: 'cheaper', detail: 'cheaper' };
   if (SLOWER.test(message)) return { kind: 'slower', ...(day ? { day } : {}), detail: day ? `slower day ${day}` : 'slower' };
+  if (ADVENTUROUS.test(message)) return { kind: 'adventurous', detail: 'more adventurous' };
   if (FASTER.test(message)) return { kind: 'faster', ...(day ? { day } : {}), detail: day ? `busier day ${day}` : 'busier' };
   const tripChanged = TRIP_KEYS.some((k) => before[k] !== after[k]);
   const prefsChanged = Object.keys(ex.profile.explicit.set ?? {}).length > 0 || Object.keys(ex.profile.explicit.add ?? {}).length > 0;
@@ -233,13 +234,22 @@ export function planTurn(i: {
   let trip = mergeTrip(i.trip, extraction.trip, i.now);
   const route = routeTurn({ trip, profile, message: i.message, extraction, firstTurnOfThread: i.firstTurnOfThread, savedProfile: i.profile, previousTrip: i.trip, scheduled: i.scheduled });
   const r = route.revision;
-  if (r && (r.kind === 'cheaper' || r.kind === 'slower' || r.kind === 'faster')) {
+  if (r && (r.kind === 'cheaper' || r.kind === 'slower' || r.kind === 'faster' || r.kind === 'adventurous')) {
     // a change to this plan, not to the traveller: keep the saved pace and budget style as they were
     profile = { ...profile, travelStyle: i.profile.travelStyle, budgetStyle: i.profile.budgetStyle };
     if (profile.travelStyle === undefined) delete profile.travelStyle;
     if (profile.budgetStyle === undefined) delete profile.budgetStyle;
     const base = trip.paceOverride ?? i.profile.travelStyle ?? 'balanced';
     if (r.kind === 'cheaper') trip = { ...trip, budgetStyleOverride: 'budget' };
+    else if (r.kind === 'adventurous') {
+      // the same plan as the "more adventurous" alternative; its interests are for this trip, so the saved profile
+      // doesn't learn them from this message
+      trip = { ...trip, paceOverride: fasterPace(base), addedInterests: [...new Set([...(trip.addedInterests ?? []), ...ADVENTURE_INTERESTS])] };
+      const learned = ADVENTURE_INTERESTS.filter((x) => !i.profile.interests.includes(x));
+      const sourceByField = { ...profile.sourceByField };
+      for (const x of learned) delete sourceByField[`interests:${x}`];
+      profile = { ...profile, interests: profile.interests.filter((x) => !learned.includes(x)), sourceByField };
+    }
     else if (r.day) trip = { ...trip, dayPace: { ...trip.dayPace, [r.day]: (r.kind === 'slower' ? slowerPace : fasterPace)(trip.dayPace[r.day] ?? base) } };
     else trip = { ...trip, paceOverride: (r.kind === 'slower' ? slowerPace : fasterPace)(base) };
   }

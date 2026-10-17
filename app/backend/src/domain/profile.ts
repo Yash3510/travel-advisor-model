@@ -7,6 +7,10 @@ export type FieldSource = 'explicit' | 'inferred';
 
 export const TRAVEL_STYLES: readonly TravelStyle[] = ['relaxed', 'balanced', 'packed'];
 export const BUDGET_STYLES: readonly BudgetStyle[] = ['budget', 'value', 'comfort', 'premium'];
+export const slowerPace = (p: TravelStyle): TravelStyle => (p === 'packed' ? 'balanced' : 'relaxed');
+export const fasterPace = (p: TravelStyle): TravelStyle => (p === 'relaxed' ? 'balanced' : 'packed');
+/** what "more adventurous" adds, in the plan's alternative and in the revision alike */
+export const ADVENTURE_INTERESTS = ['adventure', 'nature', 'trekking'];
 export const LIST_FIELDS = ['interests', 'dislikes', 'dietaryNeeds', 'mobilityNeeds', 'accommodationPreferences'] as const;
 export type ListField = (typeof LIST_FIELDS)[number];
 
@@ -103,6 +107,15 @@ export function normalizeItems(field: ListField, items: readonly string[]): stri
 
 export function emptyProfile(): TravelerProfile {
   return { interests: [], dislikes: [], dietaryNeeds: [], mobilityNeeds: [], accommodationPreferences: [], sourceByField: {}, updatedAt: '' };
+}
+
+/** The profile with extra interests counted as the traveller's own, for one plan; the saved profile is not changed. */
+export function withInterests(p: TravelerProfile, extra: readonly string[]): TravelerProfile {
+  if (!extra.length) return p;
+  return {
+    ...p, interests: [...new Set([...p.interests, ...extra])],
+    sourceByField: { ...p.sourceByField, ...Object.fromEntries(extra.map((x) => [`interests:${x}`, 'explicit' as const])) },
+  };
 }
 
 export function hasPreferences(p: TravelerProfile): boolean {

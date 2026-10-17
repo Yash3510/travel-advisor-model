@@ -64,6 +64,7 @@ export interface TripContext extends TripFacts {
   asked: string[]; planningTurns: number; status: 'collecting' | 'drafted';
   /** revisions for this trip only ("skip X", "make day 2 more relaxed", "cheaper"); the profile is untouched */
   excludedPoiIds: string[]; dayPace: Record<string, TravelStyle>; paceOverride?: TravelStyle; budgetStyleOverride?: BudgetStyle;
+  addedInterests?: string[];
   itineraryVersion: number; updatedAt: string;
 }
 

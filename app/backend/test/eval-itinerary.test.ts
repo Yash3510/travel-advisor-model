@@ -9,6 +9,7 @@ import type { ItineraryDraft } from '../src/domain/itinerary.js';
 import type { PointOfInterest } from '../src/domain/poi.js';
 import { applyProfileEdit, emptyProfile, type TravelerProfile } from '../src/domain/profile.js';
 import { emptyTrip, type TripContext } from '../src/domain/trip.js';
+import { diff } from '../src/services/itineraryService.js';
 import { validateItinerary } from '../src/services/itineraryValidator.js';
 import { buildCheckedPlan, forThisTrip } from '../src/services/planBuilder.js';
 import { renderItinerary } from '../src/services/presentation.js';
@@ -80,6 +81,12 @@ describe('itinerary scenarios', () => {
     if (e.fewerStopsOnDay) {
       const count = (d: ItineraryDraft) => d.days[e.fewerStopsOnDay - 1].items.filter((i) => i.kind === 'activity').length;
       expect(count(final.draft)).toBeLessThan(count(plans[0].draft));
+    }
+    // tapping an alternative gives exactly the plan its preview described
+    if (e.matchesAlternative) {
+      const alt = plans[0].draft.alternatives.find((a) => a.kind === e.matchesAlternative);
+      expect(alt, `the first plan offers ${e.matchesAlternative}`).toBeDefined();
+      expect(diff(plans[0].draft, final.draft)).toEqual(alt!.changes);
     }
     if (e.restEveryDay) for (const d of final.draft.days) expect(d.items.some((i) => i.kind === 'rest')).toBe(true);
     if (e.assumptionsMatch) expect(final.draft.assumptions.join(' | ')).toMatch(new RegExp(e.assumptionsMatch));

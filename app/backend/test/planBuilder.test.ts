@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { fromClock, type ItineraryDraft } from '../src/domain/itinerary.js';
 import { estimateTravel } from '../src/services/constraints.js';
 import { TRAVEL_ESTIMATE_WARNING, TRAVEL_UNAVAILABLE_WARNING } from '../src/services/itineraryValidator.js';
-import { buildCheckedPlan } from '../src/services/planBuilder.js';
+import { buildCheckedPlan, forThisTrip } from '../src/services/planBuilder.js';
 import { osrmProvider, UNAVAILABLE_SOURCE, type TravelTimeProvider } from '../src/services/travelTime.js';
 import { NOW, profileWith, TOWN, tripWith } from './fixtures.js';
 
@@ -14,6 +14,15 @@ const legsOf = (d: ItineraryDraft) => d.days.flatMap((day) => day.items.filter((
 const gapsRespected = (d: ItineraryDraft) => d.days.every((day) => {
   const acts = day.items.filter((i) => i.kind === 'activity');
   return acts.every((a, i) => i === 0 || fromClock(a.start) - fromClock(acts[i - 1].end) >= acts[i - 1].travelToNext!.minutes);
+});
+
+describe('forThisTrip', () => {
+  it('adds interests from a revision for this trip only, as if the traveller had said them', () => {
+    const saved = profileWith({ add: { interests: ['beach'] } });
+    const p = forThisTrip(saved, { ...tripWith({}), paceOverride: 'packed', addedInterests: ['adventure', 'beach', 'nature'] });
+    expect(p).toMatchObject({ travelStyle: 'packed', interests: ['beach', 'adventure', 'nature'], sourceByField: { 'interests:adventure': 'explicit', 'interests:nature': 'explicit' } });
+    expect(saved.interests).toEqual(['beach']);
+  });
 });
 
 describe('buildCheckedPlan with a routing provider', () => {
