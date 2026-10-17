@@ -6,6 +6,9 @@ import { store, type MessageRow, type Offer, type StoredMessage } from './db.js'
 import { detectRegion, dealsForRegion } from './catalog.js';
 import { ingestPolicy, gateAssistantOutput, gatePrices, emergencyText, statusText, newBookingRef, toPlainText, PII_NOTICE } from './harness.js';
 import { log } from './log.js';
+import { applyProfileEdit, emptyProfile } from './domain/profile.js';
+import { emptyTrip } from './domain/trip.js';
+import { planTurn, type Route } from './services/promptRouter.js';
 import { buildSystemPrompt } from './prompts.js';
 import { runTurn, trimHistory, type PendingBooking, type ToolBackend, type Turn } from './modelClient.js';
 import { toolSchemas, type Backend } from './tools.js';
@@ -104,7 +107,7 @@ async function route(req: IncomingMessage, res: ServerResponse, ctx: RequestCont
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
-      'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+      'Access-Control-Allow-Methods': 'GET,POST,PATCH,OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, X-Request-Id',
       'Access-Control-Max-Age': '86400',
     }).end();
@@ -116,6 +119,20 @@ async function route(req: IncomingMessage, res: ServerResponse, ctx: RequestCont
   };
 
   try {
+    const requireSession = (sessionId: string) => {
+      if (!store.sessionExists(sessionId)) throw new HttpError(404, 'session_not_found', 'Session not found. Start a new session.');
+      return sessionId;
+    };
+
+    const tripPath = /^\/api\/threads\/(\d+)\/trip$/.exec(pathname);
+    if (tripPath) {
+      allow('GET');
+      const thread = store.getThread(Number(tripPath[1]), url.searchParams.get('sessionId') ?? '');
+      if (!thread) throw new HttpError(404, 'thread_not_found', 'Thread not found.');
+      json(res, 200, { trip: store.getTrip(thread.id) });
+      return;
+    }
+
     const messagesPath = /^\/api\/threads\/(\d+)\/messages$/.exec(pathname);
     if (messagesPath) {
       allow('GET');
@@ -165,6 +182,32 @@ async function route(req: IncomingMessage, res: ServerResponse, ctx: RequestCont
             updatedAt: toIso(r.updated_at),
           })),
         });
+        return;
+      }
+      case '/api/profile': {
+        // the traveler profile belongs to the session; another session only ever sees its own
+        if (req.method === 'GET') {
+          json(res, 200, { profile: store.getProfile(requireSession(url.searchParams.get('sessionId') ?? '')) });
+          return;
+        }
+        if (req.method !== 'PATCH') { res.setHeader('Allow', 'GET, PATCH'); throw new HttpError(405, 'method_not_allowed', 'Use GET or PATCH.'); }
+        const body = await readBody(req);
+        const sessionId = requireSession(str(body.sessionId));
+        let profile;
+        try {
+          profile = applyProfileEdit(store.getProfile(sessionId), body, new Date().toISOString());
+        } catch (err) {
+          throw new HttpError(400, 'invalid_profile', (err as Error).message);
+        }
+        store.saveProfile(sessionId, profile);
+        json(res, 200, { profile });
+        return;
+      }
+      case '/api/profile/reset': {
+        allow('POST');
+        const sessionId = requireSession(str((await readBody(req)).sessionId));
+        store.resetProfile(sessionId);
+        json(res, 200, { profile: emptyProfile() });
         return;
       }
       case '/api/events/track': {
@@ -243,6 +286,9 @@ function sessionTools(ctx: RequestContext, sessionId: string): ToolBackend {
   };
 }
 
+/** Additive `planning` key on `done`: where the planner is, so the UI can show progress and assumptions. */
+const planningInfo = (r: Route) => ({ state: r.state, action: r.action, ...(r.field ? { field: r.field } : {}), assumptions: r.assumptions, missing: r.missing });
+
 const busyThreads = new Set<number>();
 
 const toTurn = (m: MessageRow): Turn => ({
@@ -297,6 +343,8 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext):
     let offers: Offer[] = [];
     let pendingBooking: PendingBooking | undefined;
     let region: { name: string; code: string } | null = null;
+    let planned: ReturnType<typeof planTurn> | undefined;
+    const conversationText = () => [...history, toStore[0]].map((m) => m.content).join(' ');
 
     if (policy.emergency) {
       // the model is not consulted; support gets an urgent handoff
@@ -305,11 +353,23 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext):
       toStore.push({ role: 'assistant', content: reply });
       log('warn', 'emergency message', { threadId: thread?.id ?? null, handedOff: String(handoff?.status).toUpperCase() === 'TRANSFERRED' });
     } else {
+      // the planner reads the message (no model) and either asks one question itself or lets the model answer
+      planned = planTurn({
+        trip: thread ? store.getTrip(thread.id) : emptyTrip(), profile: store.getProfile(sessionId), message: policy.redacted,
+        today: today(), catalogPath: ctx.catalogPath, firstTurnOfThread: !thread, now: new Date().toISOString(),
+      });
+      if (planned.route.action === 'ask') {
+        reply = planned.route.text!;
+        toStore.push({ role: 'assistant', content: reply });
+        if (!thread?.region_code) region = detectRegion(conversationText(), ctx.catalogPath);
+      } else {
+      // a draft gets the trip summary added for the model only; the stored message stays as typed
+      const modelTurn: Turn = planned.route.action === 'draft' ? { role: 'user', content: `${policy.redacted}\n\n${planned.route.brief}` } : toStore[0];
       let turn: Awaited<ReturnType<typeof runTurn>>;
       try {
         turn = await runTurn({
           base: ctx.modelUrl, apiKey: config.modelApiKey, model: config.model, timeoutMs: config.modelTimeoutMs, signal: clientGone.signal,
-          messages: [{ role: 'system', content: buildSystemPrompt(today()) }, ...trimHistory([...history, toStore[0]], config.maxHistoryChars)],
+          messages: [{ role: 'system', content: buildSystemPrompt(today()) }, ...trimHistory([...history, modelTurn], config.maxHistoryChars)],
           backend: sessionTools(ctx, sessionId), tools: toolSchemas,
           findOffer: (id) => (thread && id.startsWith('OF-') ? store.getOffer(id, thread.id) : undefined),
         });
@@ -322,7 +382,7 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext):
       if (config.logTools && turn.toolTrace.length) log('info', 'tool calls', { threadId: thread?.id ?? null, toolTrace: turn.toolTrace });
       offers = turn.offers;
       pendingBooking = turn.pendingBooking;
-      if (!thread?.region_code) region = detectRegion([...history, toStore[0]].map((m) => m.content).join(' ') + ' ' + turn.reply, ctx.catalogPath);
+      if (!thread?.region_code) region = detectRegion(conversationText() + ' ' + turn.reply, ctx.catalogPath);
       const regionCode = thread?.region_code ?? region?.code;
 
       // The confirmation summary is built from supplier data; model text is checked against
@@ -336,6 +396,7 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext):
         user: [...history, toStore[0]].filter((m) => m.role === 'user').map((m) => m.content).join('\n'),
       }));
       toStore.push(...turn.added.slice(0, -1), { role: 'assistant', content: reply });
+      }
     }
 
     const deals = region ? dealsForRegion(region.code, ctx.catalogPath) : [];
@@ -344,6 +405,7 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext):
       if (!thread) store.appendMessage(id, { role: 'assistant', content: GREETING });
       for (const m of toStore) store.appendMessage(id, m);
       if (region) store.updateThread(id, { destination: region.name, region_code: region.code, stage: 'planning' });
+      if (planned) { store.saveTrip(id, planned.trip); store.saveProfile(sessionId, planned.profile); }
       // deals become confirmable offers too, keyed by their campaignItineraryId
       store.saveOffers(id, [...offers, ...deals.map((d) => ({ ...d, offer_id: d.campaignItineraryId }))]);
       return id;
@@ -359,6 +421,7 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext):
       threadId,
       ...(offers.length ? { offers } : {}),
       ...(pendingBooking ? { pendingBooking } : {}),
+      ...(planned ? { planning: planningInfo(planned.route) } : {}),
     });
     res.end();
   } finally {

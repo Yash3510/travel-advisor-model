@@ -153,7 +153,8 @@ describe('POST /api/chat', () => {
   it('tells the customer when card details were removed', async () => {
     const sid = await session();
     stub.queue = [{ content: 'Noted.' }];
-    const d = (await chat(sid, 'my card is 4111 1111 1111 1111')).at(-1)!;
+    const d = (await chat(sid, 'my card is 4111 1111 1111 1111, can you hold a hotel?')).at(-1)!;
+    expect(stub.requests).toHaveLength(1);
     expect(d.data.message).toMatch(/^For your safety I removed/);
     expect(JSON.stringify(stub.requests)).not.toContain('4111');
   });
@@ -161,7 +162,7 @@ describe('POST /api/chat', () => {
   it('reports a model outage without saving half a turn', async () => {
     const sid = await session();
     stub.queue = ['fail'];
-    const ev = await chat(sid, 'plan a trip to Japan');
+    const ev = await chat(sid, 'what is the weather like in Japan?');
     expect(ev).toEqual([{ event: 'error', data: expect.objectContaining({ code: 'model_unavailable' }) }]);
     expect((await (await fetch(`${base}/api/threads?sessionId=${sid}`)).json()).threads).toEqual([]);
   });
@@ -169,7 +170,7 @@ describe('POST /api/chat', () => {
   it('keeps slow replies alive with SSE comments', async () => {
     const sid = await session();
     stub.queue = [{ content: 'Here you go.', delayMs: 150 }];
-    const raw = await chatRaw(sid, 'hello');
+    const raw = await chatRaw(sid, 'what can you do?');
     expect(raw).toMatch(/^: keep-alive\n\n/m);
     expect(raw).toContain('event: done');
   });
@@ -179,7 +180,7 @@ describe('POST /api/chat', () => {
     stub.queue = [{ content: 'Too late.', delayMs: 300 }];
     const ac = new AbortController();
     const pending = fetch(`${base}/api/chat`, { method: 'POST', signal: ac.signal, headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionId: sid, messages: [{ role: 'user', content: 'hello' }] }) }).then((r) => r.text()).catch(() => 'aborted');
+      body: JSON.stringify({ sessionId: sid, messages: [{ role: 'user', content: 'what can you do?' }] }) }).then((r) => r.text()).catch(() => 'aborted');
     setTimeout(() => ac.abort(), 50);
     expect(await pending).toBe('aborted');
     await new Promise((r) => setTimeout(r, 400));
@@ -190,6 +191,58 @@ describe('POST /api/chat', () => {
     expect((await chat('nope', 'hi'))[0]).toMatchObject({ event: 'error', data: { code: 'session_not_found' } });
     const big = await post('/api/chat', { sessionId: 'x', messages: [{ role: 'user', content: 'a'.repeat(70_000) }] });
     expect(big.status).toBe(413);
+  });
+});
+
+describe('planning flow', () => {
+  it('asks its own questions, then has the model write the plan by the fourth message', async () => {
+    const sid = await session();
+    const asks: string[] = [];
+    let threadId: number | undefined;
+    for (const text of ['I want to plan a trip', 'Goa', 'December, 5 days, me and my wife']) {
+      const done = (await chat(sid, text, threadId)).at(-1)!;
+      threadId = done.data.threadId;
+      expect(done.data.planning.action).toBe('ask');
+      asks.push(done.data.planning.field);
+    }
+    expect(asks).toEqual(['destination', 'when', 'budget']);
+    expect(stub.requests).toHaveLength(0);
+
+    stub.queue = [{ content: 'Day 1: settle in near the beach.' }];
+    const plan = (await chat(sid, 'around 80k', threadId)).at(-1)!;
+    expect(plan.data).toMatchObject({ message: 'Day 1: settle in near the beach.', planning: { action: 'draft', state: 'draft_ready' } });
+    const sent = stub.requests[0].messages;
+    expect(sent[0].content).toMatch(/^You are a travel advisor and booking assistant for trips in India\./);
+    expect(sent.at(-1).content).toMatch(/^around 80k\n\nTrip details so far: destination Goa; .*budget ₹80,000 in total/);
+
+    // the summary went to the model only; the thread keeps what the customer typed
+    const stored = await (await fetch(`${base}/api/threads/${threadId}/messages?sessionId=${sid}`)).json();
+    expect(stored.messages.at(-2)).toMatchObject({ role: 'user', content: 'around 80k' });
+    const trip = await (await fetch(`${base}/api/threads/${threadId}/trip?sessionId=${sid}`)).json();
+    expect(trip.trip).toMatchObject({ destination: 'Goa', month: 12, durationDays: 5, travelers: 2, budgetInr: 80000, status: 'drafted', asked: ['destination', 'when', 'budget'] });
+    expect((await fetch(`${base}/api/threads/${threadId}/trip?sessionId=${await session()}`)).status).toBe(404);
+  });
+
+  it('keeps a profile per session, learns from chat and reuses it in a new thread', async () => {
+    const sid = await session();
+    const patched = await fetch(`${base}/api/profile`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: sid, travelStyle: 'relaxed' }) });
+    expect((await patched.json()).profile.travelStyle).toBe('relaxed');
+
+    await chat(sid, 'I love beaches but hate crowds');
+    const learned = (await (await fetch(`${base}/api/profile?sessionId=${sid}`)).json()).profile;
+    expect(learned).toMatchObject({ travelStyle: 'relaxed', interests: ['beach'], dislikes: ['crowds'] });
+
+    const next = (await chat(sid, 'Plan a trip to Goa')).at(-1)!;
+    expect(next.data.message).toContain("I'll use your saved preferences: relaxed pace; likes beach; avoids crowds.");
+
+    const other = await session();
+    expect((await (await fetch(`${base}/api/profile?sessionId=${other}`)).json()).profile.interests).toEqual([]);
+    const bad = await fetch(`${base}/api/profile`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: sid, travelStyle: 'speedy' }) });
+    expect(bad.status).toBe(400);
+    expect((await fetch(`${base}/api/profile?sessionId=nope`)).status).toBe(404);
+    const reset = await (await post('/api/profile/reset', { sessionId: sid })).json();
+    expect(reset.profile.interests).toEqual([]);
+    expect((await (await fetch(`${base}/api/profile?sessionId=${sid}`)).json()).profile.travelStyle).toBeUndefined();
   });
 });
 
@@ -220,14 +273,14 @@ describe('drop-in client (client/takeoff-api.ts)', () => {
     storage.setItem('takeoff.sessionId', 'stale-session');
     const api = createTakeoffApi({ baseUrl: base, storage });
     stub.queue = [{ content: 'Hello again.', delayMs: 120 }];
-    expect((await api.chat('hello', { threadId: 1 })).message).toBe('Hello again.');
+    expect((await api.chat('what can you do?', { threadId: 1 })).message).toBe('Hello again.');
     expect(storage.getItem('takeoff.sessionId')).not.toBe('stale-session');
   });
 
   it('reports backend errors with their codes', async () => {
     const api = createTakeoffApi({ baseUrl: base, storage: memory() });
     stub.queue = ['fail'];
-    await expect(api.chat('plan Goa')).rejects.toMatchObject({ code: 'model_unavailable' });
+    await expect(api.chat('is Goa safe?')).rejects.toMatchObject({ code: 'model_unavailable' });
     await expect(api.chat('x'.repeat(4001))).rejects.toBeInstanceOf(TakeoffApiError);
   });
 

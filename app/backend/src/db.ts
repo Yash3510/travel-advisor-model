@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { config } from './config.js';
+import { emptyProfile, type TravelerProfile } from './domain/profile.js';
+import { emptyTrip, type TripContext } from './domain/trip.js';
 
 if (config.dbPath !== ':memory:') fs.mkdirSync(path.dirname(config.dbPath), { recursive: true });
 const db = new Database(config.dbPath);
@@ -58,6 +60,17 @@ CREATE TABLE IF NOT EXISTS booking_requests (
   travelers INTEGER NOT NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE (offer_id, thread_id)
+);
+-- Reusable traveler preferences, per user (the session until accounts exist), and one trip per thread.
+CREATE TABLE IF NOT EXISTS profiles (
+  session_id TEXT PRIMARY KEY REFERENCES sessions(session_id),
+  data TEXT NOT NULL,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS trips (
+  thread_id INTEGER PRIMARY KEY REFERENCES threads(id),
+  data TEXT NOT NULL,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_messages_thread ON messages(thread_id);
 CREATE INDEX IF NOT EXISTS idx_threads_session ON threads(session_id);
@@ -137,6 +150,25 @@ export const store = {
       WHERE b.booking_ref = ? AND t.session_id = ?`).get(ref, sessionId) as
       { booking_ref: string; status: string; travelers: number; created_at: string; payload: string } | undefined;
     return row && { ...row, offer: JSON.parse(row.payload) as Offer };
+  },
+  getProfile(sessionId: string): TravelerProfile {
+    const row = db.prepare('SELECT data FROM profiles WHERE session_id = ?').get(sessionId) as { data: string } | undefined;
+    return row ? { ...emptyProfile(), ...(JSON.parse(row.data) as TravelerProfile) } : emptyProfile();
+  },
+  saveProfile(sessionId: string, profile: TravelerProfile) {
+    db.prepare("INSERT INTO profiles(session_id, data) VALUES (?, ?) ON CONFLICT(session_id) DO UPDATE SET data = excluded.data, updated_at = datetime('now')")
+      .run(sessionId, JSON.stringify(profile));
+  },
+  resetProfile(sessionId: string) {
+    db.prepare('DELETE FROM profiles WHERE session_id = ?').run(sessionId);
+  },
+  getTrip(threadId: number): TripContext {
+    const row = db.prepare('SELECT data FROM trips WHERE thread_id = ?').get(threadId) as { data: string } | undefined;
+    return row ? { ...emptyTrip(), ...(JSON.parse(row.data) as TripContext) } : emptyTrip();
+  },
+  saveTrip(threadId: number, trip: TripContext) {
+    db.prepare("INSERT INTO trips(thread_id, data) VALUES (?, ?) ON CONFLICT(thread_id) DO UPDATE SET data = excluded.data, updated_at = datetime('now')")
+      .run(threadId, JSON.stringify(trip));
   },
   /** Run several writes atomically. */
   tx<T>(fn: () => T): T { return db.transaction(fn)(); },
