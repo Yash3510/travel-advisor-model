@@ -1,30 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { TripInsight } from '../src/domain/insights.js';
 import { fromClock, type ItineraryDraft } from '../src/domain/itinerary.js';
-import { parseOpeningHours } from '../src/domain/openingHours.js';
-import type { PointOfInterest } from '../src/domain/poi.js';
-import { emptyProfile, mergeProfile, type ProfilePatch } from '../src/domain/profile.js';
-import { emptyTrip, mergeTrip, type TripContext } from '../src/domain/trip.js';
+import { emptyProfile } from '../src/domain/profile.js';
+import type { TripContext } from '../src/domain/trip.js';
 import { buildItinerary } from '../src/services/itineraryService.js';
-import { poi } from './fixtures.js';
-
-const NOW = '2026-10-18T00:00:00.000Z';
-const profileWith = (patch: ProfilePatch) => mergeProfile(emptyProfile(), patch, 'explicit', NOW);
-const tripWith = (facts: Partial<TripContext>) => mergeTrip(emptyTrip(), { travelerTypes: [], ...facts }, NOW);
-
-// a small town: places within a few kilometres of each other
-const at = (i: number) => ({ lat: 15.5 + (i % 5) * 0.01, lon: 73.8 + Math.floor(i / 5) * 0.01 });
-const TOWN: PointOfInterest[] = [
-  poi({ id: 'osm:node/1', name: 'Sunny Beach', category: 'beach', interests: ['beach'], indoor: false, kidFriendly: true, goodSlots: ['morning', 'evening'], visitDuration: { minutes: 150, basis: 'category_default', confidence: 0.4 }, location: at(1) }),
-  poi({ id: 'osm:node/2', name: 'Quiet Beach', category: 'beach', interests: ['beach'], indoor: false, kidFriendly: true, goodSlots: ['morning', 'evening'], visitDuration: { minutes: 150, basis: 'category_default', confidence: 0.4 }, location: at(2) }),
-  poi({ id: 'osm:node/3', name: 'Old Fort', category: 'heritage', interests: ['history'], indoor: false, location: at(3), openingHours: parseOpeningHours('Mo-Su 09:00-17:30'), fee: 'paid', feeInr: 50, visitDuration: { minutes: 90, basis: 'category_default', confidence: 0.4 } }),
-  poi({ id: 'osm:node/4', name: 'Town Museum', category: 'museum', interests: ['history', 'culture'], indoor: true, location: at(4), openingHours: parseOpeningHours('Tu-Su 09:30-17:30'), fee: 'free' }),
-  poi({ id: 'osm:node/5', name: 'Spice Market', category: 'market', interests: ['shopping', 'food'], indoor: false, location: at(5), goodSlots: ['morning', 'evening'], visitDuration: { minutes: 90, basis: 'category_default', confidence: 0.4 } }),
-  poi({ id: 'osm:node/6', name: 'Club Neon', category: 'nightlife', interests: ['nightlife'], indoor: true, location: at(6), goodSlots: ['evening'], accessibility: { wheelchair: 'no' } }),
-  poi({ id: 'osm:node/7', name: 'Hill Temple', category: 'place_of_worship', interests: ['spiritual', 'history'], indoor: true, location: at(7), visitDuration: { minutes: 45, basis: 'category_default', confidence: 0.4 }, accessibility: { wheelchair: 'yes' } }),
-  poi({ id: 'osm:node/8', name: 'Green Park', category: 'park', interests: ['nature'], indoor: false, kidFriendly: true, location: at(8), visitDuration: { minutes: 60, basis: 'category_default', confidence: 0.4 }, fee: 'free' }),
-  poi({ id: 'osm:node/9', name: 'Veg Thali House', category: 'restaurant', interests: ['food'], indoor: true, location: at(9), diet: ['vegetarian', 'jain'], goodSlots: [] }),
-];
+import { at, NOW, poi, profileWith, TOWN, tripWith } from './fixtures.js';
 
 const build = (trip: TripContext, profile = emptyProfile(), insights: TripInsight[] = [], pois = TOWN) =>
   buildItinerary({ trip, profile, insights, pointsOfInterest: pois, version: 1 });
