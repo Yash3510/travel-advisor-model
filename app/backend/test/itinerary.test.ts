@@ -90,6 +90,10 @@ describe('buildItinerary', () => {
     const titles = activities(d).map((a) => a.title);
     expect(titles.includes('Distant Falls') && titles.includes('Sunny Beach')).toBe(false);
     expect(d.warnings.join(' ')).toMatch(/too far/);
+    // a far place that matches nothing the traveller asked for isn't worth a warning
+    const notable = { ...far, wikidata: 'Q50', fee: 'free' as const };
+    const quiet = build(tripWith({ destination: 'Goa', durationDays: 1, travelers: 2 }), profileWith({ add: { interests: ['beach'] } }), [], [...TOWN, notable]);
+    expect(quiet.warnings.join(' ')).not.toMatch(/Distant Falls/);
   });
 
   it('totals only costs backed by data, per traveller, and warns when over budget', () => {

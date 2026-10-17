@@ -241,10 +241,10 @@ export function buildItinerary(req: ItineraryRequest): ItineraryDraft {
     days.push({ day: d + 1, ...(date ? { date } : {}), items, warnings: dayWarnings });
   }
 
-  // strong candidates left out because they're too far from everything planned
+  // places matching the traveller's interests that were left out because they're too far from everything planned
   const plannedStops = candidates.filter((c) => used.has(c.poi.id));
   for (const c of candidates.slice(0, 5)) {
-    if (used.has(c.poi.id) || !plannedStops.length) continue;
+    if (used.has(c.poi.id) || !plannedStops.length || !c.matched.some((m) => m.startsWith('your interest in'))) continue;
     const nearest = Math.min(...plannedStops.map((s) => estimateTravel(s.poi.location, c.poi.location).minutes));
     if (nearest > MAX_LEG_MINUTES) warnings.push(`${c.poi.name} is too far from the other places to fit into a day of this plan (about ${Math.round(nearest / 60)} h away)`);
   }
