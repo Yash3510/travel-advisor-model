@@ -8,11 +8,12 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit && tsc --noEmit --strict --noUnusedLocals --erasableSyntaxOnly --noFallthroughCasesInSwitch --moduleDetection force --target ES2023 --lib ES2023,DOM --module ESNext --moduleResolution Bundler ../client/takeoff-api.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc --noEmit --strict --noUnusedLocals --erasableSyntaxOnly --noFallthroughCasesInSwitch --moduleDetection force --target ES2023 --lib ES2023,DOM --module ESNext --moduleResolution Bundler ../client/takeoff-api.ts ../client/takeoff-plan.ts",
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",
     "lint": "oxlint --deny-warnings src test && cd ../client && oxlint --deny-warnings -c ../backend/.oxlintrc.json .",
-    "data:import": "tsx src/data/importOsm.ts"
+    "data:import": "tsx src/data/importOsm.ts",
+    "docs:sync": "node ../scripts/sync-integration.mjs"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",

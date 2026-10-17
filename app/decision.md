@@ -115,3 +115,10 @@ Decisions log — newest at bottom. Never delete an entry; strike through if rev
 - **Rule:** the alternative builds exactly what its message does. "More relaxed" and "more adventurous" move the pace one step (`slowerPace`, `fasterPace`); "more adventurous" also adds adventure, nature and trekking. The relaxed summary mentions the rest break only when the step reaches relaxed. An alternative that doesn't change the plan isn't offered.
 - **Trip only:** the added interests live on the trip (`addedInterests`) and count as explicit for that plan; the saved profile doesn't learn them from this message, as with cheaper and slower.
 - **Check:** `matchesAlternative` scenarios rebuild the plan from the message and compare it with the alternative's `changes`.
+
+## D-018 — The frontend integration is a brief its coding agent carries out
+- **Why:** Pranay integrates through a coding agent he directs remotely, with no access to this repository. So `integration.md` is a step-by-step brief that agent follows on its own: rules, steps with checks, and a final report.
+- **What it embeds:** `client/takeoff-api.ts`, the new `client/takeoff-plan.ts` (quick replies the planner understands, the message for each alternative, labels, and the plan in the frontend's `DayPlan`/`Activity` shapes) and `scripts/smoke.mjs` as the live check. `npm run docs:sync` writes them in; `test/integration-doc.test.ts` fails while a copy is out of date.
+- **Verified against the frontend's toolchain:** the frontend runs TypeScript 6 (strict by default), `erasableSyntaxOnly` and its own oxlint config. The brief's tagged snippets were assembled into a stand-in `App.tsx` with the frontend's real types, compiled and linted under those settings, and run in a browser against the backend. That run found two wording bugs, now fixed: meal blocks showed "Entry fee not published", and reasons read "For suits a honeymoon" (now "Why: …").
+- **The brief stays in its lane:** it keeps the design, adds no dependencies, deletes nothing, and turns off the checkout's fake payment and prefilled personal data.
+

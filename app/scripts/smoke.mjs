@@ -1,4 +1,5 @@
-// End-to-end check against a running backend (scripts/docker-smoke.sh runs it): a four-message plan and a revision
+// End-to-end check against a running backend (scripts/docker-smoke.sh runs it, and integration.md has the frontend
+// run it as scripts/check-backend.mjs): a four-message plan and a revision
 // ("flow"), then, after the backend restarts, that the thread, messages, trip and plan are all still there
 // ("persist"). Exits non-zero at the first failed check.
 import fs from 'node:fs';

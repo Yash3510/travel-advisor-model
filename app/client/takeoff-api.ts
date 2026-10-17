@@ -1,5 +1,5 @@
 // Typed client for the Takeoff backend. No dependencies: works in the browser (React + Vite) and in Node 22.
-// Copy this file into the frontend as-is (e.g. src/services/takeoffApi.ts). The contract it speaks is in
+// Copy this file into the frontend as-is (src/services/takeoff-api.ts). The contract it speaks is in
 // app/AGENTS.md in the model repo; app/integration.md shows how to wire it into the UI.
 
 export interface Deal {
