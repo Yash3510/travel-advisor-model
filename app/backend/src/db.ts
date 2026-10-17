@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { config } from './config.js';
 import { emptyProfile, type TravelerProfile } from './domain/profile.js';
 import { emptyTrip, type TripContext } from './domain/trip.js';
+import type { ItineraryDraft } from './domain/itinerary.js';
 
 if (config.dbPath !== ':memory:') fs.mkdirSync(path.dirname(config.dbPath), { recursive: true });
 const db = new Database(config.dbPath);
@@ -71,6 +72,14 @@ CREATE TABLE IF NOT EXISTS trips (
   thread_id INTEGER PRIMARY KEY REFERENCES threads(id),
   data TEXT NOT NULL,
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+-- Every version of a thread's itinerary; the latest is the current plan.
+CREATE TABLE IF NOT EXISTS itineraries (
+  thread_id INTEGER NOT NULL REFERENCES threads(id),
+  version INTEGER NOT NULL,
+  data TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (thread_id, version)
 );
 CREATE INDEX IF NOT EXISTS idx_messages_thread ON messages(thread_id);
 CREATE INDEX IF NOT EXISTS idx_threads_session ON threads(session_id);
@@ -169,6 +178,13 @@ export const store = {
   saveTrip(threadId: number, trip: TripContext) {
     db.prepare("INSERT INTO trips(thread_id, data) VALUES (?, ?) ON CONFLICT(thread_id) DO UPDATE SET data = excluded.data, updated_at = datetime('now')")
       .run(threadId, JSON.stringify(trip));
+  },
+  saveItinerary(threadId: number, draft: ItineraryDraft) {
+    db.prepare('INSERT OR REPLACE INTO itineraries(thread_id, version, data) VALUES (?, ?, ?)').run(threadId, draft.version, JSON.stringify(draft));
+  },
+  latestItinerary(threadId: number): ItineraryDraft | undefined {
+    const row = db.prepare('SELECT data FROM itineraries WHERE thread_id = ? ORDER BY version DESC LIMIT 1').get(threadId) as { data: string } | undefined;
+    return row && (JSON.parse(row.data) as ItineraryDraft);
   },
   /** Run several writes atomically. */
   tx<T>(fn: () => T): T { return db.transaction(fn)(); },

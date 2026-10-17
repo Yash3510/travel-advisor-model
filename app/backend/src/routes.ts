@@ -9,15 +9,33 @@ import { log } from './log.js';
 import { applyProfileEdit, emptyProfile } from './domain/profile.js';
 import { emptyTrip } from './domain/trip.js';
 import { planTurn, type Route } from './services/promptRouter.js';
+import { loadPlaces, type PlaceSet } from './data/poiStore.js';
+import type { LatLon } from './domain/geo.js';
+import type { TripInsight } from './domain/insights.js';
+import type { ItineraryDraft } from './domain/itinerary.js';
+import type { TravelerProfile } from './domain/profile.js';
+import type { TripContext } from './domain/trip.js';
+import { gatherInsights } from './services/insightsService.js';
+import { buildItinerary } from './services/itineraryService.js';
+import { repairItinerary } from './services/itineraryValidator.js';
+import { checkIntro, fallbackIntro, introRequest, renderItinerary } from './services/presentation.js';
 import { buildSystemPrompt } from './prompts.js';
-import { runTurn, trimHistory, type PendingBooking, type ToolBackend, type Turn } from './modelClient.js';
+import { chatCompletion, runTurn, trimHistory, type PendingBooking, type ToolBackend, type Turn } from './modelClient.js';
 import { toolSchemas, type Backend } from './tools.js';
 
 // Stored as the first assistant turn of every thread. The client shows its own welcome and never sends it.
 const GREETING =
   "Hi, I'm Kodi, your travel assistant. Tell me where you'd like to go, when, and who's coming along, and I'll plan it with you.";
 
-export interface RequestContext { catalogPath: string; backend: Backend; modelUrl: string }
+export interface RequestContext {
+  catalogPath: string;
+  backend: Backend;
+  modelUrl: string;
+  /** place data for a destination (default: the importer's files in data/poi/) */
+  places?: (destination: string | undefined) => PlaceSet | undefined;
+  /** trip insights (default: Open-Meteo, the Wikivoyage guide, and not-checked kinds) */
+  insights?: (trip: TripContext, at: LatLon) => Promise<TripInsight[]>;
+}
 
 type Body = Record<string, unknown>;
 
@@ -130,6 +148,15 @@ async function route(req: IncomingMessage, res: ServerResponse, ctx: RequestCont
       const thread = store.getThread(Number(tripPath[1]), url.searchParams.get('sessionId') ?? '');
       if (!thread) throw new HttpError(404, 'thread_not_found', 'Thread not found.');
       json(res, 200, { trip: store.getTrip(thread.id) });
+      return;
+    }
+
+    const itineraryPath = /^\/api\/threads\/(\d+)\/itinerary$/.exec(pathname);
+    if (itineraryPath) {
+      allow('GET');
+      const thread = store.getThread(Number(itineraryPath[1]), url.searchParams.get('sessionId') ?? '');
+      if (!thread) throw new HttpError(404, 'thread_not_found', 'Thread not found.');
+      json(res, 200, { itinerary: store.latestItinerary(thread.id) ?? null });
       return;
     }
 
@@ -286,6 +313,36 @@ function sessionTools(ctx: RequestContext, sessionId: string): ToolBackend {
   };
 }
 
+/** This trip's revisions ("make it cheaper", "slower") applied over the saved profile, which stays unchanged. */
+const forThisTrip = (p: TravelerProfile, t: TripContext): TravelerProfile => ({
+  ...p, ...(t.paceOverride ? { travelStyle: t.paceOverride } : {}), ...(t.budgetStyleOverride ? { budgetStyle: t.budgetStyleOverride } : {}),
+});
+
+async function planItinerary(p: { ctx: RequestContext; trip: TripContext; profile: TravelerProfile; history: Turn[]; userText: string; places: PlaceSet; signal: AbortSignal; threadId?: number }) {
+  const insights = await (p.ctx.insights ?? ((trip, at) => gatherInsights({ trip, at, now: new Date() })))(p.trip, p.places.center);
+  const profile = forThisTrip(p.profile, p.trip);
+  const pois = p.places.pois;
+  const built = buildItinerary({ trip: p.trip, profile, insights, pointsOfInterest: pois, version: p.trip.itineraryVersion + 1, excluded: p.trip.excludedPoiIds, dayPace: p.trip.dayPace });
+  const draft = repairItinerary(built, { pois: new Map(pois.map((x) => [x.id, x])), trip: p.trip, profile, insights, dayPace: p.trip.dayPace }).draft;
+
+  let intro = fallbackIntro(draft, profile, p.trip);
+  try {
+    // no tools: the model can't search or book here, only write a note about the plan it is shown
+    const out = await chatCompletion({
+      base: p.ctx.modelUrl, apiKey: config.modelApiKey, model: config.model, timeoutMs: config.modelTimeoutMs, signal: p.signal,
+      messages: [{ role: 'system', content: buildSystemPrompt(today()) }, ...trimHistory([...p.history, { role: 'user', content: `${p.userText}\n\n${introRequest(draft, profile, p.trip)}` }], config.maxHistoryChars)],
+    });
+    const note = toPlainText(out.content);
+    const check = out.toolCalls.length ? { ok: false as const, reason: 'tried to use a tool' } : checkIntro(note, { draft, knownPlaceNames: pois.map((x) => x.name) });
+    if (check.ok) intro = note;
+    else log('info', 'model note rejected', { threadId: p.threadId ?? null, reason: check.reason });
+  } catch (err) {
+    if (p.signal.aborted) return undefined;
+    log('warn', 'model note unavailable, using the template', { threadId: p.threadId ?? null, error: (err as Error).message });
+  }
+  return { draft, insights, reply: `${intro}\n\n${renderItinerary(draft, insights)}` };
+}
+
 /** Additive `planning` key on `done`: where the planner is, so the UI can show progress and assumptions. */
 const planningInfo = (r: Route) => ({ state: r.state, action: r.action, ...(r.field ? { field: r.field } : {}), assumptions: r.assumptions, missing: r.missing });
 
@@ -344,6 +401,8 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext):
     let pendingBooking: PendingBooking | undefined;
     let region: { name: string; code: string } | null = null;
     let planned: ReturnType<typeof planTurn> | undefined;
+    let itinerary: ItineraryDraft | undefined;
+    let tripInsights: TripInsight[] | undefined;
     const conversationText = () => [...history, toStore[0]].map((m) => m.content).join(' ');
 
     if (policy.emergency) {
@@ -354,16 +413,28 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext):
       log('warn', 'emergency message', { threadId: thread?.id ?? null, handedOff: String(handoff?.status).toUpperCase() === 'TRANSFERRED' });
     } else {
       // the planner reads the message (no model) and either asks one question itself or lets the model answer
+      const current = thread ? store.latestItinerary(thread.id) : undefined;
       planned = planTurn({
         trip: thread ? store.getTrip(thread.id) : emptyTrip(), profile: store.getProfile(sessionId), message: policy.redacted,
         today: today(), catalogPath: ctx.catalogPath, firstTurnOfThread: !thread, now: new Date().toISOString(),
+        scheduled: current?.days.flatMap((d) => d.items.filter((x) => x.kind === 'activity' && x.poiId).map((x) => ({ poiId: x.poiId!, name: x.title }))),
       });
+      const planning = planned.route.action === 'draft' || planned.route.action === 'revise';
+      const places = planning ? (ctx.places ?? loadPlaces)(planned.trip.destination) : undefined;
       if (planned.route.action === 'ask') {
         reply = planned.route.text!;
         toStore.push({ role: 'assistant', content: reply });
         if (!thread?.region_code) region = detectRegion(conversationText(), ctx.catalogPath);
+      } else if (places) {
+        // the plan comes from code; the model only adds a short, checked note
+        const built = await planItinerary({ ctx, trip: planned.trip, profile: planned.profile, history, userText: policy.redacted, places, signal: clientGone.signal, threadId: thread?.id });
+        if (!built) { log('info', 'client left before the reply', { threadId: thread?.id ?? null }); return; }
+        ({ draft: itinerary, insights: tripInsights, reply } = built);
+        planned.trip = { ...planned.trip, status: 'drafted', itineraryVersion: built.draft.version };
+        toStore.push({ role: 'assistant', content: reply });
+        if (!thread?.region_code) region = detectRegion(conversationText(), ctx.catalogPath);
       } else {
-      // a draft gets the trip summary added for the model only; the stored message stays as typed
+      // no place data for this destination: the model drafts from the trip summary, added for the model only
       const modelTurn: Turn = planned.route.action === 'draft' ? { role: 'user', content: `${policy.redacted}\n\n${planned.route.brief}` } : toStore[0];
       let turn: Awaited<ReturnType<typeof runTurn>>;
       try {
@@ -406,6 +477,7 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext):
       for (const m of toStore) store.appendMessage(id, m);
       if (region) store.updateThread(id, { destination: region.name, region_code: region.code, stage: 'planning' });
       if (planned) { store.saveTrip(id, planned.trip); store.saveProfile(sessionId, planned.profile); }
+      if (itinerary) store.saveItinerary(id, itinerary);
       // deals become confirmable offers too, keyed by their campaignItineraryId
       store.saveOffers(id, [...offers, ...deals.map((d) => ({ ...d, offer_id: d.campaignItineraryId }))]);
       return id;
@@ -422,6 +494,8 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext):
       ...(offers.length ? { offers } : {}),
       ...(pendingBooking ? { pendingBooking } : {}),
       ...(planned ? { planning: planningInfo(planned.route) } : {}),
+      // additive: the structured plan is the source of truth; the message is its rendering
+      ...(itinerary ? { itinerary, insights: tripInsights } : {}),
     });
     res.end();
   } finally {

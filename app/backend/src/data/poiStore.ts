@@ -1,0 +1,25 @@
+// Normalised place files from the importer (data/poi/<region>.json), loaded on demand and cached.
+
+import fs from 'node:fs';
+import type { LatLon } from '../domain/geo.js';
+import type { PointOfInterest } from '../domain/poi.js';
+import { regionFor } from './importOsm.js';
+
+export interface PlaceSet { slug: string; center: LatLon; pois: PointOfInterest[] }
+
+const cache = new Map<string, { mtimeMs: number; set: PlaceSet }>();
+
+export function loadPlaces(destination: string | undefined): PlaceSet | undefined {
+  const region = regionFor(destination);
+  if (!region) return undefined;
+  const file = new URL(`../../data/poi/${region.slug}.json`, import.meta.url);
+  if (!fs.existsSync(file)) return undefined;
+  const { mtimeMs } = fs.statSync(file);
+  const hit = cache.get(region.slug);
+  if (hit && hit.mtimeMs === mtimeMs) return hit.set;
+  const { pois } = JSON.parse(fs.readFileSync(file, 'utf8')) as { pois: PointOfInterest[] };
+  const [s, w, n, e] = region.bbox;
+  const set = { slug: region.slug, center: { lat: (s + n) / 2, lon: (w + e) / 2 }, pois };
+  cache.set(region.slug, { mtimeMs, set });
+  return set;
+}

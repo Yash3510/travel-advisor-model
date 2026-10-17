@@ -107,6 +107,47 @@ describe('planTurn', () => {
 
   it('switches to revision once a plan exists', () => {
     const { routes } = conversation(['Plan a 4 day Goa trip in December for 2', 'make day 2 more relaxed']);
-    expect(routes[1]).toMatchObject({ action: 'converse', state: 'revision' });
+    expect(routes[1]).toMatchObject({ action: 'revise', state: 'revision', revision: { kind: 'slower', day: 2 } });
+  });
+});
+
+describe('revisions after the first plan', () => {
+  const scheduled = [{ poiId: 'osm:node/1', name: 'Sunny Beach' }, { poiId: 'osm:node/3', name: 'Old Fort' }];
+  function after(message: string, profile: TravelerProfile = emptyProfile()) {
+    const first = planTurn({ trip: emptyTrip(), profile, message: 'Plan a 4 day Goa trip in December for 2', today: TODAY, catalogPath: config.catalogPath, firstTurnOfThread: true, now: NOW });
+    return planTurn({ trip: first.trip, profile: first.profile, message, today: TODAY, catalogPath: config.catalogPath, firstTurnOfThread: false, now: NOW, scheduled });
+  }
+
+  it('makes the trip cheaper without touching the saved profile', () => {
+    const saved = mergeProfile(emptyProfile(), { set: { budgetStyle: 'premium' } }, 'explicit', NOW);
+    const r = after('make it cheaper', saved);
+    expect(r.route).toMatchObject({ action: 'revise', state: 'revision', revision: { kind: 'cheaper' } });
+    expect(r.trip.budgetStyleOverride).toBe('budget');
+    expect(r.profile.budgetStyle).toBe('premium');
+  });
+
+  it('slows one day, or the whole trip', () => {
+    const day = after('make day 2 more relaxed');
+    expect(day.route.revision).toMatchObject({ kind: 'slower', day: 2 });
+    expect(day.trip.dayPace).toEqual({ 2: 'relaxed' });
+    const whole = after('can we slow it down, fewer stops please');
+    expect(whole.route.revision).toMatchObject({ kind: 'slower' });
+    expect(whole.trip.paceOverride).toBe('relaxed');
+  });
+
+  it('removes a scheduled place the traveller does not want', () => {
+    const r = after("I don't want to go to the old fort");
+    expect(r.route.revision).toMatchObject({ kind: 'remove', poiId: 'osm:node/3' });
+    expect(r.trip.excludedPoiIds).toEqual(['osm:node/3']);
+  });
+
+  it('replans when the party size or dates change', () => {
+    expect(after('we are 4 people now').route.revision).toMatchObject({ kind: 'replan' });
+    expect(after('move it to 21 to 24 December').trip).toMatchObject({ startDate: '2026-12-21', endDate: '2026-12-24' });
+  });
+
+  it('leaves questions and searches to the model', () => {
+    expect(after('is the fort worth it?').route.action).toBe('converse');
+    expect(after('find me a cheaper hotel').route.action).toBe('converse');
   });
 });

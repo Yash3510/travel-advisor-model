@@ -9,15 +9,18 @@
 
 import { inrAmount } from '../harness.js';
 import { extractFacts, type Extraction } from '../domain/extract.js';
-import { hasPreferences, mergeProfile, profileSummary, type TravelerProfile } from '../domain/profile.js';
+import { hasPreferences, mergeProfile, profileSummary, type TravelerProfile, type TravelStyle } from '../domain/profile.js';
 import { mergeTrip, type TripContext } from '../domain/trip.js';
 
 export type RouteState = 'profile_context' | 'trip_basics' | 'high_value_refinement' | 'draft_ready' | 'revision';
 export type PlanField = 'destination' | 'when' | 'travelers' | 'budget' | 'pace' | 'interests';
 export type AskField = PlanField | 'tradeoff:luxury_budget' | 'tradeoff:pace';
 
+export interface Revision { kind: 'cheaper' | 'slower' | 'faster' | 'remove' | 'replan'; day?: number; poiId?: string; detail: string }
+
 export interface Route {
-  action: 'ask' | 'draft' | 'converse';
+  action: 'ask' | 'draft' | 'revise' | 'converse';
+  revision?: Revision;
   state: RouteState;
   field?: AskField;
   /** the reply, for ask */
@@ -62,6 +65,33 @@ const ASSUMPTIONS: Record<PlanField, string> = {
   pace: 'a balanced pace',
   interests: 'a mix of the main sights',
 };
+
+// revisions of an existing plan
+const CHEAPER = /\b(?:cheaper|less expensive|lower (?:the )?(?:cost|budget|price)|budget[- ]friendly|save (?:some )?money|cut (?:the )?costs?|reduce (?:the )?costs?)\b/i;
+const SLOWER = /\b(?:slower|slow (?:it|things) down|more relaxed|less (?:packed|rushed|hectic)|fewer (?:stops|activities|places)|relax(?:ed)? pace|take it easy|lighter)\b/i;
+const FASTER = /\b(?:more packed|more activities|busier|see more|faster pace|more stops|pack (?:it|more) in)\b/i;
+const REMOVE = /\b(?:remove|skip|drop|replace|swap out|take out|cut out|don'?t (?:want to (?:go to|visit|see)|want|like)|not interested in|no more)\s+(?:the\s+|visiting\s+|going to\s+)?(.+?)(?=[.,!?;]|\band\b|$)/i;
+const STOP_WORDS = new Set(['the', 'a', 'an', 'to', 'of', 'at', 'in', 'visit', 'go', 'please']);
+const TRIP_KEYS = ['destination', 'startDate', 'endDate', 'month', 'durationDays', 'travelers', 'budgetInr', 'purpose'] as const;
+export const slowerPace = (p: TravelStyle): TravelStyle => (p === 'packed' ? 'balanced' : 'relaxed');
+export const fasterPace = (p: TravelStyle): TravelStyle => (p === 'relaxed' ? 'balanced' : 'packed');
+
+function detectRevision(message: string, before: TripContext, after: TripContext, scheduled: { poiId: string; name: string }[], ex: Extraction): Revision | undefined {
+  const target = REMOVE.exec(message)?.[1]?.toLowerCase();
+  if (target) {
+    const words = target.split(/\W+/).filter((w) => w.length > 2 && !STOP_WORDS.has(w));
+    const hit = words.length ? scheduled.find((s) => words.every((w) => s.name.toLowerCase().includes(w))) : undefined;
+    if (hit) return { kind: 'remove', poiId: hit.poiId, detail: `remove ${hit.name}` };
+  }
+  const day = Number(/\bday\s*(\d{1,2})\b/i.exec(message)?.[1]) || undefined;
+  if (CHEAPER.test(message)) return { kind: 'cheaper', detail: 'cheaper' };
+  if (SLOWER.test(message)) return { kind: 'slower', ...(day ? { day } : {}), detail: day ? `slower day ${day}` : 'slower' };
+  if (FASTER.test(message)) return { kind: 'faster', ...(day ? { day } : {}), detail: day ? `busier day ${day}` : 'busier' };
+  const tripChanged = TRIP_KEYS.some((k) => before[k] !== after[k]);
+  const prefsChanged = Object.keys(ex.profile.explicit.set ?? {}).length > 0 || Object.keys(ex.profile.explicit.add ?? {}).length > 0;
+  if (tripChanged || prefsChanged) return { kind: 'replan', detail: tripChanged ? 'trip details changed' : 'preferences changed' };
+  return undefined;
+}
 
 const REQUEST = /\b(?:book|search|find|show me|check|compare|look up|cancel|status|confirm|refund|availability|available)\b/i;
 const PLANNING = /\b(?:plan|planning|itinerary|trip|holiday|vacation|getaway|tour|jana hai|ghumna)\b/i;
@@ -136,14 +166,20 @@ function conflict(t: TripContext, p: TravelerProfile, ex: Extraction): AskField 
   return undefined;
 }
 
-export function routeTurn(i: { trip: TripContext; profile: TravelerProfile; message: string; extraction: Extraction; firstTurnOfThread: boolean; savedProfile: TravelerProfile }): Route {
+export function routeTurn(i: {
+  trip: TripContext; profile: TravelerProfile; message: string; extraction: Extraction; firstTurnOfThread: boolean; savedProfile: TravelerProfile;
+  previousTrip?: TripContext; scheduled?: { poiId: string; name: string }[];
+}): Route {
   const { trip, profile, message } = i;
   const have = known(trip, profile);
   const missing = [...ESSENTIALS, ...REFINEMENTS].filter((f) => !have[f]);
   const essentialsMissing = ESSENTIALS.filter((f) => !have[f]);
   const assumptions = missing.map((f) => (f === 'when' && trip.month ? `${DEFAULT_DAYS} days` : ASSUMPTIONS[f]));
 
-  if (trip.status === 'drafted') return { action: 'converse', state: 'revision', assumptions: [], missing };
+  if (trip.status === 'drafted') {
+    const revision = REQUEST.test(message) ? undefined : detectRevision(message, i.previousTrip ?? trip, trip, i.scheduled ?? [], i.extraction);
+    return revision ? { action: 'revise', state: 'revision', revision, assumptions: [], missing } : { action: 'converse', state: 'revision', assumptions: [], missing };
+  }
   if (REQUEST.test(message) || (QUESTION.test(message) && !PLANNING.test(message))) {
     return { action: 'converse', state: essentialsMissing.length ? 'trip_basics' : 'high_value_refinement', assumptions, missing };
   }
@@ -174,7 +210,11 @@ export function routeTurn(i: { trip: TripContext; profile: TravelerProfile; mess
  * One customer message through the planner. Pure: the caller stores the returned trip and profile.
  * `message` must already be redacted.
  */
-export function planTurn(i: { trip: TripContext; profile: TravelerProfile; message: string; today: string; catalogPath: string; firstTurnOfThread: boolean; now: string }) {
+export function planTurn(i: {
+  trip: TripContext; profile: TravelerProfile; message: string; today: string; catalogPath: string; firstTurnOfThread: boolean; now: string;
+  /** the stops of the current plan, so "skip the fort" can be matched */
+  scheduled?: { poiId: string; name: string }[];
+}) {
   const extraction = extractFacts(i.message, i.today, i.catalogPath);
   // a bare answer to the question just asked: "80k", "3"
   const justAsked = i.trip.status === 'collecting' ? i.trip.asked.at(-1) : undefined;
@@ -189,9 +229,21 @@ export function planTurn(i: { trip: TripContext; profile: TravelerProfile; messa
   }
   if (justAsked && !extraction.hasTripFacts) extraction.hasTripFacts = Object.keys(extraction.trip).length > 1;
 
-  const profile = mergeProfile(mergeProfile(i.profile, extraction.profile.explicit, 'explicit', i.now), extraction.profile.inferred, 'inferred', i.now);
+  let profile = mergeProfile(mergeProfile(i.profile, extraction.profile.explicit, 'explicit', i.now), extraction.profile.inferred, 'inferred', i.now);
   let trip = mergeTrip(i.trip, extraction.trip, i.now);
-  const route = routeTurn({ trip, profile, message: i.message, extraction, firstTurnOfThread: i.firstTurnOfThread, savedProfile: i.profile });
+  const route = routeTurn({ trip, profile, message: i.message, extraction, firstTurnOfThread: i.firstTurnOfThread, savedProfile: i.profile, previousTrip: i.trip, scheduled: i.scheduled });
+  const r = route.revision;
+  if (r && (r.kind === 'cheaper' || r.kind === 'slower' || r.kind === 'faster')) {
+    // a change to this plan, not to the traveller: keep the saved pace and budget style as they were
+    profile = { ...profile, travelStyle: i.profile.travelStyle, budgetStyle: i.profile.budgetStyle };
+    if (profile.travelStyle === undefined) delete profile.travelStyle;
+    if (profile.budgetStyle === undefined) delete profile.budgetStyle;
+    const base = trip.paceOverride ?? i.profile.travelStyle ?? 'balanced';
+    if (r.kind === 'cheaper') trip = { ...trip, budgetStyleOverride: 'budget' };
+    else if (r.day) trip = { ...trip, dayPace: { ...trip.dayPace, [r.day]: (r.kind === 'slower' ? slowerPace : fasterPace)(trip.dayPace[r.day] ?? base) } };
+    else trip = { ...trip, paceOverride: (r.kind === 'slower' ? slowerPace : fasterPace)(base) };
+  }
+  if (r?.kind === 'remove') trip = { ...trip, excludedPoiIds: [...trip.excludedPoiIds, r.poiId!] };
   if (route.action === 'ask') trip = { ...trip, asked: [...trip.asked, route.field!], planningTurns: trip.planningTurns + 1 };
   if (route.action === 'draft') trip = { ...trip, status: 'drafted', planningTurns: trip.planningTurns + 1 };
   return { trip, profile, route };

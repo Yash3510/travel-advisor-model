@@ -5,10 +5,13 @@ import { config } from '../src/config.js';
 import { createHandler } from '../src/routes.js';
 import { MockBackend } from '../src/tools.js';
 import { createTakeoffApi, readSse, toDealCard, TakeoffApiError, type Deal } from '../../client/takeoff-api.js';
+import type { TripInsight } from '../src/domain/insights.js';
+import { NOW, TOWN } from './fixtures.js';
 
 // Stand-in for llama-server: replies come from a queue; every request body is recorded.
 type Reply = { content?: string; tool_calls?: { name: string; args: object }[]; delayMs?: number } | 'fail' | ((req: any) => Reply);
 const stub = { queue: [] as Reply[], requests: [] as any[] };
+let testInsights: TripInsight[] = [];
 let modelServer: http.Server;
 let apiServer: http.Server;
 let base = '';
@@ -33,11 +36,16 @@ beforeAll(async () => {
     });
   });
   const modelUrl = await listen(modelServer);
-  apiServer = http.createServer(createHandler({ catalogPath: config.catalogPath, backend: new MockBackend(config.catalogPath), modelUrl }));
+  apiServer = http.createServer(createHandler({
+    catalogPath: config.catalogPath, backend: new MockBackend(config.catalogPath), modelUrl,
+    // place data and insights are injected: tests never touch the generated files or live services
+    places: (d) => (d === 'Goa' ? { slug: 'goa', center: { lat: 15.5, lon: 73.8 }, pois: TOWN } : undefined),
+    insights: async () => testInsights,
+  }));
   base = await listen(apiServer);
 });
 afterAll(() => { modelServer.close(); apiServer.close(); });
-beforeEach(() => { stub.queue = []; stub.requests = []; });
+beforeEach(() => { stub.queue = []; stub.requests = []; testInsights = []; });
 
 const post = (path: string, body: unknown) =>
   fetch(`${base}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -199,7 +207,7 @@ describe('planning flow', () => {
     const sid = await session();
     const asks: string[] = [];
     let threadId: number | undefined;
-    for (const text of ['I want to plan a trip', 'Goa', 'December, 5 days, me and my wife']) {
+    for (const text of ['I want to plan a trip', 'Manali', 'December, 5 days, me and my wife']) {
       const done = (await chat(sid, text, threadId)).at(-1)!;
       threadId = done.data.threadId;
       expect(done.data.planning.action).toBe('ask');
@@ -213,13 +221,13 @@ describe('planning flow', () => {
     expect(plan.data).toMatchObject({ message: 'Day 1: settle in near the beach.', planning: { action: 'draft', state: 'draft_ready' } });
     const sent = stub.requests[0].messages;
     expect(sent[0].content).toMatch(/^You are a travel advisor and booking assistant for trips in India\./);
-    expect(sent.at(-1).content).toMatch(/^around 80k\n\nTrip details so far: destination Goa; .*budget ₹80,000 in total/);
+    expect(sent.at(-1).content).toMatch(/^around 80k\n\nTrip details so far: destination Manali; .*budget ₹80,000 in total/);
 
     // the summary went to the model only; the thread keeps what the customer typed
     const stored = await (await fetch(`${base}/api/threads/${threadId}/messages?sessionId=${sid}`)).json();
     expect(stored.messages.at(-2)).toMatchObject({ role: 'user', content: 'around 80k' });
     const trip = await (await fetch(`${base}/api/threads/${threadId}/trip?sessionId=${sid}`)).json();
-    expect(trip.trip).toMatchObject({ destination: 'Goa', month: 12, durationDays: 5, travelers: 2, budgetInr: 80000, status: 'drafted', asked: ['destination', 'when', 'budget'] });
+    expect(trip.trip).toMatchObject({ destination: 'Manali', month: 12, durationDays: 5, travelers: 2, budgetInr: 80000, status: 'drafted', asked: ['destination', 'when', 'budget'] });
     expect((await fetch(`${base}/api/threads/${threadId}/trip?sessionId=${await session()}`)).status).toBe(404);
   });
 
@@ -243,6 +251,79 @@ describe('planning flow', () => {
     const reset = await (await post('/api/profile/reset', { sessionId: sid })).json();
     expect(reset.profile.interests).toEqual([]);
     expect((await (await fetch(`${base}/api/profile?sessionId=${sid}`)).json()).profile.travelStyle).toBeUndefined();
+  });
+});
+
+async function toDraft(note: Reply | undefined) {
+  const sid = await session();
+  let threadId: number | undefined;
+  for (const text of ['Plan a trip to Goa', '15 to 16 December, 2 of us']) threadId = (await chat(sid, text, threadId)).at(-1)!.data.threadId;
+  stub.queue = note ? [note] : [];
+  const done = (await chat(sid, 'about 50k', threadId)).at(-1)!;
+  return { sid, threadId: threadId!, done };
+}
+const titles = (plan: any) => plan.days.flatMap((d: any) => d.items.filter((i: any) => i.kind === 'activity').map((i: any) => i.title));
+
+describe('itinerary flow', () => {
+  it('plans in code, and the model only adds a checked note', async () => {
+    const note = 'A gentle start each morning and plenty of time to enjoy it together.';
+    const { sid, threadId, done } = await toDraft({ content: note });
+    expect(done.data.planning).toMatchObject({ action: 'draft' });
+    const plan = done.data.itinerary;
+    expect(plan.days.map((d: any) => d.date)).toEqual(['2026-12-15', '2026-12-16']);
+    expect(done.data.message.startsWith(`${note}\n\nDay 1, Tuesday 15 December`)).toBe(true);
+    for (const t of titles(plan)) expect(done.data.message).toContain(t);
+    const sent = stub.requests.at(-1);
+    expect(sent.tools).toBeUndefined();
+    expect(sent.messages[0].content).toMatch(/^You are a travel advisor and booking assistant for trips in India\./);
+    const stored = await (await fetch(`${base}/api/threads/${threadId}/itinerary?sessionId=${sid}`)).json();
+    expect(stored.itinerary).toEqual(plan);
+    expect((await fetch(`${base}/api/threads/${threadId}/itinerary?sessionId=${await session()}`)).status).toBe(404);
+  });
+
+  it('cannot be overridden by the model: dates, prices, places, bookings, tool calls', async () => {
+    const attacks: Reply[] = [
+      { content: 'Your trip starts on 25 December, dinner is ₹9,999 at Golden Sands Beach and everything is booked.' },
+      { tool_calls: [{ name: 'search_hotels', args: { city: 'Goa', check_in: '2026-12-15', check_out: '2026-12-16', guests: 2 } }] },
+      'fail',
+    ];
+    for (const attack of attacks) {
+      const { done } = await toDraft(attack);
+      const plan = done.data.itinerary;
+      expect(done.data.message.startsWith('Here is your 2-day balanced plan for Goa.\n\nDay 1, Tuesday 15 December')).toBe(true);
+      expect(plan.days.map((d: any) => d.date)).toEqual(['2026-12-15', '2026-12-16']);
+      expect(done.data.message).not.toMatch(/9,999|Golden Sands|booked/);
+      for (const t of titles(plan)) expect(done.data.message).toContain(t);
+      for (const w of plan.warnings) expect(done.data.message).toContain(w);
+      expect(done.data.offers).toBeUndefined();
+    }
+  });
+
+  it('rebuilds the plan on revisions and keeps the saved profile', async () => {
+    const { sid, threadId, done } = await toDraft(undefined);
+    const first = titles(done.data.itinerary);
+    const cheaper = (await chat(sid, 'make it cheaper', threadId)).at(-1)!;
+    expect(cheaper.data).toMatchObject({ planning: { action: 'revise' }, itinerary: { version: 2 } });
+    expect((await (await fetch(`${base}/api/profile?sessionId=${sid}`)).json()).profile.budgetStyle).toBeUndefined();
+
+    const skip = (await chat(sid, `skip ${first[0]}`, threadId)).at(-1)!;
+    expect(skip.data.itinerary.version).toBe(3);
+    expect(titles(skip.data.itinerary)).not.toContain(first[0]);
+
+    await chat(sid, 'we are 4 people now', threadId);
+    const moved = (await chat(sid, 'move it to 21 to 22 December', threadId)).at(-1)!;
+    expect(moved.data.itinerary.days.map((d: any) => d.date)).toEqual(['2026-12-21', '2026-12-22']);
+    const trip = (await (await fetch(`${base}/api/threads/${threadId}/trip?sessionId=${sid}`)).json()).trip;
+    expect(trip).toMatchObject({ travelers: 4, excludedPoiIds: [TOWN.find((p) => p.name === first[0])!.id], budgetStyleOverride: 'budget', itineraryVersion: 5 });
+  });
+
+  it('lets a rain forecast change the plan, and says so', async () => {
+    testInsights = [{ type: 'weather', title: 'Heavy rain likely', detail: '90% chance of rain', source: 'Open-Meteo', licence: 'CC BY 4.0', checkedAt: NOW, severity: 'warning', confidence: 0.7, status: 'checked', date: '2026-12-15', effect: 'rain' }];
+    const { done } = await toDraft(undefined);
+    const day1 = done.data.itinerary.days[0].items.filter((i: any) => i.kind === 'activity');
+    expect(day1.every((a: any) => TOWN.find((p) => p.id === a.poiId)!.indoor)).toBe(true);
+    expect(done.data.message).toContain('Heavy rain likely on 15 December');
+    expect(done.data.insights).toEqual(testInsights);
   });
 });
 
