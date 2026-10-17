@@ -1,0 +1,88 @@
+{
+  "today": "2026-10-14",
+  "places": "../fixtures/town.json",
+  "scenarios": [
+    {
+      "name": "1. relaxed couple who love beaches and food, no crowds",
+      "turns": ["Plan a relaxed 2 day Goa trip from 15 to 16 December for me and my wife, we love beaches and food but hate crowds"],
+      "expect": { "draftOnTurn": 1, "maxStopsPerDay": 3, "planHas": ["Sunny Beach", "Quiet Beach"], "assumptionsMatch": "Crowd levels aren't in our data" }
+    },
+    {
+      "name": "2. packed family trip with children",
+      "turns": ["Packed 2 day Goa trip for a family of 4 with 2 kids, 15 to 16 December"],
+      "expect": { "draftOnTurn": 1, "planHas": ["Little Zoo"], "planLacks": ["Club Neon"], "restEveryDay": true, "finalTrip": { "travelers": 4 } }
+    },
+    {
+      "name": "3. premium stays on an insufficient budget",
+      "turns": ["Luxury trip to Goa for 2, 15 to 16 December, budget 10k", "keep luxury, we will spend more"],
+      "expect": { "draftOnTurn": 2, "asked": ["tradeoff:luxury_budget"] }
+    },
+    {
+      "name": "4. wheelchair user",
+      "profile": { "mobilityNeeds": ["wheelchair"] },
+      "turns": ["Goa for 2 from 15 to 16 December"],
+      "expect": { "draftOnTurn": 1, "planLacks": ["Club Neon", "Distant Falls"], "notesMatch": "Wheelchair access is not confirmed" }
+    },
+    {
+      "name": "5. Jain diet",
+      "turns": ["Goa for 2 from 15 to 16 December, we eat Jain food"],
+      "expect": { "draftOnTurn": 1, "mealSuggests": "Veg Thali House", "planLacks": ["Harbour Fish Market"] }
+    },
+    {
+      "name": "6. rainy day",
+      "insights": [{ "type": "weather", "title": "Heavy rain likely", "detail": "90% chance of rain", "source": "Open-Meteo", "licence": "CC BY 4.0", "checkedAt": "2026-12-10T06:00:00.000Z", "severity": "warning", "confidence": 0.7, "status": "checked", "date": "2026-12-15", "effect": "rain" }],
+      "turns": ["Goa for 2 from 15 to 16 December, we love beaches"],
+      "expect": { "draftOnTurn": 1, "warningsMatch": "Heavy rain is likely on 15 December", "renderedMatch": "Heavy rain likely on 15 December" }
+    },
+    {
+      "name": "7. a place closed on the chosen day",
+      "insights": [{ "type": "closure", "title": "Closed for repairs", "detail": "Closed all day", "source": "Venue notice", "checkedAt": "2026-12-10T06:00:00.000Z", "severity": "blocking", "confidence": 0.8, "status": "checked", "date": "2026-12-14", "poiId": "osm:node/3", "effect": "closed" }],
+      "turns": ["Packed 1 day trip to Goa on 14 December for 2, we love history"],
+      "expect": { "draftOnTurn": 1, "planLacks": ["Town Museum", "Old Fort"], "warningsMatch": "Old Fort is closed on 14 December" }
+    },
+    {
+      "name": "8. unknown opening hours",
+      "turns": ["Goa for 2 from 15 to 16 December, we love beaches"],
+      "expect": { "draftOnTurn": 1, "assumptionsMatch": "Opening hours aren't published", "renderedMatch": "Opening hours not published" }
+    },
+    {
+      "name": "9. a long-distance place that cannot share a day",
+      "turns": ["Plan a 1 day Goa trip for 2 on 15 December, we love nature and waterfalls"],
+      "expect": { "draftOnTurn": 1, "warningsMatch": "too far", "notBoth": ["Distant Falls", "Green Park"] }
+    },
+    {
+      "name": "10. cheaper revision",
+      "turns": ["Packed 2 day Goa trip for 2, 15 to 16 December, we love history", "make it cheaper"],
+      "expect": { "draftOnTurn": 1, "versions": 2, "costNotAbove": true, "profileUnchanged": ["budgetStyle"] }
+    },
+    {
+      "name": "11. slower revision for one day",
+      "turns": ["Packed 2 day Goa trip for 2, 15 to 16 December, we love history and beaches", "make day 1 more relaxed"],
+      "expect": { "draftOnTurn": 1, "versions": 2, "fewerStopsOnDay": 1, "profileUnchanged": ["travelStyle"] }
+    },
+    {
+      "name": "12. the number of travellers changes",
+      "turns": ["Goa for 2 from 15 to 16 December, we love history", "we are 4 people now"],
+      "expect": { "draftOnTurn": 1, "versions": 2, "finalTrip": { "travelers": 4 }, "costOf": { "Old Fort": 200 } }
+    },
+    {
+      "name": "13. the dates change after the first plan",
+      "turns": ["Goa for 2 from 15 to 16 December", "move it to 21 to 22 December"],
+      "expect": { "draftOnTurn": 1, "versions": 2, "dates": ["2026-12-21", "2026-12-22"] }
+    },
+    {
+      "name": "14. the traveller dislikes one scheduled place",
+      "turns": ["Goa for 2 from 15 to 16 December, we love history", "skip Old Fort"],
+      "expect": { "draftOnTurn": 1, "versions": 2, "planLacks": ["Old Fort"], "profileUnchanged": ["interests", "dislikes"] }
+    },
+    {
+      "name": "15. weather provider timed out, older forecast available",
+      "insights": [
+        { "type": "weather", "title": "Weather not checked", "detail": "The weather service did not respond", "source": "Open-Meteo", "checkedAt": "2026-12-10T06:00:00.000Z", "severity": "info", "confidence": 0, "status": "not_checked" },
+        { "type": "weather", "title": "Heavy rain likely", "detail": "80% chance of rain", "source": "Open-Meteo", "licence": "CC BY 4.0", "checkedAt": "2026-12-09T06:00:00.000Z", "severity": "warning", "confidence": 0.35, "status": "stale", "date": "2026-12-15", "effect": "rain" }
+      ],
+      "turns": ["Goa for 2 from 15 to 16 December, we love beaches"],
+      "expect": { "draftOnTurn": 1, "renderedMatch": "Not checked: weather", "renderedMatch2": "from an older forecast", "outdoorOnDate": "2026-12-15" }
+    }
+  ]
+}

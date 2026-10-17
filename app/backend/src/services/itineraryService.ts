@@ -27,6 +27,7 @@ export interface ItineraryRequest {
 
 export const DEFAULT_DAYS = 4;
 const CLUSTER_MINUTES = 45; // a day's places stay within this travel time of its first stop
+const SEEDS_TRIED = 3;
 const STEP = 15;
 const MEAL_SEARCH_KM = 5;
 const UNKNOWN_HOURS_CONFIDENCE = 0.3;
@@ -108,6 +109,23 @@ function place(order: Candidate[], rules: DayRules, date: string | undefined): P
   return out;
 }
 
+/** Starting from a seed, add nearby stops by score while the day's budgets and the schedule allow. */
+function fillDay(seed: Candidate, pool: Candidate[], rules: DayRules, date: string | undefined): Placed[] {
+  let chosen = [seed];
+  let placed = place([seed], rules, date)!;
+  for (const c of pool) {
+    if (c === seed || estimateTravel(seed.poi.location, c.poi.location).minutes > CLUSTER_MINUTES) continue;
+    if (chosen.length >= rules.maxActivities) break;
+    if (chosen.some((x) => x.poi.category === c.poi.category)) continue;
+    if (chosen.reduce((s, x) => s + x.poi.visitDuration.minutes, 0) + c.poi.visitDuration.minutes > rules.activityMinutes) continue;
+    const trial = place(orderStops([...chosen, c]), rules, date);
+    if (!trial || trial.reduce((s, x) => s + (x.travel?.minutes ?? 0), 0) > rules.maxTravelMinutes) continue;
+    chosen = [...chosen, c];
+    placed = trial;
+  }
+  return placed;
+}
+
 /** Highest-scoring stop first, then the nearest remaining; evening-only places go last. */
 function orderStops(stops: Candidate[]): Candidate[] {
   const day = stops.filter((c) => !eveningOnly(c.poi)).toSorted(rank);
@@ -180,23 +198,14 @@ export function buildItinerary(req: ItineraryRequest): ItineraryDraft {
     // variety: each kind of place loses appeal every time it has already been used
     const adjusted = pool.map((c) => ({ ...c, score: round2(c.score - 1.5 * (categoryUses.get(c.poi.category) ?? 0)) })).toSorted(rank);
 
-    let chosen: Candidate[] = [];
+    // try the best few starting points and keep the day that scores highest overall: a greedy first pick
+    // can crowd out a better combination (two strong stops beat one strong stop and two fillers)
     let placed: Placed[] = [];
-    const seed = adjusted.find((c) => place([c], rules, date));
-    if (seed) {
-      chosen = [seed];
-      placed = place([seed], rules, date)!;
-      const nearby = adjusted.filter((c) => c !== seed && estimateTravel(seed.poi.location, c.poi.location).minutes <= CLUSTER_MINUTES);
-      for (const c of nearby) {
-        if (chosen.length >= rules.maxActivities) break;
-        if (chosen.some((x) => x.poi.category === c.poi.category)) continue;
-        if (chosen.reduce((s, x) => s + x.poi.visitDuration.minutes, 0) + c.poi.visitDuration.minutes > rules.activityMinutes) continue;
-        const trial = place(orderStops([...chosen, c]), rules, date);
-        if (!trial) continue;
-        if (trial.reduce((s, x) => s + (x.travel?.minutes ?? 0), 0) > rules.maxTravelMinutes) continue;
-        chosen = [...chosen, c];
-        placed = trial;
-      }
+    let bestScore = -Infinity;
+    for (const seed of adjusted.filter((c) => place([c], rules, date)).slice(0, SEEDS_TRIED)) {
+      const day = fillDay(seed, adjusted, rules, date);
+      const total = day.reduce((s, p) => s + p.c.score, 0);
+      if (total > bestScore) { bestScore = total; placed = day; }
     }
     for (const p of placed) {
       used.add(p.c.poi.id);

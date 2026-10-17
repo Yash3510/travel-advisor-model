@@ -135,10 +135,12 @@ describe('revisions after the first plan', () => {
     expect(whole.trip.paceOverride).toBe('relaxed');
   });
 
-  it('removes a scheduled place the traveller does not want', () => {
-    const r = after("I don't want to go to the old fort");
+  it('removes a scheduled place the traveller does not want, without changing their tastes', () => {
+    const likesHistory = mergeProfile(emptyProfile(), { add: { interests: ['history'] } }, 'explicit', NOW);
+    const r = after("I don't want to go to the old fort", likesHistory);
     expect(r.route.revision).toMatchObject({ kind: 'remove', poiId: 'osm:node/3' });
     expect(r.trip.excludedPoiIds).toEqual(['osm:node/3']);
+    expect(r.profile).toMatchObject({ interests: ['history'], dislikes: [] });
   });
 
   it('replans when the party size or dates change', () => {

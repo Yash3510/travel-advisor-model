@@ -243,7 +243,11 @@ export function planTurn(i: {
     else if (r.day) trip = { ...trip, dayPace: { ...trip.dayPace, [r.day]: (r.kind === 'slower' ? slowerPace : fasterPace)(trip.dayPace[r.day] ?? base) } };
     else trip = { ...trip, paceOverride: (r.kind === 'slower' ? slowerPace : fasterPace)(base) };
   }
-  if (r?.kind === 'remove') trip = { ...trip, excludedPoiIds: [...trip.excludedPoiIds, r.poiId!] };
+  if (r?.kind === 'remove') {
+    // "skip the old fort" is about one place, not the traveller's tastes (it would otherwise read as disliking history)
+    trip = { ...trip, excludedPoiIds: [...trip.excludedPoiIds, r.poiId!] };
+    profile = i.profile;
+  }
   if (route.action === 'ask') trip = { ...trip, asked: [...trip.asked, route.field!], planningTurns: trip.planningTurns + 1 };
   if (route.action === 'draft') trip = { ...trip, status: 'drafted', planningTurns: trip.planningTurns + 1 };
   return { trip, profile, route };

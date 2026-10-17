@@ -1,0 +1,644 @@
+{
+ "_note": "Synthetic places for app scenarios (not real data). Same shape as data/poi/<region>.json.",
+ "pois": [
+  {
+   "id": "osm:node/1",
+   "name": "Sunny Beach",
+   "destination": "goa",
+   "location": {
+    "lat": 15.51,
+    "lon": 73.8
+   },
+   "category": "beach",
+   "interests": [
+    "beach"
+   ],
+   "indoor": false,
+   "kidFriendly": true,
+   "goodSlots": [
+    "morning",
+    "evening"
+   ],
+   "visitDuration": {
+    "minutes": 150,
+    "basis": "category_default",
+    "confidence": 0.4
+   },
+   "openingHours": {
+    "basis": "unknown",
+    "confidence": 0
+   },
+   "accessibility": {
+    "wheelchair": "unknown"
+   },
+   "fee": "unknown",
+   "source": {
+    "name": "OpenStreetMap",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "url": "https://www.openstreetmap.org/node/1",
+    "checkedAt": "2026-10-17"
+   }
+  },
+  {
+   "id": "osm:node/2",
+   "name": "Quiet Beach",
+   "destination": "goa",
+   "location": {
+    "lat": 15.52,
+    "lon": 73.8
+   },
+   "category": "beach",
+   "interests": [
+    "beach"
+   ],
+   "indoor": false,
+   "kidFriendly": true,
+   "goodSlots": [
+    "morning",
+    "evening"
+   ],
+   "visitDuration": {
+    "minutes": 150,
+    "basis": "category_default",
+    "confidence": 0.4
+   },
+   "openingHours": {
+    "basis": "unknown",
+    "confidence": 0
+   },
+   "accessibility": {
+    "wheelchair": "unknown"
+   },
+   "fee": "unknown",
+   "source": {
+    "name": "OpenStreetMap",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "url": "https://www.openstreetmap.org/node/1",
+    "checkedAt": "2026-10-17"
+   }
+  },
+  {
+   "id": "osm:node/3",
+   "name": "Old Fort",
+   "destination": "goa",
+   "location": {
+    "lat": 15.53,
+    "lon": 73.8
+   },
+   "category": "heritage",
+   "interests": [
+    "history"
+   ],
+   "indoor": false,
+   "kidFriendly": false,
+   "goodSlots": [
+    "morning",
+    "afternoon"
+   ],
+   "visitDuration": {
+    "minutes": 90,
+    "basis": "category_default",
+    "confidence": 0.4
+   },
+   "openingHours": {
+    "basis": "osm",
+    "raw": "Mo-Su 09:00-17:30",
+    "weekly": [
+     [
+      [
+       540,
+       1050
+      ]
+     ],
+     [
+      [
+       540,
+       1050
+      ]
+     ],
+     [
+      [
+       540,
+       1050
+      ]
+     ],
+     [
+      [
+       540,
+       1050
+      ]
+     ],
+     [
+      [
+       540,
+       1050
+      ]
+     ],
+     [
+      [
+       540,
+       1050
+      ]
+     ],
+     [
+      [
+       540,
+       1050
+      ]
+     ]
+    ],
+    "confidence": 0.7
+   },
+   "accessibility": {
+    "wheelchair": "unknown"
+   },
+   "fee": "paid",
+   "source": {
+    "name": "OpenStreetMap",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "url": "https://www.openstreetmap.org/node/1",
+    "checkedAt": "2026-10-17"
+   },
+   "feeInr": 50
+  },
+  {
+   "id": "osm:node/4",
+   "name": "Town Museum",
+   "destination": "goa",
+   "location": {
+    "lat": 15.54,
+    "lon": 73.8
+   },
+   "category": "museum",
+   "interests": [
+    "history",
+    "culture"
+   ],
+   "indoor": true,
+   "kidFriendly": false,
+   "goodSlots": [
+    "morning",
+    "afternoon"
+   ],
+   "visitDuration": {
+    "minutes": 120,
+    "basis": "category_default",
+    "confidence": 0.4
+   },
+   "openingHours": {
+    "basis": "osm",
+    "raw": "Tu-Su 09:30-17:30",
+    "weekly": [
+     [],
+     [
+      [
+       570,
+       1050
+      ]
+     ],
+     [
+      [
+       570,
+       1050
+      ]
+     ],
+     [
+      [
+       570,
+       1050
+      ]
+     ],
+     [
+      [
+       570,
+       1050
+      ]
+     ],
+     [
+      [
+       570,
+       1050
+      ]
+     ],
+     [
+      [
+       570,
+       1050
+      ]
+     ]
+    ],
+    "confidence": 0.7
+   },
+   "accessibility": {
+    "wheelchair": "unknown"
+   },
+   "fee": "free",
+   "source": {
+    "name": "OpenStreetMap",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "url": "https://www.openstreetmap.org/node/1",
+    "checkedAt": "2026-10-17"
+   }
+  },
+  {
+   "id": "osm:node/5",
+   "name": "Spice Market",
+   "destination": "goa",
+   "location": {
+    "lat": 15.5,
+    "lon": 73.81
+   },
+   "category": "market",
+   "interests": [
+    "shopping",
+    "food"
+   ],
+   "indoor": false,
+   "kidFriendly": false,
+   "goodSlots": [
+    "morning",
+    "evening"
+   ],
+   "visitDuration": {
+    "minutes": 90,
+    "basis": "category_default",
+    "confidence": 0.4
+   },
+   "openingHours": {
+    "basis": "unknown",
+    "confidence": 0
+   },
+   "accessibility": {
+    "wheelchair": "unknown"
+   },
+   "fee": "unknown",
+   "source": {
+    "name": "OpenStreetMap",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "url": "https://www.openstreetmap.org/node/1",
+    "checkedAt": "2026-10-17"
+   }
+  },
+  {
+   "id": "osm:node/6",
+   "name": "Club Neon",
+   "destination": "goa",
+   "location": {
+    "lat": 15.51,
+    "lon": 73.81
+   },
+   "category": "nightlife",
+   "interests": [
+    "nightlife"
+   ],
+   "indoor": true,
+   "kidFriendly": false,
+   "goodSlots": [
+    "evening"
+   ],
+   "visitDuration": {
+    "minutes": 120,
+    "basis": "category_default",
+    "confidence": 0.4
+   },
+   "openingHours": {
+    "basis": "unknown",
+    "confidence": 0
+   },
+   "accessibility": {
+    "wheelchair": "no"
+   },
+   "fee": "unknown",
+   "source": {
+    "name": "OpenStreetMap",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "url": "https://www.openstreetmap.org/node/1",
+    "checkedAt": "2026-10-17"
+   }
+  },
+  {
+   "id": "osm:node/7",
+   "name": "Hill Temple",
+   "destination": "goa",
+   "location": {
+    "lat": 15.52,
+    "lon": 73.81
+   },
+   "category": "place_of_worship",
+   "interests": [
+    "spiritual",
+    "history"
+   ],
+   "indoor": true,
+   "kidFriendly": false,
+   "goodSlots": [
+    "morning",
+    "afternoon"
+   ],
+   "visitDuration": {
+    "minutes": 45,
+    "basis": "category_default",
+    "confidence": 0.4
+   },
+   "openingHours": {
+    "basis": "unknown",
+    "confidence": 0
+   },
+   "accessibility": {
+    "wheelchair": "yes"
+   },
+   "fee": "unknown",
+   "source": {
+    "name": "OpenStreetMap",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "url": "https://www.openstreetmap.org/node/1",
+    "checkedAt": "2026-10-17"
+   }
+  },
+  {
+   "id": "osm:node/8",
+   "name": "Green Park",
+   "destination": "goa",
+   "location": {
+    "lat": 15.53,
+    "lon": 73.81
+   },
+   "category": "park",
+   "interests": [
+    "nature"
+   ],
+   "indoor": false,
+   "kidFriendly": true,
+   "goodSlots": [
+    "morning",
+    "afternoon"
+   ],
+   "visitDuration": {
+    "minutes": 60,
+    "basis": "category_default",
+    "confidence": 0.4
+   },
+   "openingHours": {
+    "basis": "unknown",
+    "confidence": 0
+   },
+   "accessibility": {
+    "wheelchair": "unknown"
+   },
+   "fee": "free",
+   "source": {
+    "name": "OpenStreetMap",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "url": "https://www.openstreetmap.org/node/1",
+    "checkedAt": "2026-10-17"
+   }
+  },
+  {
+   "id": "osm:node/9",
+   "name": "Veg Thali House",
+   "destination": "goa",
+   "location": {
+    "lat": 15.54,
+    "lon": 73.81
+   },
+   "category": "restaurant",
+   "interests": [
+    "food"
+   ],
+   "indoor": true,
+   "kidFriendly": false,
+   "goodSlots": [],
+   "visitDuration": {
+    "minutes": 120,
+    "basis": "category_default",
+    "confidence": 0.4
+   },
+   "openingHours": {
+    "basis": "unknown",
+    "confidence": 0
+   },
+   "accessibility": {
+    "wheelchair": "unknown"
+   },
+   "fee": "unknown",
+   "source": {
+    "name": "OpenStreetMap",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "url": "https://www.openstreetmap.org/node/1",
+    "checkedAt": "2026-10-17"
+   },
+   "diet": [
+    "vegetarian",
+    "jain"
+   ]
+  },
+  {
+   "id": "osm:node/50",
+   "name": "Distant Falls",
+   "destination": "goa",
+   "location": {
+    "lat": 14.2,
+    "lon": 74.4
+   },
+   "category": "waterfall",
+   "interests": [
+    "nature"
+   ],
+   "indoor": false,
+   "kidFriendly": false,
+   "goodSlots": [
+    "morning",
+    "afternoon"
+   ],
+   "visitDuration": {
+    "minutes": 120,
+    "basis": "category_default",
+    "confidence": 0.4
+   },
+   "openingHours": {
+    "basis": "unknown",
+    "confidence": 0
+   },
+   "accessibility": {
+    "wheelchair": "unknown"
+   },
+   "fee": "unknown",
+   "source": {
+    "name": "OpenStreetMap",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "url": "https://www.openstreetmap.org/node/1",
+    "checkedAt": "2026-10-17"
+   },
+   "wikidata": "Q50"
+  },
+  {
+   "id": "osm:node/60",
+   "name": "Harbour Fish Market",
+   "destination": "goa",
+   "location": {
+    "lat": 15.5,
+    "lon": 73.82
+   },
+   "category": "market",
+   "interests": [
+    "shopping",
+    "food"
+   ],
+   "indoor": false,
+   "kidFriendly": false,
+   "goodSlots": [
+    "morning",
+    "afternoon"
+   ],
+   "visitDuration": {
+    "minutes": 90,
+    "basis": "category_default",
+    "confidence": 0.4
+   },
+   "openingHours": {
+    "basis": "unknown",
+    "confidence": 0
+   },
+   "accessibility": {
+    "wheelchair": "unknown"
+   },
+   "fee": "unknown",
+   "source": {
+    "name": "OpenStreetMap",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "url": "https://www.openstreetmap.org/node/1",
+    "checkedAt": "2026-10-17"
+   },
+   "wikidata": "Q60"
+  },
+  {
+   "id": "osm:node/70",
+   "name": "Little Zoo",
+   "destination": "goa",
+   "location": {
+    "lat": 15.51,
+    "lon": 73.82
+   },
+   "category": "zoo",
+   "interests": [
+    "wildlife"
+   ],
+   "indoor": false,
+   "kidFriendly": true,
+   "goodSlots": [
+    "morning",
+    "afternoon"
+   ],
+   "visitDuration": {
+    "minutes": 150,
+    "basis": "category_default",
+    "confidence": 0.4
+   },
+   "openingHours": {
+    "basis": "osm",
+    "raw": "Tu-Su 09:00-17:00",
+    "weekly": [
+     [],
+     [
+      [
+       540,
+       1020
+      ]
+     ],
+     [
+      [
+       540,
+       1020
+      ]
+     ],
+     [
+      [
+       540,
+       1020
+      ]
+     ],
+     [
+      [
+       540,
+       1020
+      ]
+     ],
+     [
+      [
+       540,
+       1020
+      ]
+     ],
+     [
+      [
+       540,
+       1020
+      ]
+     ]
+    ],
+    "confidence": 0.7
+   },
+   "accessibility": {
+    "wheelchair": "yes"
+   },
+   "fee": "unknown",
+   "source": {
+    "name": "OpenStreetMap",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "url": "https://www.openstreetmap.org/node/1",
+    "checkedAt": "2026-10-17"
+   }
+  },
+  {
+   "id": "osm:node/80",
+   "name": "Harbour Gallery",
+   "destination": "goa",
+   "location": {
+    "lat": 15.52,
+    "lon": 73.82
+   },
+   "category": "gallery",
+   "interests": [
+    "culture"
+   ],
+   "indoor": true,
+   "kidFriendly": false,
+   "goodSlots": [
+    "morning",
+    "afternoon"
+   ],
+   "visitDuration": {
+    "minutes": 75,
+    "basis": "category_default",
+    "confidence": 0.4
+   },
+   "openingHours": {
+    "basis": "unknown",
+    "confidence": 0
+   },
+   "accessibility": {
+    "wheelchair": "yes"
+   },
+   "fee": "free",
+   "source": {
+    "name": "OpenStreetMap",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "url": "https://www.openstreetmap.org/node/1",
+    "checkedAt": "2026-10-17"
+   }
+  }
+ ]
+}

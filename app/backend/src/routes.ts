@@ -16,8 +16,7 @@ import type { ItineraryDraft } from './domain/itinerary.js';
 import type { TravelerProfile } from './domain/profile.js';
 import type { TripContext } from './domain/trip.js';
 import { gatherInsights } from './services/insightsService.js';
-import { buildItinerary } from './services/itineraryService.js';
-import { repairItinerary } from './services/itineraryValidator.js';
+import { buildCheckedPlan } from './services/planBuilder.js';
 import { checkIntro, fallbackIntro, introRequest, renderItinerary } from './services/presentation.js';
 import { buildSystemPrompt } from './prompts.js';
 import { chatCompletion, runTurn, trimHistory, type PendingBooking, type ToolBackend, type Turn } from './modelClient.js';
@@ -313,17 +312,10 @@ function sessionTools(ctx: RequestContext, sessionId: string): ToolBackend {
   };
 }
 
-/** This trip's revisions ("make it cheaper", "slower") applied over the saved profile, which stays unchanged. */
-const forThisTrip = (p: TravelerProfile, t: TripContext): TravelerProfile => ({
-  ...p, ...(t.paceOverride ? { travelStyle: t.paceOverride } : {}), ...(t.budgetStyleOverride ? { budgetStyle: t.budgetStyleOverride } : {}),
-});
-
 async function planItinerary(p: { ctx: RequestContext; trip: TripContext; profile: TravelerProfile; history: Turn[]; userText: string; places: PlaceSet; signal: AbortSignal; threadId?: number }) {
   const insights = await (p.ctx.insights ?? ((trip, at) => gatherInsights({ trip, at, now: new Date() })))(p.trip, p.places.center);
-  const profile = forThisTrip(p.profile, p.trip);
   const pois = p.places.pois;
-  const built = buildItinerary({ trip: p.trip, profile, insights, pointsOfInterest: pois, version: p.trip.itineraryVersion + 1, excluded: p.trip.excludedPoiIds, dayPace: p.trip.dayPace });
-  const draft = repairItinerary(built, { pois: new Map(pois.map((x) => [x.id, x])), trip: p.trip, profile, insights, dayPace: p.trip.dayPace }).draft;
+  const { draft, profile } = buildCheckedPlan({ trip: p.trip, profile: p.profile, insights, pois });
 
   let intro = fallbackIntro(draft, profile, p.trip);
   try {
