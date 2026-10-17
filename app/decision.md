@@ -77,3 +77,11 @@ Decisions log — newest at bottom. Never delete an entry; strike through if rev
 - The assistant is Kodi: the server greeting no longer uses another company's persona.
 - Replies are plain text with no emojis (`toPlainText` in harness.ts). The frontend renders plain text, and its design rules ban emojis. Stripping in code keeps the trained prompt unchanged.
 - oxlint (the frontend's linter) now runs on the backend and the client, in CI too.
+
+## D-013 — Planning flow: profile, trip context and a question budget (Phase 1)
+- **Goal:** a first plan within three to four customer messages, personalised by a reusable profile.
+- **Profile vs trip:** preferences that carry over (pace, budget style, interests, dislikes, diet, mobility, stay type, home city) live in a per-user profile; the facts of one trip live per thread. Until accounts exist, the session is the user. Both are JSON in SQLite (`profiles`, `trips`).
+- **Merge rules:** explicit beats inferred; the newest explicit value wins; an item moves between interests and dislikes; an inferred item never displaces an explicit opposite. API edits replace lists and reject unknown fields.
+- **Deterministic parsing, not the model:** the 0.8B model isn't trained for JSON extraction, so destination (from `travel/kb.py`'s place list, exported to `data/places.json` and kept in sync by a test), dates, duration, party, budget, purpose and preferences are parsed with rules.
+- **Router:** at most three questions, most useful field first; one refinement question; one trade-off question for conflicts. Questions are answered without a model call (instant, and the budget is guaranteed). The draft is written by the model with a plain-language summary added to the customer's message for that call only, so the trained system prompt stays exactly as it was. Side questions, searches, bookings and revisions go to the model unchanged.
+- **Not in Phase 1:** POI-based feasibility, live insights, accounts, Postgres, fine-tuning, the full release suite, frontend changes.

@@ -1,0 +1,56 @@
+{
+  "today": "2026-10-14",
+  "scenarios": [
+    {
+      "name": "everything in one message: plan at once",
+      "turns": ["Plan a 4 day Goa trip in December for 2, budget 1 lakh"],
+      "expect": { "draftOnTurn": 1, "asked": [], "briefIncludes": ["destination Goa", "4 days", "2 travellers", "₹1,00,000 in total"] }
+    },
+    {
+      "name": "happy path in three messages",
+      "turns": ["Plan a trip to Goa", "December, 5 days, me and my wife", "around 80k"],
+      "expect": { "draftOnTurn": 3, "asked": ["when", "budget"], "briefIncludes": ["budget ₹80,000 in total", "2 travellers (couple)"] }
+    },
+    {
+      "name": "vague answers: still a plan on the fourth message",
+      "turns": ["plan a trip", "not sure", "no idea", "whatever"],
+      "expect": { "draftOnTurn": 4, "asked": ["destination", "when", "travelers"], "assumptionsInclude": ["suggest two or three destinations that fit", "2 travellers"] }
+    },
+    {
+      "name": "returning traveller: saved pace and interests are not asked again",
+      "profile": { "travelStyle": "relaxed", "interests": ["beach"], "dietaryNeeds": ["vegetarian"] },
+      "turns": ["Plan a trip to Goa", "December for 2", "50k total"],
+      "expect": { "draftOnTurn": 3, "neverAsk": ["pace", "interests"], "firstReplyIncludes": "I'll use your saved preferences", "briefIncludes": ["pace: relaxed", "likes: beach", "diet: vegetarian"] }
+    },
+    {
+      "name": "correction mid-way: the newest party size wins",
+      "turns": ["Plan Goa for 2 in December", "actually we are 3 people"],
+      "expect": { "draftOnTurn": 1, "finalTrip": { "travelers": 3 } }
+    },
+    {
+      "name": "luxury on a small budget: one trade-off question",
+      "turns": ["Luxury trip to Goa for 2, 5 days in December, budget 20k", "keep the budget, comfortable stays are fine"],
+      "expect": { "draftOnTurn": 2, "asked": ["tradeoff:luxury_budget"] }
+    },
+    {
+      "name": "contradictory pace: ask which",
+      "turns": ["Goa for 2 in December, relaxed but we also want to see everything", "relaxed"],
+      "expect": { "draftOnTurn": 2, "asked": ["tradeoff:pace"], "briefIncludes": ["pace: relaxed"] }
+    },
+    {
+      "name": "a side question does not use up the question budget",
+      "turns": ["Plan a trip to Goa", "Is Goa safe in the monsoon?", "December for 2", "50k"],
+      "expect": { "draftOnTurn": 4, "asked": ["when", "budget"], "conversedOnTurns": [2] }
+    },
+    {
+      "name": "Hinglish: everything in one message",
+      "turns": ["hum 2 log hain, Goa jana hai December mein"],
+      "expect": { "draftOnTurn": 1, "briefIncludes": ["destination Goa", "2 travellers", "dates December"] }
+    },
+    {
+      "name": "per-person budget for a family",
+      "turns": ["Kerala for a family of 4, a week in January, under 30k per person"],
+      "expect": { "draftOnTurn": 1, "briefIncludes": ["destination Kerala", "7 days", "4 travellers (family)", "budget ₹30,000 per person"] }
+    }
+  ]
+}

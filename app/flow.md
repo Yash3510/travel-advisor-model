@@ -37,3 +37,7 @@ Build flow, recorded as it happens.
 ## Stage 6 — Production hardening (DONE)
 - Fixed install, moved guardrails into code, session-scoped threads, persisted offers + booking requests, rate limits, CORS allowlist, Docker + CI. See decision.md D-010.
 - Tests: guardrails, tools and the full HTTP flow against a stub model server.
+
+## Stage 7 — Planning flow, Phase 1 (DONE)
+- Traveler profile with merge rules and endpoints, deterministic parsing, trip context, and the three-to-four message planner. See decision.md D-013.
+- Ten planner scenarios in `app/eval/scenarios/`, run in the backend tests.

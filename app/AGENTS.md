@@ -48,6 +48,9 @@ Production: `docker compose up -d --build` (see README). Config is env vars, all
 4. `POST /api/events/track` → `{"ok":true}` (accepts anything).
 5. `POST /api/confirm` — `{"sessionId","threadId","offerId","travelers"?}` → `{"status":"PENDING_SUPPLIER_CONFIRMATION","bookingRef":"BK-…","offer":{…},"message":"…"}` — never fabricates "confirmed". `sessionId` is required: thread ids are sequential and deal ids are public, so the session must own the thread. `offerId` is a tool `offer_id` or a deal's `campaignItineraryId` shown in that thread; anything else is 404. Repeating a request returns the same `bookingRef`. `message` comes from a status template and is also added to the thread, so the model (via `get_booking`) knows the request is pending.
 6. `GET /api/threads/:id/messages?sessionId=` → `{"messages":[{"role","content","createdAt"}]}` (additive) — 404 unless the thread belongs to that session.
+7. `GET /api/profile?sessionId=` → `{"profile":{…}}`; `PATCH /api/profile` `{"sessionId", "travelStyle"?, "budgetStyle"?, "homeCity"?, "interests"?, "dislikes"?, "dietaryNeeds"?, "mobilityNeeds"?, "accommodationPreferences"?}` → `{"profile"}` (lists given are replaced, `null` clears a field, unknown fields or values → 400 `invalid_profile`); `POST /api/profile/reset` `{"sessionId"}` → empty profile. Unknown session → 404. The session is the user until accounts exist (additive).
+8. `GET /api/threads/:id/trip?sessionId=` → `{"trip":{destination, origin, startDate, endDate, month, durationDays, travelers, travelerTypes, purpose, budgetInr, budgetPerPerson, asked, planningTurns, status}}` — 404 unless that session's thread (additive).
+9. `done` carries an additive `"planning":{"state","action","field"?,"assumptions":[…],"missing":[…]}`. `action` is `ask` (the planner asked a question itself), `draft` (the model wrote the first plan) or `converse`. `state` is `trip_basics`, `profile_context`, `high_value_refinement`, `draft_ready` or `revision`.
 
 ### Deal object shape (frontend must render these keys)
 
@@ -68,10 +71,21 @@ Categories code: region codes follow ISO-3 (idn, jpn, tha, are, mdv, sgp) in `ba
 ## Non-negotiable backend rules (reason in decision.md)
 
 1. **The model never states a price/unverified number.** Prices only enter the conversation through tool results (tools.ts, deterministic mock inventory) or catalog deals. Enforced by `gatePrices` in harness.ts: unbacked amounts become "(price to be confirmed)".
-2. **Bookings are never made by the model.** /api/confirm is the only path, and it always says PENDING. "Book it" messages get `bookingSummary` (no model call); `create_booking` returns `NOT_ALLOWED`.
+2. **Bookings are never made by the model.** /api/confirm is the only path, and it always says PENDING. A model `create_booking` call is held as a confirmation summary built from the offer (`pendingBooking`); only the Confirm button reaches the supplier.
 3. **PII is redacted before the model or storage see it** (card, CVV, OTP, Aadhaar, PAN, passport, email, phone) and thread titles are built from redacted text. Card/ID removal prepends a notice to the reply.
 4. **Emergency phrases** (a deliberately narrow list from the model's harness, incl. Hinglish) skip the model, raise an urgent `handoff_to_human` and reply with a fixed "call 112" message. "Missed my flight" or "booked by accident" must not trigger it.
 5. `POST /api/chat` streams `destination_selected` → `campaign_deals` → `done` in one response, then closes. Never keep the stream open.
+
+## Planning flow (first plan within three to four messages)
+
+`services/promptRouter.ts`, `domain/extract.ts`, `domain/profile.ts`, `domain/trip.ts`:
+
+- Every message is parsed **without the model** (destination, origin, dates, month, duration, party, budget, purpose, and preferences for the profile). The 0.8B model is not used for structured extraction.
+- The **profile** (per session) keeps reusable preferences: pace, budget style, interests, dislikes, diet, mobility, stay type, home city. Explicit statements beat inferred ones; the newest explicit statement wins. The **trip** (per thread) keeps that trip's facts.
+- The planner asks **at most three questions** per trip, most useful first (destination, when, who; then one of budget, pace, interests). It skips anything already known from the trip or the saved profile, and says which saved preferences it is using. Luxury stays on a small budget, or a contradictory pace, get one trade-off question.
+- Its questions are answered **without a model call**. When it has enough (or has used its questions), the model writes the plan: a plain-language summary of the trip and the stated assumptions is added to the customer's message for that call only. The **system prompt is never changed**, and the stored message stays as typed.
+- Side questions, searches, bookings, and edits after the first plan go to the model as before and don't use up questions.
+- Scenarios for this flow live in `app/eval/scenarios/` and run in the backend tests.
 
 ## Adding a destination
 
@@ -82,6 +96,7 @@ Edit `backend/data/catalog.json`: add a `{name, code, aliases[], currency, deals
 ```bash
 cd backend && npm test      # guardrails, tools, the full HTTP flow and the frontend client against a stub model server
 npm run lint && npm run typecheck   # oxlint (as in the frontend repo) and tsc for the backend and client/
+npx vitest run test/eval-scenarios.test.ts   # the planning-flow scenarios in app/eval/scenarios/
 ```
 
 Manual smoke test (start the stack first):
