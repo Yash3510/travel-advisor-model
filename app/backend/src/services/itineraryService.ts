@@ -59,7 +59,7 @@ function score(p: PointOfInterest, trip: TripContext, profile: TravelerProfile, 
   if ((purpose === 'honeymoon' || purpose === 'anniversary') && ['beach', 'viewpoint'].includes(p.category)) { s += 1; matched.push(`suits a ${purpose}`); }
   if (purpose === 'pilgrimage' && p.category === 'place_of_worship') { s += 3; matched.push('suits a pilgrimage'); }
   if (purpose === 'adventure' && ['theme_park', 'waterfall', 'nature_reserve'].includes(p.category)) { s += 1.5; matched.push('suits an adventure trip'); }
-  if ((purpose === 'relaxation' || pace === 'relaxed') && ['beach', 'park'].includes(p.category)) { s += 0.5; matched.push('unhurried'); }
+  if ((purpose === 'relaxation' || pace === 'relaxed') && ['beach', 'park'].includes(p.category)) { s += 0.5; matched.push('suits a relaxed pace'); }
   if (pace === 'packed' && p.visitDuration.minutes <= 90) s += 0.5;
   const thrifty = profile.budgetStyle === 'budget' || profile.budgetStyle === 'value';
   if (p.fee === 'free') { s += thrifty ? 1 : 0.2; matched.push('free entry'); }

@@ -25,6 +25,9 @@ describe('renderItinerary', () => {
     expect(text).toContain('Not checked: events');
     expect(text).toContain('© OpenStreetMap contributors');
     expect(text).toMatch(/Then about \d+ min to the next stop \(estimated\)\./);
+    // every reason reads after the label, whatever its wording ("suits a honeymoon", "free entry")
+    expect(text).toMatch(/Why: (?:your interest in|suits a)/);
+    expect(text).not.toMatch(/\bFor (?:suits|free|unhurried|good for)/);
     expect(text).not.toMatch(/(?![©®™])\p{Extended_Pictographic}/u);
   });
 });

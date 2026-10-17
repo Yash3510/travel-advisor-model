@@ -23,7 +23,7 @@ function itemLine(i: ItineraryItem): string {
   const parts = [`• ${i.start}–${i.end} ${i.title}`];
   if (i.kind === 'activity') {
     parts.push(`(about ${minutes(i.durationMinutes)})`);
-    if (i.why?.matched.length) parts.push(`${sentence(`For ${joinAnd(i.why.matched)}`)}`);
+    if (i.why?.matched.length) parts.push(sentence(`Why: ${i.why.matched.join(', ')}`));
     if (i.hours === 'unknown') parts.push('Opening hours not published.');
     if (i.costInr !== undefined) parts.push(`Entry about ${inr(i.costInr)} for the group.`);
     for (const n of i.notes) parts.push(sentence(n));
