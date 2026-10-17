@@ -1,8 +1,11 @@
 # Production-style stack: model server + backend. The frontend deploys separately.
-# The .gguf goes in ../models/trained-v2-gguf/ (./setup.sh downloads it).
+# The .gguf goes in ../models/trained-v2-gguf/ (./setup.sh downloads it). Place files come from
+# `npm run data:import -- goa` (backend/data/poi); POI_DIR and GUIDE_HOST_DIR point elsewhere.
+# scripts/docker-smoke.sh builds, runs and checks the stack; --stub swaps in a stub model (docker-compose.smoke.yml).
 services:
   model:
-    image: ghcr.io/ggml-org/llama.cpp:server
+    # the llama.cpp server build this stack was verified with (b11706); change it deliberately, then rerun scripts/docker-smoke.sh
+    image: ghcr.io/ggml-org/llama.cpp:server@sha256:f41d47eee678c02656eefc9ed8cce76cab584aa7032805eeef0e6639fcfda485
     command: ["-m", "/models/travel-advisor-qwen3.5-0.8b-v2-Q8_0.gguf", "-c", "16384", "--jinja", "--host", "0.0.0.0", "--port", "8081"]
     volumes: ["../models/trained-v2-gguf:/models:ro"]
     healthcheck:
@@ -22,13 +25,26 @@ services:
       TRUST_PROXY: ${TRUST_PROXY:-0}
       # weather: the free Open-Meteo API is non-commercial; production needs a paid key (docs/data-sources.md)
       OPEN_METEO_API_KEY: ${OPEN_METEO_API_KEY:-}
+      WEATHER: ${WEATHER:-on}
+      # road times between stops: a self-hosted OSRM server (docs/data-sources.md); empty = labelled estimates
+      ROUTING_URL: ${ROUTING_URL:-}
+      ROUTING_TIMEOUT_MS: ${ROUTING_TIMEOUT_MS:-2000}
       GUIDE_DIR: /guide
     ports: ["5590:5590"]
     volumes:
       - backend-data:/data
-      # place files from `npm run data:import -- <region>` (ODbL) and the cached Wikivoyage guide (CC BY-SA)
-      - ./backend/data/poi:/app/data/poi:ro
-      - ../data/raw/wikivoyage:/guide:ro
+      # place files from `npm run data:import -- <region>` (ODbL) and the cached Wikivoyage guide (CC BY-SA).
+      # A missing source directory is an error, not an empty mount; /ready reports missing files inside it.
+      - type: bind
+        source: ${POI_DIR:-./backend/data/poi}
+        target: /app/data/poi
+        read_only: true
+        bind: { create_host_path: false }
+      - type: bind
+        source: ${GUIDE_HOST_DIR:-../data/raw/wikivoyage}
+        target: /guide
+        read_only: true
+        bind: { create_host_path: false }
     depends_on:
       model:
         condition: service_healthy

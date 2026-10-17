@@ -110,7 +110,13 @@ cd backend && npm test      # guardrails, tools, the full HTTP flow and the fron
 npm run lint && npm run typecheck   # oxlint (as in the frontend repo) and tsc for the backend and client/
 npx vitest run test/eval-scenarios.test.ts test/eval-itinerary.test.ts   # app/eval/scenarios/ (planner and itinerary)
 npm run data:import -- goa   # refresh Goa's places from OpenStreetMap (light use of the public Overpass API)
+../scripts/docker-smoke.sh --stub   # the image and Compose stack end to end with a stub model (CI runs this too)
+../scripts/docker-smoke.sh          # the same with the real model weights and imported place data
 ```
+
+The CI container test uses a stub model and the synthetic places in `eval/fixtures/town.json`, because the model weights
+and the OSM-derived place files are not in the repository. It checks the image, mounts, readiness, the wire contract,
+the planner, revisions and persistence; it does not check the model's wording.
 
 Manual smoke test (start the stack first):
 

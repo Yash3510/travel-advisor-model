@@ -1,0 +1,19 @@
+# Overrides for the container smoke test (scripts/docker-smoke.sh --stub, and CI): a stub model that speaks the
+# OpenAI-compatible endpoints the backend uses, so no model weights are needed. Planning, validation, storage and
+# the wire contract are the real code; only the model's short note comes from the stub.
+services:
+  model:
+    image: node:22-bookworm-slim
+    command: ["node", "/stub/stub-model.mjs"]
+    volumes: !override
+      - ./scripts/stub-model.mjs:/stub/stub-model.mjs:ro
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8081/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+      start_period: 2s
+  backend:
+    environment:
+      # no live weather calls from CI
+      WEATHER: "off"

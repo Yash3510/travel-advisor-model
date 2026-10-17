@@ -27,12 +27,22 @@ The files are generated, not committed (see `docs/data-sources.md` for licences 
 ## Production
 
 ```bash
+cd backend && npm run data:import -- goa && cd ..   # place files, mounted read-only into the backend
 docker compose up -d --build   # model server + backend, SQLite on a named volume
-curl -s localhost:5590/ready   # 200 once the model answers
+curl -s localhost:5590/ready   # 200 once the model answers and the place files, guide pages and database are there
 ```
 
-Set `ALLOWED_ORIGINS` to the frontend's origin, and set `TRUST_PROXY=1` behind a reverse
-proxy. The backend image runs compiled JS as a non-root user with a health check.
+The image holds the compiled backend, `catalog.json`, `places.json` and the region list; the place files
+(`POI_DIR`, default `backend/data/poi`) and the guide pages (`GUIDE_HOST_DIR`, default `../data/raw/wikivoyage`)
+are mounted at run time. A missing directory stops Compose; a missing file inside it makes `/ready` return 503 and
+name it. Set `ALLOWED_ORIGINS` to the frontend's origin, `TRUST_PROXY=1` behind a reverse proxy,
+`OPEN_METEO_API_KEY` for weather and `ROUTING_URL` for road times (`docs/data-sources.md`). The backend image runs
+compiled JS as a non-root user with a health check.
+
+```bash
+scripts/docker-smoke.sh          # clean build, real model, four-message plan, revision, restart, then cleanup
+scripts/docker-smoke.sh --stub   # the same with a stub model and synthetic places (what CI runs)
+```
 
 ## API
 

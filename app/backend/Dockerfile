@@ -12,7 +12,8 @@ ENV NODE_ENV=production PORT=5590 DB_PATH=/data/threads.db
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force && mkdir /data && chown node:node /data
 COPY --from=build /app/dist ./dist
-COPY data/catalog.json data/places.json ./data/
+# place files (data/poi) and guide pages are mounted at run time, not baked in (docker-compose.yml)
+COPY data/catalog.json data/places.json data/poi-regions.json data/poi-manifest.json ./data/
 USER node
 VOLUME /data
 EXPOSE 5590
