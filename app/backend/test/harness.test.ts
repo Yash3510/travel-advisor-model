@@ -60,6 +60,9 @@ describe('reply formatting', () => {
     const md = '## Options 🌴\n\n*   **Riverside** – ₹60,900 ✈️\n- Lakeshore 🇮🇳 *quiet*\n\n\n\nEnjoy! 😊';
     expect(toPlainText(md)).toBe('Options\n\n• Riverside – ₹60,900\n• Lakeshore quiet\n\nEnjoy!');
   });
+  it('keeps the © of licence credits', () => {
+    expect(toPlainText('Map data © OpenStreetMap contributors 🌍')).toBe('Map data © OpenStreetMap contributors');
+  });
   it('leaves plain text and numbered lists alone', () => {
     expect(toPlainText('1. Day one\n2. Day two')).toBe('1. Day one\n2. Day two');
   });

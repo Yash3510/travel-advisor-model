@@ -72,7 +72,8 @@ export function gateAssistantOutput(text: string): { text: string; blocked: bool
 
 export function toPlainText(text: string): string {
   return text
-    .replace(/\p{Regional_Indicator}{2}|\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic})*|\uFE0F/gu, '')
+    // emojis, but not © ® ™, which Unicode also counts as pictographs (licence credits need ©)
+    .replace(/\p{Regional_Indicator}{2}|(?![©®™])\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic})*|\uFE0F/gu, '')
     .replace(/^#{1,6}\s+/gm, '') // headings
     .replace(/\*\*(.+?)\*\*|__(.+?)__/g, '$1$2') // bold
     .replace(/^[ \t]*[*+-][ \t]+/gm, '• ') // bullets
