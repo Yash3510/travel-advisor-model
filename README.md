@@ -36,6 +36,7 @@ Integrating it into an app: see [docs/INTEGRATION.md](docs/INTEGRATION.md). Full
 | `train/train_lora.py`, `train/export_gguf.sh` | LoRA training (Unsloth) and GGUF export |
 | `reports/` | Dataset reports, manual review rejects, evaluation reports |
 | `eval/results/` | Raw answers and scores of every model tested |
+| `app/` | Takeoff, the product built on this model: Node backend (chat API, guardrails, booking flow), typed frontend client, Docker and CI. See [app/README.md](app/README.md) |
 
 ## Results
 

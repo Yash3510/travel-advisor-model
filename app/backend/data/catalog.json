@@ -1,0 +1,259 @@
+{
+  "regions": [
+    {
+      "name": "Bali", "code": "idn",
+      "aliases": ["bali", "indonesia", "ubud", "seminyak", "canggu", "nusa penida", "kuta"],
+      "currency": "₹",
+      "deals": [
+        {
+          "campaignItineraryId": "tak-bali-story-001",
+          "sourceItineraryId": "src-bali-story-001",
+          "title": "6 Night Bali Complete Story: At ₹50K per Person",
+          "image": "https://d3lf10b5gahyby.cloudfront.net/city/bali.jpg",
+          "images": [
+            "https://d3lf10b5gahyby.cloudfront.net/city/bali.jpg",
+            "https://d3lf10b5gahyby.cloudfront.net/city/ubud.jpg"
+          ],
+          "destinationString": "Ubud,Kuta",
+          "nights": 6,
+          "tripType": "Honeymoon",
+          "itineraryCost": 51401,
+          "itineraryCostWithoutFlights": 48126.117,
+          "hotelStarRating": 4,
+          "slug": "itineraries/bali-complete-story-wellness-wonders-6n",
+          "pills": [],
+          "numBookings": 538,
+          "strikedCost": 64251,
+          "dealDiscountPercentage": 20,
+          "cityHotelStay": [
+            { "cityName": "Ubud", "hotelName": "Danakha Villa Ubud", "nights": 3, "hotelImages": [] },
+            { "cityName": "Ubud", "hotelName": "Purana Boutique Resort", "nights": 3, "hotelImages": [] },
+            { "cityName": "Kuta", "hotelName": "Cross Vibe Paasha Atelier Bali Kuta", "nights": 3, "hotelImages": [] },
+            { "cityName": "Kuta", "hotelName": "Harper Kuta by Aston", "nights": 3, "hotelImages": [] }
+          ],
+          "activities": [
+            "West Nusa Penida Tour with One point snorkelling and complimentary Indian Lunch",
+            "Tirta Empul & Goa Gajah Tour with Silver Jewellery Making and Aloha Swing Experience",
+            "South Bali Coastal Escape with GWK Buggy Access & Priority Kecak Dance",
+            "Balinese Sound Healing Experience with Traditional Lunch",
+            "Tandem ATV + Rafting & Monkey Forest Tour"
+          ],
+          "highlights": [],
+          "regionName": "Bali",
+          "regionCode": "idn",
+          "type": "ON_SALE",
+          "unityOptions": [],
+          "fixedItineraryDetails": null,
+          "perPersonCostByOption": {}
+        }
+      ]
+    },
+    {
+      "name": "Japan", "code": "jpn",
+      "aliases": ["japan", "tokyo", "osaka", "kyoto", "mount fuji"],
+      "currency": "₹",
+      "deals": [
+        {
+          "campaignItineraryId": "tak-japan-blossom-001",
+          "sourceItineraryId": "src-japan-blossom-001",
+          "title": "Cherry Blossom Across Twin Cities – 5 Nights to Tokyo & Osaka",
+          "image": "https://d3lf10b5gahyby.cloudfront.net/city/tokyo.jpg",
+          "images": ["https://d3lf10b5gahyby.cloudfront.net/city/tokyo.jpg"],
+          "destinationString": "Tokyo,Osaka",
+          "nights": 5,
+          "tripType": "Honeymoon",
+          "itineraryCost": 169624.5,
+          "itineraryCostWithoutFlights": 169624.5,
+          "hotelStarRating": 3.5,
+          "slug": "itineraries/twin-delights-getaway-5-nights-to-tokyo-osaka",
+          "pills": [],
+          "numBookings": 477,
+          "strikedCost": 0,
+          "dealDiscountPercentage": 0,
+          "cityHotelStay": [
+            { "cityName": "Tokyo", "hotelName": "Business Hotel La Firenze", "nights": 3, "hotelImages": [] },
+            { "cityName": "Osaka", "hotelName": "Precious Terrace", "nights": 2, "hotelImages": [] }
+          ],
+          "activities": [
+            "Tokyo: Meiji Shrine, Asakusa, Skytree Bus Tour and Cruise",
+            "Osaka/Kyoto: Arashiyama, Nara Park & Fushimi Inari Day Tour",
+            "Tokyo: Mt Fuji & Hakone Ropeway, Lake Ashi Cruise, Owakudani"
+          ],
+          "highlights": [],
+          "regionName": "Japan",
+          "regionCode": "jpn",
+          "type": "ON_SALE",
+          "unityOptions": [],
+          "fixedItineraryDetails": null,
+          "perPersonCostByOption": {}
+        }
+      ]
+    },
+    {
+      "name": "Thailand", "code": "tha",
+      "aliases": ["thailand", "phuket", "krabi", "bangkok", "ko samui", "ko chang"],
+      "currency": "₹",
+      "deals": [
+        {
+          "campaignItineraryId": "tak-thai-island-001",
+          "sourceItineraryId": "src-thai-island-001",
+          "title": "6 Night Thailand Island Hopping: At ₹65K per Person",
+          "image": "https://d3lf10b5gahyby.cloudfront.net/city/phuket.jpg",
+          "images": ["https://d3lf10b5gahyby.cloudfront.net/city/phuket.jpg"],
+          "destinationString": "Phuket,Krabi",
+          "nights": 6,
+          "tripType": "Adventure",
+          "itineraryCost": 64999,
+          "itineraryCostWithoutFlights": 58999,
+          "hotelStarRating": 4,
+          "slug": "itineraries/thailand-island-hopping-6n",
+          "pills": [],
+          "numBookings": 621,
+          "strikedCost": 78999,
+          "dealDiscountPercentage": 18,
+          "cityHotelStay": [
+            { "cityName": "Phuket", "hotelName": "Dusit Thani Laguna Phuket", "nights": 3, "hotelImages": [] },
+            { "cityName": "Krabi", "hotelName": "Buri Tara Resort", "nights": 3, "hotelImages": [] }
+          ],
+          "activities": [
+            "Phi Phi Island speedboat excursion with lunch",
+            "James Bond Island day trip from Phuket",
+            "4 Islands tour from Krabi with sunset dinner",
+            "Half-day Krabi rock climbing session"
+          ],
+          "highlights": [],
+          "regionName": "Thailand",
+          "regionCode": "tha",
+          "type": "UNITY",
+          "unityOptions": [],
+          "fixedItineraryDetails": null,
+          "perPersonCostByOption": {}
+        }
+      ]
+    },
+    {
+      "name": "Dubai", "code": "are",
+      "aliases": ["dubai", "uae", "abu dhabi"],
+      "currency": "₹",
+      "deals": [
+        {
+          "campaignItineraryId": "tak-dubai-family-001",
+          "sourceItineraryId": "src-dubai-family-001",
+          "title": "5 Night Dubai Family Adventure: At ₹75K per Person",
+          "image": "https://d3lf10b5gahyby.cloudfront.net/city/dubai.jpg",
+          "images": ["https://d3lf10b5gahyby.cloudfront.net/city/dubai.jpg"],
+          "destinationString": "Dubai",
+          "nights": 5,
+          "tripType": "Family",
+          "itineraryCost": 74999,
+          "itineraryCostWithoutFlights": 67999,
+          "hotelStarRating": 4,
+          "slug": "itineraries/dubai-family-adventure-5n",
+          "pills": [],
+          "numBookings": 807,
+          "strikedCost": 92999,
+          "dealDiscountPercentage": 19,
+          "cityHotelStay": [
+            { "cityName": "Dubai", "hotelName": "Rove Downtown", "nights": 3, "hotelImages": [] },
+            { "cityName": "Dubai", "hotelName": "Novotel Deira", "nights": 2, "hotelImages": [] }
+          ],
+          "activities": [
+            "Burj Khalifa levels 124 & 125 with sunset transfer",
+            "Desert safari with dinner & entertainment",
+            "Aquaventure waterpark day pass",
+            "Abu Dhabi city tour with Ferrari World option"
+          ],
+          "highlights": [],
+          "regionName": "Dubai",
+          "regionCode": "are",
+          "type": "UNITY",
+          "unityOptions": [],
+          "fixedItineraryDetails": null,
+          "perPersonCostByOption": {}
+        }
+      ]
+    },
+    {
+      "name": "Maldives", "code": "mdv",
+      "aliases": ["maldives", "male", "overwater villa"],
+      "currency": "₹",
+      "deals": [
+        {
+          "campaignItineraryId": "tak-mald-overwater-001",
+          "sourceItineraryId": "src-mald-overwater-001",
+          "title": "5 Night Maldives Overwater Escape: At ₹1.2L per Person",
+          "image": "https://d3lf10b5gahyby.cloudfront.net/city/maldives.jpg",
+          "images": ["https://d3lf10b5gahyby.cloudfront.net/city/maldives.jpg"],
+          "destinationString": "Male",
+          "nights": 5,
+          "tripType": "Honeymoon",
+          "itineraryCost": 119999,
+          "itineraryCostWithoutFlights": 99999,
+          "hotelStarRating": 5,
+          "slug": "itineraries/maldives-overwater-escape-5n",
+          "pills": [],
+          "numBookings": 312,
+          "strikedCost": 149999,
+          "dealDiscountPercentage": 20,
+          "cityHotelStay": [
+            { "cityName": "Male", "hotelName": "Overwater Villas Resort", "nights": 5, "hotelImages": [] }
+          ],
+          "activities": [
+            "Sunset dolphin cruise",
+            "Sandbar picnic with photoshoot",
+            "Floating breakfast experience",
+            "Couple's spa session over the lagoon"
+          ],
+          "highlights": [],
+          "regionName": "Maldives",
+          "regionCode": "mdv",
+          "type": "ON_SALE",
+          "unityOptions": [],
+          "fixedItineraryDetails": null,
+          "perPersonCostByOption": {}
+        }
+      ]
+    },
+    {
+      "name": "Singapore", "code": "sgp",
+      "aliases": ["singapore", "sentosa", "marina bay"],
+      "currency": "₹",
+      "deals": [
+        {
+          "campaignItineraryId": "tak-sg-kids-001",
+          "sourceItineraryId": "src-sg-kids-001",
+          "title": "4 Night Singapore with Kids: At ₹70K per Person",
+          "image": "https://d3lf10b5gahyby.cloudfront.net/city/singapore.jpg",
+          "images": ["https://d3lf10b5gahyby.cloudfront.net/city/singapore.jpg"],
+          "destinationString": "Singapore",
+          "nights": 4,
+          "tripType": "Family",
+          "itineraryCost": 69999,
+          "itineraryCostWithoutFlights": 62999,
+          "hotelStarRating": 4,
+          "slug": "itineraries/singapore-with-kids-4n",
+          "pills": [],
+          "numBookings": 546,
+          "strikedCost": 0,
+          "dealDiscountPercentage": 0,
+          "cityHotelStay": [
+            { "cityName": "Singapore", "hotelName": "Mercure Singapore on Stevens", "nights": 4, "hotelImages": [] }
+          ],
+          "activities": [
+            "Universal Studios Singapore full-day pass",
+            "S.E.A. Aquarium & Adventure Cove combo",
+            "Gardens by the Bay with Cloud Forest",
+            "Sentosa cable car and luge combo"
+          ],
+          "highlights": [],
+          "regionName": "Singapore",
+          "regionCode": "sgp",
+          "type": "UNITY",
+          "unityOptions": [],
+          "fixedItineraryDetails": null,
+          "perPersonCostByOption": {}
+        }
+      ]
+    }
+  ]
+}

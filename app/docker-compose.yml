@@ -1,0 +1,30 @@
+# Production-style stack: model server + backend. The frontend deploys separately.
+# The .gguf goes in ../models/trained-v2-gguf/ (./setup.sh downloads it).
+services:
+  model:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    command: ["-m", "/models/travel-advisor-qwen3.5-0.8b-v2-Q8_0.gguf", "-c", "16384", "--jinja", "--host", "0.0.0.0", "--port", "8081"]
+    volumes: ["../models/trained-v2-gguf:/models:ro"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8081/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+  backend:
+    build: ./backend
+    environment:
+      MODEL_URL: ${MODEL_URL:-http://model:8081}
+      MODEL_NAME: ${MODEL_NAME:-travel-advisor-v2}
+      MODEL_API_KEY: ${MODEL_API_KEY:-}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
+      TRUST_PROXY: ${TRUST_PROXY:-0}
+    ports: ["5590:5590"]
+    volumes: ["backend-data:/data"]
+    depends_on:
+      model:
+        condition: service_healthy
+    restart: unless-stopped
+volumes:
+  backend-data:

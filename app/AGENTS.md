@@ -1,0 +1,113 @@
+# AGENTS.md — instructions for anyone (or any coding agent) working on the Takeoff app
+
+Started by Rituraj (github.com/riturajthakur1/travel-agent); now lives in `app/` of the model repo. The model itself (training, prompt, tools, harness) is the rest of this repository.
+Read `decision.md` for the "why" behind every choice, and `flow.md` for the build history.
+
+## What this project is
+
+An AI travel-planning chat that replicates the **backend behaviour** of `https://takeoff.wwmib.com/chat` (Pickyourtrail's "Trippie") as closely as possible: exact endpoints, exact SSE event names, exact payload shapes. The frontend is separate (made by a friend) and will be connected to this backend.
+
+## Architecture (do not restructure without permission)
+
+```
+frontend (friend's)  →  backend :5590  →  llama-server :8081 (0.8B v2 fine-tune)
+                          │
+                          ├─ SQLite: backend/data/threads.db (sessions, threads, messages)
+                          └─ catalog.json (mock inventory + deals; stands in for Pickyourtrail's
+                             live OceanJar/Hotelbeds inventory, which we cannot access)
+```
+
+- Frontend and backend are **independent processes**. The backend does not import the frontend and vice versa.
+- The model runs as a **separate llama.cpp process** (`llama-server`). Never load model weights inside backend code.
+
+## Run it
+
+```bash
+./setup.sh   # once: backend deps + model download
+./run.sh     # boots llama-server on :8081 (waits until healthy) and backend on :5590
+# test UI: http://127.0.0.1:5590 (served by src/server.ts when SERVE_TEST_UI=1, which run.sh sets)
+```
+
+Production: `docker compose up -d --build` (see README). Config is env vars, all listed in `backend/.env.example`.
+
+- Restart only llama-server if it was restarted: health probe is `curl http://127.0.0.1:8081/health` → `{"status":"ok"}`.
+- Backend health: `curl http://127.0.0.1:5590/health` (liveness) and `/ready` (503 until the model answers).
+
+## Backend wire contract (must stay EXACTLY this)
+
+1. `POST /api/session` → `{"sessionId":"<uuid>","message":"Session created. Ready to start planning your trip!"}`
+2. `GET /api/threads?sessionId=<id>` → `{"threads":[{"id":1,"title":"...","destination":null,"itineraryId":null,"itineraryMeta":null,"isActive":true,"createdAt":"...","updatedAt":"..."}]}`
+3. `POST /api/chat` — body `{"sessionId","messages":[{"role":"user"|"assistant","content":"","timestamp":null}],"threadId"?}` → SSE (`text/event-stream`), events in order:
+   - `event: destination_selected` `data: {"regionName":"Bali","regionCode":"idn"}` — only the first time a destination is detected
+   - `event: campaign_deals` `data: {"deals":[<deal objects, shape below>]}` — same turn as above
+   - `event: done` `data: {"message":"<full text>","threadId":1}` — ONE event with the full message; there are NO partial/streamed tokens. Typing animation is the client's job.
+   - `event: error` `data: {"message":"...","code":"..."}` — on failure. Codes: `bad_request`, `session_not_found`, `message_too_long`, `thread_busy`, `model_unavailable`.
+   - `done` may also carry (additive) `"offers":[...]`: flight/hotel offers from tools this turn, each with an `offer_id`; and `"pendingBooking":{"offer_id","travelers","total_price_inr"}` when the model wants to book. The message is then a confirmation summary built from the offer (dates, travellers, total with taxes, cancellation terms): show Confirm and Change buttons. Confirm → `/api/confirm`; Change → just send the next message.
+   - While the model works the stream sends SSE comment lines (`: keep-alive`) every 15 s so proxies keep the connection open. Parsers must skip lines starting with `:` (standard SSE). If the client disconnects, the turn is cancelled and nothing is stored.
+   - Validation that happens before streaming returns plain JSON `{"error":{"code","message"}}`: 400 invalid JSON, 413 body over 64 KB, 429 rate limited.
+4. `POST /api/events/track` → `{"ok":true}` (accepts anything).
+5. `POST /api/confirm` — `{"sessionId","threadId","offerId","travelers"?}` → `{"status":"PENDING_SUPPLIER_CONFIRMATION","bookingRef":"BK-…","offer":{…},"message":"…"}` — never fabricates "confirmed". `sessionId` is required: thread ids are sequential and deal ids are public, so the session must own the thread. `offerId` is a tool `offer_id` or a deal's `campaignItineraryId` shown in that thread; anything else is 404. Repeating a request returns the same `bookingRef`. `message` comes from a status template and is also added to the thread, so the model (via `get_booking`) knows the request is pending.
+6. `GET /api/threads/:id/messages?sessionId=` → `{"messages":[{"role","content","createdAt"}]}` (additive) — 404 unless the thread belongs to that session.
+
+### Deal object shape (frontend must render these keys)
+
+`campaignItineraryId, sourceItineraryId, title, image, images[], destinationString, nights, tripType, itineraryCost, itineraryCostWithoutFlights, hotelStarRating, slug, pills, numBookings, strikedCost, dealDiscountPercentage, cityHotelStay[{cityName,hotelName,nights,hotelImages[]}], activities[], highlights[], regionName, regionCode, type (UNITY|ON_SALE), unityOptions[], fixedItineraryDetails, perPersonCostByOption`
+
+Categories code: region codes follow ISO-3 (idn, jpn, tha, are, mdv, sgp) in `backend/data/catalog.json`.
+
+## Client expectation (how the frontend must talk to the API)
+
+- The assistant is **Kodi**. The client shows its own welcome; it doesn't need to send it. The server stores its own greeting as the first assistant turn of each thread (`GREETING` in routes.ts).
+- Replies are **plain text**: the server strips emojis and markdown (lists arrive as `•` lines), matching the frontend's plain-text rendering and its no-emoji design rule.
+- The ready-made client is `client/takeoff-api.ts`; wiring steps are in `docs/frontend-integration.md`.
+- The **server ignores the client's history** — its SQLite store is authoritative. The `messages[]` array is used only to find the latest user turn (and to replay context, which must therefore be non-spammy).
+- Send `threadId` on every message after the first so the thread is reused (server auto-creates on first). A `threadId` that belongs to another session is ignored and a new thread is started.
+- A turn is saved only after the model answers; on `model_unavailable` the client can simply resend.
+- Set `"thinking": false` — the model was trained without thinking tags. (Backend already requests this from llama-server; the frontend never talks to llama-server directly.)
+
+## Non-negotiable backend rules (reason in decision.md)
+
+1. **The model never states a price/unverified number.** Prices only enter the conversation through tool results (tools.ts, deterministic mock inventory) or catalog deals. Enforced by `gatePrices` in harness.ts: unbacked amounts become "(price to be confirmed)".
+2. **Bookings are never made by the model.** /api/confirm is the only path, and it always says PENDING. "Book it" messages get `bookingSummary` (no model call); `create_booking` returns `NOT_ALLOWED`.
+3. **PII is redacted before the model or storage see it** (card, CVV, OTP, Aadhaar, PAN, passport, email, phone) and thread titles are built from redacted text. Card/ID removal prepends a notice to the reply.
+4. **Emergency phrases** (a deliberately narrow list from the model's harness, incl. Hinglish) skip the model, raise an urgent `handoff_to_human` and reply with a fixed "call 112" message. "Missed my flight" or "booked by accident" must not trigger it.
+5. `POST /api/chat` streams `destination_selected` → `campaign_deals` → `done` in one response, then closes. Never keep the stream open.
+
+## Adding a destination
+
+Edit `backend/data/catalog.json`: add a `{name, code, aliases[], currency, deals[]}` entry. Aliases are matched case-insensitively as whole words against the chat text ("bali", "tokyo", "japan"...). No backend code change needed for detection.
+
+## Testing
+
+```bash
+cd backend && npm test      # guardrails, tools, the full HTTP flow and the frontend client against a stub model server
+npm run lint && npm run typecheck   # oxlint (as in the frontend repo) and tsc for the backend and client/
+```
+
+Manual smoke test (start the stack first):
+
+```bash
+SID=$(curl -s -X POST http://127.0.0.1:5590/api/session | python3 -c "import json,sys;print(json.load(sys.stdin)['sessionId'])")
+curl -s -N -X POST http://127.0.0.1:5590/api/chat -H 'Content-Type: application/json' \
+  -d "{\"sessionId\":\"$SID\",\"messages\":[{\"role\":\"user\",\"content\":\"I want to plan a 5 day trip to Bali in December for 2 people, budget around 1 lakh\"}]}"
+```
+
+Expect: `destination_selected` (Bali) → `campaign_deals` (1 deal) → `done` with a coherent reply and a threadId.
+
+## Known limits (do not hide these in UI copy)
+
+- The model is a 0.8B fine-tune benchmarked at 2.13/4 with 2 critical-failure scenarios behind guardrails (source: `~/Downloads/Projects/travel-advisor-model/context/v2_REPORT.md`). Quality is imperfect — that is a training-data issue, not a backend bug.
+- All prices are mock/deterministic. Label them "estimate" in the UI, never "live price".
+- `backend/src/prompts.ts` is the exact prompt the model was trained with (`prompts/runtime_system_prompt.txt` in the model repo) plus its deployment block. Tool schemas in `tools.ts` match the model repo's `travel/tools.py`. Do not reword either: the model learned its behaviour from that text.
+- The model was trained for trips **within India**; the catalog's international deals work but are outside its training focus.
+- `get_destination_info` returns `found: false` until the model repo's Wikivoyage guide (`kb/destinations.json`) is bundled, so the model says it has no guide entry for seasons and routes.
+- Tool history (calls and results) is stored per thread so the model can book an offer from an earlier turn; each model call sends the newest `MAX_HISTORY_CHARS` (default 30k) of it.
+
+## Style for agents making changes here
+
+- TypeScript, ESM, NodeNext, strict. No framework additions without updating `decision.md`.
+- Keep files small and named for what they do: `db.ts` (SQLite), `harness.ts` (guardrails), `tools.ts` (mock inventory + tool schemas), `routes.ts` (HTTP handlers), `modelClient.ts` (OpenAI-compatible model client), `prompts.ts`, `catalog.ts`, `config.ts`, `server.ts` (bootstrap).
+- Record **every** architectural decision as a new `## D-0XX` entry at the bottom of `decision.md`.
+- Update `flow.md` stages as work completes.
+- The model's training repo is a read-only reference; never edit it from here.
+- Config is env vars (`backend/src/config.ts`, listed in `backend/.env.example`). Secrets such as `MODEL_API_KEY` may live in `backend/.env`, which is git-ignored.
