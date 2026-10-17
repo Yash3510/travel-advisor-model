@@ -101,6 +101,12 @@ export const UNVERIFIED_PRICE = '(price to be confirmed)';
 
 const scale = (unit: string) => (/^(crores?|cr)$/.test(unit) ? 1e7 : /^(l|lakhs?|lacs?)$/.test(unit) ? 1e5 : unit === 'k' ? 1e3 : 1);
 
+/** "1.5" + "lakh" → 150000. Shared with the message parser. */
+export const inrAmount = (num: string, unit = '') => Number(num.replace(/,/g, '')) * scale(unit.toLowerCase());
+
+/** Every rupee amount written with ₹, Rs, INR, rupees, lakh or crore, in order. */
+export const moneyAmounts = (text: string): number[] => [...text.matchAll(MONEY_RE)].flatMap((m) => moneyValues(m[0]));
+
 /** Values in one money expression; in a range the last unit applies to bare numbers ("₹5-10k" is 5,000 to 10,000). */
 function moneyValues(expr: string): number[] {
   const parts = [...expr.replace(/^(?:₹|Rs\.?|INR)\s?/i, '').matchAll(AMOUNT_RE)]

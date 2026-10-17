@@ -24,4 +24,17 @@ describe('model sync', () => {
     expect(trained).toHaveLength(8);
     expect(sent).toEqual(trained);
   });
+
+  it('knows every place in the travel guide list (travel/kb.py → data/places.json)', () => {
+    const py = repoFile('travel/kb.py');
+    const keys = (name: string) => {
+      const start = py.indexOf(`${name} = {`);
+      const block = py.slice(start, py.indexOf('\n}', start));
+      return [...block.matchAll(/"([^"]+)":\s*"/g)].map((m) => m[1]).toSorted();
+    };
+    const exported = JSON.parse(repoFile('app/backend/data/places.json')) as { places: object; aliases: object };
+    expect(keys('DESTINATIONS').length).toBeGreaterThan(100);
+    expect(Object.keys(exported.places).toSorted()).toEqual(keys('DESTINATIONS'));
+    expect(Object.keys(exported.aliases).toSorted()).toEqual(keys('ALIASES'));
+  });
 });

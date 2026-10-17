@@ -12,7 +12,7 @@ ENV NODE_ENV=production PORT=5590 DB_PATH=/data/threads.db
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force && mkdir /data && chown node:node /data
 COPY --from=build /app/dist ./dist
-COPY data/catalog.json ./data/catalog.json
+COPY data/catalog.json data/places.json ./data/
 USER node
 VOLUME /data
 EXPOSE 5590
