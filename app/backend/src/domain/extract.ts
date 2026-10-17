@@ -191,7 +191,7 @@ function findParty(lower: string): { travelers?: number; types: string[] } {
   if ((m = new RegExp(`\\bfamily of ${NUM}\\b`).exec(lower))) travelers = toNum(m[1]);
   else if ((m = new RegExp(`\\bwith (?:my )?${NUM} friends\\b`).exec(lower))) travelers = toNum(m[1]) + 1;
   else if ((m = new RegExp(`\\b${NUM}\\s+(people|persons|adults|pax|travell?ers|guests|members|log|of us|friends)\\b`).exec(lower))) travelers = toNum(m[1]);
-  else if ((m = new RegExp(`\\bfor ${NUM}\\b(?![\\d,.]|\\s*(?:-|days?|nights?|weeks?|k\\b|lakhs?|lacs?|%|am|pm|hours?|hrs?))`).exec(lower))) travelers = toNum(m[1]);
+  else if ((m = new RegExp(`\\bfor ${NUM}\\b(?!\\d|[,.]\\d|\\s*(?:-|days?|nights?|weeks?|k\\b|lakhs?|lacs?|%|am|pm|hours?|hrs?))`).exec(lower))) travelers = toNum(m[1]);
 
   const couple = /\b(?:my (?:wife|husband|partner|girlfriend|boyfriend|fianc[eé]e?)|couple|the two of us|both of us|honeymoon|babymoon)\b/.test(lower);
   const solo = /\b(?:solo|alone|just me|by myself|on my own)\b/.test(lower);
@@ -205,12 +205,18 @@ function findParty(lower: string): { travelers?: number; types: string[] } {
 }
 
 const BUDGET_CUE = /\b(?:budget|under|within|max(?:imum)?|up ?to|around|about|approx(?:imately)?|not more than|less than|below|spend|afford|total)\b[^.\d₹]{0,15}?(?:₹|rs\.?|inr)?\s?(\d+(?:,\d+)*(?:\.\d+)?)\s?(k|l|lakhs?|lacs?|crores?|cr)?\b/gi;
+// "50k total", "1 lakh budget"
+const BUDGET_AFTER = /(?:₹|rs\.?|inr)?\s?(\d+(?:,\d+)*(?:\.\d+)?)\s?(k|l|lakhs?|lacs?|crores?|cr)?\s+(?:total|in total|overall|budget|max|maximum|all inclusive)\b/gi;
 const PER_PERSON = /^\W*(?:per (?:person|head|pax|traveller|traveler)|each|pp\b|\/person|a head)/i;
 
 function findBudget(text: string): { budgetInr?: number; budgetPerPerson?: boolean } {
   for (const m of text.matchAll(BUDGET_CUE)) {
     const value = inrAmount(m[1], m[2]);
     if (value >= 1000) return { budgetInr: value, budgetPerPerson: PER_PERSON.test(text.slice(m.index + m[0].length, m.index + m[0].length + 20)) };
+  }
+  for (const m of text.matchAll(BUDGET_AFTER)) {
+    const value = inrAmount(m[1], m[2]);
+    if (value >= 1000) return { budgetInr: value, budgetPerPerson: /\b(?:per (?:person|head)|each)\b/i.test(text) };
   }
   const amount = moneyAmounts(text).find((v) => v >= 1000);
   return amount ? { budgetInr: amount, budgetPerPerson: /\b(?:per (?:person|head)|each)\b/i.test(text) } : {};
