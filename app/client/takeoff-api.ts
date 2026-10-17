@@ -1,6 +1,6 @@
 // Typed client for the Takeoff backend. No dependencies: works in the browser (React + Vite) and in Node 22.
 // Copy this file into the frontend as-is (e.g. src/services/takeoffApi.ts). The contract it speaks is in
-// app/AGENTS.md in the model repo; docs/frontend-integration.md shows how to wire it into the UI.
+// app/AGENTS.md in the model repo; app/integration.md shows how to wire it into the UI.
 
 export interface Deal {
   campaignItineraryId: string; sourceItineraryId: string; title: string; image: string; images: string[];
@@ -132,9 +132,14 @@ export interface BookingResult { status: string; bookingRef: string; message: st
  * bad_response from here.
  */
 export class TakeoffApiError extends Error {
-  constructor(public code: string, message: string, public status?: number) {
+  // plain fields, not constructor parameter properties: the frontend compiles with erasableSyntaxOnly
+  code: string;
+  status?: number;
+  constructor(code: string, message: string, status?: number) {
     super(message);
     this.name = 'TakeoffApiError';
+    this.code = code;
+    this.status = status;
   }
 }
 
