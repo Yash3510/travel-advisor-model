@@ -19,6 +19,11 @@ Open http://127.0.0.1:5590 for the test client. To use a hosted OpenAI-compatibl
 instead of the local one, set `MODEL_URL`, `MODEL_NAME` and `MODEL_API_KEY`. See
 `backend/.env.example`.
 
+## Place data
+
+Plans are built from OpenStreetMap places, imported per region: `cd backend && npm run data:import -- goa`.
+The files are generated, not committed (see `docs/data-sources.md` for licences and attribution).
+
 ## Production
 
 ```bash
@@ -39,6 +44,7 @@ The full contract with payloads is in [AGENTS.md](AGENTS.md).
 | `GET /api/threads?sessionId=` | a session's threads |
 | `GET /api/threads/:id/messages?sessionId=` | a thread's messages (only its own session) |
 | `GET /api/threads/:id/trip?sessionId=` | the trip facts the planner has gathered for that thread |
+| `GET /api/threads/:id/itinerary?sessionId=` | the latest structured itinerary for that thread |
 | `GET`, `PATCH /api/profile`, `POST /api/profile/reset` | the traveler profile (reusable preferences) of a session |
 | `POST /api/chat` | SSE: `destination_selected` → `campaign_deals` → `done` (or `error`) |
 | `POST /api/confirm` | request booking of an offer shown in that thread → `PENDING_SUPPLIER_CONFIRMATION` |

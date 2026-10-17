@@ -41,3 +41,7 @@ Build flow, recorded as it happens.
 ## Stage 7 — Planning flow, Phase 1 (DONE)
 - Traveler profile with merge rules and endpoints, deterministic parsing, trip context, and the three-to-four message planner. See decision.md D-013.
 - Ten planner scenarios in `app/eval/scenarios/`, run in the backend tests.
+
+## Stage 8 — Itinerary engine, Phase 2 (DONE)
+- Data-source decision (D-014), OSM place model and importer (Goa), constraints, engine, validation and repair, insights, presentation layer, revisions. See D-015.
+- 15 itinerary scenarios with release assertions in `app/eval/scenarios/itinerary.json`.

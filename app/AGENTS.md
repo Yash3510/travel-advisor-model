@@ -50,7 +50,9 @@ Production: `docker compose up -d --build` (see README). Config is env vars, all
 6. `GET /api/threads/:id/messages?sessionId=` → `{"messages":[{"role","content","createdAt"}]}` (additive) — 404 unless the thread belongs to that session.
 7. `GET /api/profile?sessionId=` → `{"profile":{…}}`; `PATCH /api/profile` `{"sessionId", "travelStyle"?, "budgetStyle"?, "homeCity"?, "interests"?, "dislikes"?, "dietaryNeeds"?, "mobilityNeeds"?, "accommodationPreferences"?}` → `{"profile"}` (lists given are replaced, `null` clears a field, unknown fields or values → 400 `invalid_profile`); `POST /api/profile/reset` `{"sessionId"}` → empty profile. Unknown session → 404. The session is the user until accounts exist (additive).
 8. `GET /api/threads/:id/trip?sessionId=` → `{"trip":{destination, origin, startDate, endDate, month, durationDays, travelers, travelerTypes, purpose, budgetInr, budgetPerPerson, asked, planningTurns, status}}` — 404 unless that session's thread (additive).
-9. `done` carries an additive `"planning":{"state","action","field"?,"assumptions":[…],"missing":[…]}`. `action` is `ask` (the planner asked a question itself), `draft` (the model wrote the first plan) or `converse`. `state` is `trip_basics`, `profile_context`, `high_value_refinement`, `draft_ready` or `revision`.
+9. `done` carries an additive `"planning":{"state","action","field"?,"assumptions":[…],"missing":[…]}`. `action` is `ask` (the planner asked a question itself), `draft` (first plan), `revise` (the plan was rebuilt after "make it cheaper", "slower", "skip X", new dates or party size) or `converse`. `state` is `trip_basics`, `profile_context`, `high_value_refinement`, `draft_ready` or `revision`.
+10. When a plan is built from place data, `done` also carries `"itinerary":{version, destination, startDate?, days:[{day, date?, items:[{kind (activity|meal|rest), block, start, end, title, poiId?, durationMinutes, durationBasis, travelToNext?, hours (open|unknown), costInr?, why:{matched, tradeoffs}, notes, suggestions?, source, confidence}], warnings}], totalEstimatedCostInr?, assumptions, warnings, alternatives, confidence, sources, rejected}` and `"insights":[{type, title, detail, source, sourceUrl?, licence?, checkedAt, severity, confidence, status (checked|not_checked|stale), date?, poiId?, effect?}]` (additive). The structured itinerary is the source of truth; `message` is its rendering. The frontend must show `sources` (the OpenStreetMap credit is required by its licence).
+11. `GET /api/threads/:id/itinerary?sessionId=` → `{"itinerary": <latest version> | null}` — 404 unless that session's thread (additive).
 
 ### Deal object shape (frontend must render these keys)
 
@@ -87,6 +89,15 @@ Categories code: region codes follow ISO-3 (idn, jpn, tha, are, mdv, sgp) in `ba
 - Side questions, searches, bookings, and edits after the first plan go to the model as before and don't use up questions.
 - Scenarios for this flow live in `app/eval/scenarios/` and run in the backend tests.
 
+## Itinerary engine (Phase 2)
+
+- **Place data:** OpenStreetMap via `npm run data:import -- <region>` (regions in `backend/data/poi-regions.json`; output in git-ignored `backend/data/poi/`, an ODbL derived database; the committed `poi-manifest.json` records each extract). Licences and attribution: `docs/data-sources.md`.
+- **Plan:** `services/itineraryService.ts` builds days in code: hard filters (access, dislikes, children, removed places), ranking with reasons, nearby stops per day, pace budgets, meal and rest breaks, opening hours, rain and closures, diet-matching meal options, alternatives. `services/itineraryValidator.ts` validates and repairs every plan. Unknown opening hours and visit lengths are assumptions with low confidence, never facts.
+- **Model:** called without tools for a short note above the plan; `services/presentation.ts` rejects notes with prices, dates, times, bookings or places outside the plan and uses a template instead. The trained system prompt is unchanged.
+- **Insights:** `services/insightsService.ts`: Open-Meteo (non-commercial free tier; production needs `OPEN_METEO_API_KEY`), the Wikivoyage guide (`GUIDE_DIR`), and "not checked" for events, closures, advisories and entry rules.
+- **Revisions** apply to the trip only (`budgetStyleOverride`, `paceOverride`, `dayPace`, `excludedPoiIds`); the saved profile is unchanged.
+- Destinations without place data keep the Phase 1 path (the model drafts from the trip summary).
+
 ## Adding a destination
 
 Edit `backend/data/catalog.json`: add a `{name, code, aliases[], currency, deals[]}` entry. Aliases are matched case-insensitively as whole words against the chat text ("bali", "tokyo", "japan"...). No backend code change needed for detection.
@@ -96,7 +107,8 @@ Edit `backend/data/catalog.json`: add a `{name, code, aliases[], currency, deals
 ```bash
 cd backend && npm test      # guardrails, tools, the full HTTP flow and the frontend client against a stub model server
 npm run lint && npm run typecheck   # oxlint (as in the frontend repo) and tsc for the backend and client/
-npx vitest run test/eval-scenarios.test.ts   # the planning-flow scenarios in app/eval/scenarios/
+npx vitest run test/eval-scenarios.test.ts test/eval-itinerary.test.ts   # app/eval/scenarios/ (planner and itinerary)
+npm run data:import -- goa   # refresh Goa's places from OpenStreetMap (light use of the public Overpass API)
 ```
 
 Manual smoke test (start the stack first):
@@ -115,7 +127,8 @@ Expect: `destination_selected` (Bali) → `campaign_deals` (1 deal) → `done` w
 - All prices are mock/deterministic. Label them "estimate" in the UI, never "live price".
 - `backend/src/prompts.ts` is the exact prompt the model was trained with (`prompts/runtime_system_prompt.txt` in the model repo) plus its deployment block. Tool schemas in `tools.ts` match the model repo's `travel/tools.py`. Do not reword either: the model learned its behaviour from that text.
 - The model was trained for trips **within India**; the catalog's international deals work but are outside its training focus.
-- `get_destination_info` returns `found: false` until the model repo's Wikivoyage guide (`kb/destinations.json`) is bundled, so the model says it has no guide entry for seasons and routes.
+- `get_destination_info` (a model tool) returns `found: false` until the model repo's `kb/destinations.json` is built; the itinerary engine reads the Wikivoyage pages directly for season notes.
+- Place data exists for Goa only so far. OSM publishes opening hours for about 8% of Goa's places and wheelchair access for about 11%; the rest is shown as unknown. Travel times are straight-line estimates. Only published entry fees are counted.
 - Tool history (calls and results) is stored per thread so the model can book an offer from an earlier turn; each model call sends the newest `MAX_HISTORY_CHARS` (default 30k) of it.
 
 ## Style for agents making changes here

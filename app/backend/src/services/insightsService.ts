@@ -2,6 +2,7 @@
 // checked. Without an approved source, or when a provider fails, the answer is "not checked", never a guess.
 
 import fs from 'node:fs';
+import { pathToFileURL } from 'node:url';
 import type { LatLon } from '../domain/geo.js';
 import type { InsightType, TripInsight } from '../domain/insights.js';
 import type { TripContext } from '../domain/trip.js';
@@ -101,7 +102,8 @@ export async function openMeteo(ctx: InsightContext): Promise<TripInsight[]> {
 
 // ── Destination guide: Wikivoyage (CC BY-SA 4.0), from the pages cached in the repository
 
-const GUIDE_DIR = new URL('../../../../data/raw/wikivoyage/', import.meta.url);
+// the repository's cached pages by default; GUIDE_DIR points elsewhere (the Docker image mounts them)
+const GUIDE_DIR = process.env.GUIDE_DIR ? pathToFileURL(process.env.GUIDE_DIR.replace(/\/?$/, '/')) : new URL('../../../../data/raw/wikivoyage/', import.meta.url);
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const MONEY = /₹|\bRs\.?\s?\d|\bINR\b|\$\d|\bUSD\b/i;
 

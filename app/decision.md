@@ -94,3 +94,11 @@ Decisions log — newest at bottom. Never delete an entry; strike through if rev
 - **Travel time: computed estimate** (haversine × 1.35, 25/40 km/h, +10 min), labelled as an estimate. The OSRM demo server is non-commercial, 1 req/s; self-hosted OSRM (BSD-2-Clause) is the Phase 3 option.
 - **Unknowns stay unknown:** missing opening hours and visit lengths are shown as assumptions with low confidence. Events, extra closures, advisories and entry rules have no approved source and are reported as "not checked".
 - Full details and attribution wording: `docs/data-sources.md`.
+
+## D-015 — Itinerary engine in code; the model only presents
+- **Problem:** in the Phase 1 real run, the 0.8B model searched hotels instead of planning days. More prompting or a changed system prompt was ruled out.
+- **Engine:** plans are built deterministically from OpenStreetMap places (D-014): hard filters, ranking with recorded reasons and trade-offs, per-day clusters within 45 min, pace budgets with meal and rest breaks, opening hours, rain and closures, diet-matching meal options, cheaper, relaxed and adventurous alternatives. The best of three starting points per day is kept. Every plan goes through `validateItinerary` and deterministic `repairItinerary`; an unsavable day is kept free with a warning.
+- **Presentation:** the plan text is rendered by code. The model, called without tools, writes a two-to-three sentence note; notes with prices, dates, times, bookings or places outside the plan are replaced with a template, as is any model failure. The structured itinerary (`done.itinerary`, stored per version) is authoritative.
+- **Revisions** ("cheaper", "slower", "day N more relaxed", "skip X", new dates or party size) rebuild the plan from trip-only overrides; the saved profile keeps its pace, budget style and tastes.
+- **Insights:** Open-Meteo forecasts within 16 days change the plan when rain is likely (stale forecasts don't); Wikivoyage season notes are shown with attribution; events, closures beyond OSM hours, advisories and entry rules are reported as not checked.
+- **Unknowns:** visit lengths are category defaults labelled as assumptions; unknown hours lower confidence; costs only from published fees.

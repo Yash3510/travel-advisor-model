@@ -20,8 +20,15 @@ services:
       MODEL_API_KEY: ${MODEL_API_KEY:-}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
       TRUST_PROXY: ${TRUST_PROXY:-0}
+      # weather: the free Open-Meteo API is non-commercial; production needs a paid key (docs/data-sources.md)
+      OPEN_METEO_API_KEY: ${OPEN_METEO_API_KEY:-}
+      GUIDE_DIR: /guide
     ports: ["5590:5590"]
-    volumes: ["backend-data:/data"]
+    volumes:
+      - backend-data:/data
+      # place files from `npm run data:import -- <region>` (ODbL) and the cached Wikivoyage guide (CC BY-SA)
+      - ./backend/data/poi:/app/data/poi:ro
+      - ../data/raw/wikivoyage:/guide:ro
     depends_on:
       model:
         condition: service_healthy
