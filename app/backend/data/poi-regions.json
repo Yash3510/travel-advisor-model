@@ -1,0 +1,6 @@
+{
+  "_note": "Destinations with place data. bbox is [south, west, north, east]. names are the trip destinations (as the parser outputs them) that use this region.",
+  "regions": [
+    { "slug": "goa", "name": "Goa", "bbox": [14.88, 73.67, 15.81, 74.34], "names": ["Goa", "Panaji", "Calangute", "Baga", "Anjuna", "Palolem", "Vasco da Gama", "Margao"] }
+  ]
+}

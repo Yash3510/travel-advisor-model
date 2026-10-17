@@ -1,0 +1,17 @@
+{
+  "goa": {
+    "region": "goa",
+    "extractedAt": "2026-10-17",
+    "source": "OpenStreetMap via Overpass API",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "rawSha256": "a1a30c6e9fd1af6829f8e3ee7084992debf7c3cc5f343080dbbae12eae3abb3f",
+    "querySha256": "f2b31fcb8b79c017e519db021a735e4cc9928e99eb5d3c064d7f9cb577f705a6",
+    "counts": {
+      "elements": 782,
+      "pois": 769,
+      "rejected": 0
+    },
+    "rejectedReasons": {}
+  }
+}
