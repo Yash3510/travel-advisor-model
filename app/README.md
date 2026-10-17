@@ -6,7 +6,7 @@ handles the conversation. Prices and bookings only come from tool results and th
 never from the model.
 
 The production frontend lives elsewhere. To connect it, copy `client/takeoff-api.ts` into it and follow
-[docs/frontend-integration.md](docs/frontend-integration.md). `frontend/index.html` is only a test client.
+[integration.md](integration.md). `frontend/index.html` is only a test client.
 
 ## Quickstart
 

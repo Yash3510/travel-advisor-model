@@ -1,54 +1,139 @@
-# Wiring the Takeoff frontend to this backend
+# Integrating the Takeoff frontend with the backend
 
-The frontend (React 19 + Vite) currently fakes every reply with `setTimeout`. This guide replaces the fakes with the
-real backend. The full wire contract is in [AGENTS.md](../AGENTS.md).
+For Pranay: how to replace the frontend's `setTimeout` fakes with the real backend, step by step, using the names in
+`src/App.tsx` and `src/data/tripData.ts`. The exact wire contract (every endpoint and payload) is in
+[AGENTS.md](AGENTS.md); this guide is how to use it from the UI.
 
-## 1. Add the client
+You only need one file from this repository: [`client/takeoff-api.ts`](client/takeoff-api.ts). It has no
+dependencies, is tested against the real backend routes (`backend/test/api.test.ts`, `backend/test/client.test.ts`),
+type-checks with the frontend's own compiler settings (`erasableSyntaxOnly`, `lib: ES2023, DOM`) and passes the
+frontend's `.oxlintrc.json`.
 
-Copy [`client/takeoff-api.ts`](../client/takeoff-api.ts) into the frontend as `src/services/takeoffApi.ts`. It has no
-dependencies and is tested against this backend (`backend/test/api.test.ts`). It handles:
+## Contents
 
-- creating and storing the session (`localStorage` key `takeoff.sessionId`), and replacing it if the server forgets it
-- the chat stream: one reply per message, skipping the `: keep-alive` lines the server sends while the model works
-- Confirm, the threads list and a thread's messages
-- error codes (`TakeoffApiError.code`) and customer-facing error text (`errorText`)
-- `toDealCard`, which maps backend deals to the card shape `App.tsx` already renders
+1. [What the backend gives you](#1-what-the-backend-gives-you)
+2. [Run the backend](#2-run-the-backend)
+3. [Add the client and point it at the backend](#3-add-the-client-and-point-it-at-the-backend)
+4. [Replace the fake chat](#4-replace-the-fake-chat)
+5. [The planner's questions](#5-the-planners-questions)
+6. [Show the plan (`reply.itinerary`)](#6-show-the-plan-replyitinerary)
+7. [Insights, warnings and sources](#7-insights-warnings-and-sources)
+8. [Revisions and alternatives](#8-revisions-and-alternatives)
+9. [Preferences screen (profile)](#9-preferences-screen-profile)
+10. [Sidebar: real conversations, restored](#10-sidebar-real-conversations-restored)
+11. [Booking: Confirm and Change](#11-booking-confirm-and-change)
+12. [Errors](#12-errors)
+13. [Rules the UI must keep](#13-rules-the-ui-must-keep)
+14. [What the backend does not provide yet](#14-what-the-backend-does-not-provide-yet)
+15. [Check the integration](#15-check-the-integration)
 
-## 2. Point it at the backend
+## 1. What the backend gives you
 
-Dev, in `vite.config.ts`, so the browser calls the Vite origin and CORS doesn't come into play:
+| Frontend piece today | Backend | Client call |
+|---|---|---|
+| Fake replies in `startChatWithPrompt` / `handleSend` | Real chat with Kodi, one full reply per message | `api.chat(text, { threadId, onDestination, onDeals })` |
+| Hard-coded curated deals | Deals for the destination the customer names | `onDeals` callback, then `toDealCard` |
+| `itineraryCard`, `TripState.days` from `tripData.ts` | A day-by-day plan built by code from real place data (Goa so far) | `reply.itinerary`, `api.itinerary(threadId)` |
+| Trip summary (destination, dates, travellers) | What the planner knows about the trip | `api.trip(threadId)` |
+| Nothing | Weather, season notes, and what was **not** checked | `reply.insights` |
+| Nothing yet (the `TravelMatchQuiz` could feed it) | Saved preferences, reused in every new trip | `api.profile()`, `api.updateProfile()`, `api.resetProfile()` |
+| Four hard-coded expeditions in the sidebar | The session's real conversations | `api.threads()`, `api.messages(threadId)` |
+| Checkout drawer `alert()` | A booking request (never "confirmed" until a supplier confirms) | `api.confirm(...)` |
 
-```ts
-export default defineConfig({
-  plugins: [react(), tailwindcss()],
-  server: { proxy: { '/api': 'http://127.0.0.1:5590' } },
-})
+How a conversation goes: the planner asks at most three short questions (destination, dates, who is travelling,
+then one of budget, pace or interests), and builds the first plan by the third or fourth message. Questions come
+back instantly. A plan takes about 5 to 15 seconds on the local model (CPU), and other model replies 5 to 60 seconds.
+
+## 2. Run the backend
+
+The backend is Node 22 (npm, not Bun: it uses a native SQLite module). From the `app/` folder of this repository:
+
+```bash
+./setup.sh                      # npm ci, and downloads the model (about 834 MB) to ../models/trained-v2-gguf/
+cd backend && npm run data:import -- goa && cd ..   # Goa's places from OpenStreetMap (one-off)
+./run.sh                        # model server on :8081, backend on :5590
 ```
 
-Production: set `VITE_API_URL` to the backend's URL, and on the backend set `ALLOWED_ORIGINS` to the frontend's
-origin (comma-separated if more than one).
+- `run.sh` needs `llama-server` (on a Mac: `brew install llama.cpp`, which uses the GPU through Metal). If you'd rather
+  not install it, `docker compose up -d --build` runs the model and backend in containers, but on a Mac the model then
+  runs on the CPU and replies are slower.
+- The place files (`backend/data/poi/`) are generated from OpenStreetMap and must not be committed to the frontend
+  repository (ODbL licence). Yash can also send you `goa.json`.
+- `run.sh` also serves a bare test page at `http://127.0.0.1:5590`; it is not the product UI.
 
-```ts
-import { createTakeoffApi, errorText, toDealCard, type PendingBooking } from './services/takeoffApi';
+Check it is up:
 
-export const api = createTakeoffApi({ baseUrl: import.meta.env.VITE_API_URL ?? '' });
+```bash
+curl -s http://127.0.0.1:5590/health   # {"ok":true}
+curl -s http://127.0.0.1:5590/ready    # {"ok":true,"model":"ok","data":{"ok":true,"regions":["goa"],"missing":[]},"routing":"estimate"}
 ```
 
-## 3. Replace the fake chat (`startChatWithPrompt` / `handleSend` in `App.tsx`)
+If `/ready` says `"ok":false`, its `missing` list names the file that is missing, and `"model":"unreachable"` means
+the model server isn't running.
+
+## 3. Add the client and point it at the backend
+
+1. Copy `client/takeoff-api.ts` into the frontend as `src/services/takeoffApi.ts`, unchanged. When the backend changes,
+   copy it again; don't edit it in place.
+2. Dev proxy, in `vite.config.ts`, so the browser calls the Vite origin and CORS never comes into play:
+
+   ```ts
+   export default defineConfig({
+     plugins: [react(), tailwindcss()],
+     server: { proxy: { '/api': 'http://127.0.0.1:5590' } },
+   })
+   ```
+
+3. One shared instance, `src/services/api.ts`:
+
+   ```ts
+   import { createTakeoffApi } from './takeoffApi';
+
+   // '' in dev (the Vite proxy); the backend's URL in production, e.g. VITE_API_URL=https://api.example.com
+   export const api = createTakeoffApi({ baseUrl: import.meta.env.VITE_API_URL ?? '' });
+   ```
+
+4. Production: set `VITE_API_URL` at build time, and ask for the frontend's origin to be added to the backend's
+   `ALLOWED_ORIGINS` (comma-separated). No cookies or auth headers are involved.
+
+The client keeps the session id in `localStorage` (`takeoff.sessionId`) so conversations survive a reload, and starts a
+new session by itself if the server no longer knows the old one. The session is the user until accounts exist.
+
+## 4. Replace the fake chat
+
+Extend the `Message` type in `App.tsx` with what a reply can carry:
 
 ```ts
+import type { ItineraryDraft, PendingBooking, PlanningInfo, TripInsight } from './services/takeoffApi';
+
+interface Message {
+  // ...the existing fields
+  pendingBooking?: PendingBooking; // render Confirm / Change (section 11)
+  planning?: PlanningInfo;         // what the planner did this turn (section 5)
+  itinerary?: ItineraryDraft;      // a new or revised plan (section 6)
+  insights?: TripInsight[];        // with every plan (section 7)
+}
+```
+
+Then one `send` replaces both `startChatWithPrompt` and `handleSend`:
+
+```ts
+import { errorText, toDealCard } from './services/takeoffApi';
+import { api } from './services/api';
+
 const threadIdRef = useRef<number | undefined>(undefined);
 const abortRef = useRef<AbortController | null>(null);
 
 async function send(prompt: string) {
-  if (isTyping || !prompt.trim()) return; // the server answers one message at a time per thread
+  const text = prompt.trim();
+  if (isTyping || !text) return; // one message at a time per thread
   setHasStarted(true);
-  setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: 'user', content: prompt, timestamp: 'Just now' }]);
+  setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: 'user', content: text, timestamp: 'Just now' }]);
   setInputText('');
   setIsTyping(true);
   abortRef.current = new AbortController();
   try {
-    const reply = await api.chat(prompt, {
+    const reply = await api.chat(text, {
       threadId: threadIdRef.current,
       signal: abortRef.current.signal,
       onDestination: (d) => setTrip((t) => ({ ...t, destination: d.regionName })),
@@ -57,8 +142,9 @@ async function send(prompt: string) {
     threadIdRef.current = reply.threadId;
     setMessages((prev) => [...prev, {
       id: `bot-${Date.now()}`, role: 'assistant', content: reply.message, timestamp: 'Just now',
-      pendingBooking: reply.pendingBooking, // add `pendingBooking?: PendingBooking` to the Message type
+      pendingBooking: reply.pendingBooking, planning: reply.planning, itinerary: reply.itinerary, insights: reply.insights,
     }]);
+    if (reply.itinerary) await showPlan(reply.threadId, reply.itinerary); // section 6
   } catch (err) {
     setMessages((prev) => [...prev, { id: `bot-${Date.now()}`, role: 'assistant', content: errorText(err), timestamp: 'Just now' }]);
   } finally {
@@ -69,59 +155,306 @@ async function send(prompt: string) {
 
 - **Lock the input while a reply is pending:** `disabled={!inputText.trim() || isTyping}` on both send buttons, and
   `maxLength={4000}` on the inputs.
-- **Replies take 5–60 s** with the local model. Keep the typing dots. A Stop button can call `abortRef.current?.abort()`;
-  the server then cancels that turn and stores nothing.
+- **Keep the typing dots.** A Stop button can call `abortRef.current?.abort()`; the server cancels that turn and stores
+  nothing.
 - **"New journey":** in `resetChat`, also call `abortRef.current?.abort()` and set `threadIdRef.current = undefined`.
-- **Don't send the welcome text.** The frontend shows its own greeting; the server keeps its own history and only reads
-  the newest message.
-- **Text is plain.** The server strips emojis and markdown, so the existing `whitespace-pre-line` rendering is right.
-  Lists arrive as lines starting with `•`.
-- **Safety notice:** if a customer pastes card or ID numbers, the server removes them and the reply starts with a
-  notice. Nothing to do on the frontend.
+  The next message starts a new thread.
+- **Don't send the welcome text.** Show the frontend's own greeting, but only send what the customer typed. The server
+  keeps the history and reads only the newest message.
+- **The fake greeting with a trip overview** ("I've designed a bespoke travel plan for…") must go: no plan exists until
+  the backend sends one.
+- **Text is plain.** The server removes emojis and markdown, so the existing `whitespace-pre-line` rendering is right.
+  Lists arrive as lines starting with `•`. If a customer pastes card or ID numbers, the server removes them and the
+  reply starts with a notice; nothing to do on the frontend.
+- `reply` keeps any field a newer backend adds, so you can read new fields without updating the client.
 
-## 4. Booking: Confirm and Change
+## 5. The planner's questions
 
-When a reply has `pendingBooking`, its text is a booking summary (dates, travellers, total with taxes, cancellation
-terms). Render two buttons under it:
+When the planner asks a question itself, `reply.planning` is `{ action: 'ask', state, field, assumptions, missing }`
+and `reply.message` is the question. Render it as a normal message, and use `field` for quick replies (the existing
+`cardType` cards fit):
+
+| `planning.field` | The question | Existing card | Quick replies to send (as plain text) |
+|---|---|---|---|
+| `destination` | Where would you like to go? | `cities` | the place name, e.g. `Goa` |
+| `when` | When, and for how many days? | `date` | `15 to 17 December`, or `December, 5 days` |
+| `travelers` | Who's travelling, and how many? | `traveller` | `me and my wife`, `2 of us`, `we are 4 people` |
+| `budget` | A rough total budget? | (none yet) | `about 50k`, `around 80k`, `budget 1 lakh` |
+| `pace` | Relaxed, balanced or packed? | `pace` | `relaxed`, `balanced`, `packed` |
+| `interests` | What do you enjoy most? | `experiences` | `beaches and food`, `history`, `nature and adventure` |
+| `tradeoff:pace` | Relaxed with free time, or packed? | `pace` | `relaxed`, `packed` |
+| `tradeoff:luxury_budget` | Keep the budget, or keep luxury? | (none yet) | `keep the budget, comfortable stays are fine`, `keep luxury, I can spend more` |
+
+A date picker should send its range as text in the same form, for example `15 to 17 December`. The customer can always
+type instead; chips are a shortcut, not the only way.
+
+`planning.action` is `draft` for the first plan, `revise` when a plan was rebuilt, and `converse` when the model
+answered something else (a side question, a hotel or flight search).
+
+## 6. Show the plan (`reply.itinerary`)
+
+`reply.itinerary` (type `ItineraryDraft`) is the plan itself, built and checked by code. `reply.message` is a text
+rendering of the same plan with a short note on top. Render the dossier from `itinerary`, not by parsing the text.
+A trimmed real example (Goa, 15 December):
+
+```json
+{
+  "version": 1, "destination": "Goa", "startDate": "2026-12-15", "confidence": 0.47,
+  "days": [{
+    "day": 1, "date": "2026-12-15", "warnings": [],
+    "items": [
+      { "kind": "activity", "block": "morning", "start": "09:00", "end": "10:30", "title": "Chapora Fort",
+        "poiId": "osm:relation/15959326", "durationMinutes": 90, "durationBasis": "category_default", "hours": "open",
+        "travelToNext": { "minutes": 37, "km": 11.3, "basis": "straight_line_estimate", "source": "Straight-line estimate", "isEstimate": true, "confidence": 0.5 },
+        "why": { "matched": [], "tradeoffs": [] }, "notes": [],
+        "source": { "name": "OpenStreetMap", "url": "https://www.openstreetmap.org/relation/15959326", "licence": "ODbL-1.0", "attribution": "© OpenStreetMap contributors" },
+        "confidence": 0.53 },
+      { "kind": "meal", "block": "afternoon", "start": "13:00", "end": "14:00", "title": "Lunch", "durationMinutes": 60, "durationBasis": "fixed", "notes": [], "confidence": 1 }
+    ]
+  }],
+  "assumptions": ["A balanced pace", "Visit lengths are typical times for each kind of place, not published figures", "..."],
+  "warnings": ["Travel times between stops are straight-line estimates, not road routes, so allow extra time"],
+  "alternatives": [{ "kind": "more_relaxed", "summary": "Fewer stops a day, with a rest break", "changes": ["Day 1: drop …; add …"] }],
+  "sources": [
+    { "name": "OpenStreetMap", "licence": "ODbL-1.0", "attribution": "© OpenStreetMap contributors", "url": "https://www.openstreetmap.org/copyright" },
+    { "name": "Wikivoyage", "licence": "CC BY-SA 4.0", "attribution": "Wikivoyage", "url": "https://en.wikivoyage.org/wiki/Goa" }
+  ],
+  "rejected": []
+}
+```
+
+What each part means for the UI:
+
+- **`days[].items`** are timed blocks: `activity` (a place to visit), `meal` (a break, with `suggestions` of nearby
+  places that fit the traveller's diet when there are any) and `rest`. Times are `HH:MM`, in order.
+- **`hours`**: `open` means checked against published opening hours; `unknown` means none are published. Show
+  "Opening hours not published" for `unknown`.
+- **`costInr`** appears only when an entry fee is published, and is the total for the group. When it is missing, the
+  fee is unknown, not zero: show nothing or "Entry fee not published", never ₹0.
+- **`totalEstimatedCostInr`** adds up published entry fees only (often absent). Hotels, food and transport are not in
+  it. Never label it as the trip price.
+- **`why.matched`** says why a stop was picked ("your interest in beaches"); **`why.tradeoffs`** says what it costs
+  ("about 37 min from the previous stop"). Good material for the activity description.
+- **`notes`** and **`days[].warnings`** belong next to the stop or the day; show them.
+- **`confidence`** (0 to 1) is how sure the plan is (published hours, typical visit lengths, travel estimates). Use it
+  for a subtle "check before you go" hint if you like; don't present it as a score.
+- **`rejected`**: places considered and left out, with the reason. Don't offer them as suggestions.
+- There are **no photos, hotels or flights** in the plan. Don't fill them in with stock images or the old mock hotels.
+
+An adapter to the frontend's existing types, `src/services/planAdapters.ts`. Two type changes in `tripData.ts` make
+it honest: `priceINR?: number` (optional, since most fees aren't published) and an optional `mapUrl?: string` on
+`Activity`.
+
+```ts
+import type { ItineraryDraft, ItineraryItem, TripContext } from './takeoffApi';
+import type { Activity, DayPlan, TripState } from '../data/tripData';
+
+const duration = (m: number) => (m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ''}` : `${m} min`);
+export const niceDate = (iso?: string) =>
+  iso ? new Date(`${iso}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }) : '';
+
+function toActivity(i: ItineraryItem, n: number, destination: string): Activity {
+  const description = [
+    ...(i.why?.matched.length ? [`For ${i.why.matched.join(' and ')}`] : []),
+    ...(i.suggestions?.length ? [`Nearby: ${i.suggestions.map((s) => s.name).join(', ')}`] : []),
+    ...i.notes,
+    ...(i.kind === 'activity' && i.hours === 'unknown' ? ['Opening hours not published'] : []),
+  ].join('. ');
+  return {
+    id: i.poiId ?? `${i.kind}-${n}`,
+    time: `${i.start}–${i.end}`,
+    title: i.title,
+    location: destination,
+    mapUrl: i.source?.url, // the place's OpenStreetMap page
+    description,
+    duration: duration(i.durationMinutes),
+    category: i.kind === 'meal' ? 'Culinary' : i.kind === 'rest' ? 'Relaxation' : 'Sightseeing',
+    priceINR: i.costInr, // undefined = no published fee
+    image: '', // no photos from the backend: show a neutral placeholder
+  };
+}
+
+export const toDayPlans = (it: ItineraryDraft): DayPlan[] =>
+  it.days.map((d) => ({
+    dayNumber: d.day,
+    date: niceDate(d.date) || `Day ${d.day}`,
+    title: `Day ${d.day}`,
+    tagline: d.items.filter((i) => i.kind === 'activity').map((i) => i.title).join(' · '),
+    activities: d.items.map((i, n) => toActivity(i, n, it.destination)),
+    stayHotelId: '', // hotels are not part of the plan
+  }));
+
+export const toTripState = (it: ItineraryDraft, trip: TripContext, current: TripState): TripState => ({
+  ...current,
+  destination: it.destination,
+  country: 'India',
+  dates: it.days.length && it.days[0].date ? `${niceDate(it.days[0].date)} – ${niceDate(it.days.at(-1)!.date)}` : 'Flexible dates',
+  durationDays: it.days.length,
+  travelers: trip.travelers ?? 2,
+  tripType: trip.purpose ?? '',
+  flightIncluded: false,
+  flightPriceINR: 0, // not shown: there are no flights in the plan
+  hotels: [],
+  days: toDayPlans(it),
+});
+```
+
+And in `App.tsx`:
+
+```ts
+async function showPlan(threadId: number, it: ItineraryDraft) {
+  const trip = await api.trip(threadId); // travellers, dates and purpose, as the planner understood them
+  setTrip((current) => toTripState(it, trip, current));
+}
+```
+
+The existing `itineraryCard` on `Message` needs `totalINR`, `perPersonINR` and a `hotel`, which the backend doesn't
+have. Build the summary card from `message.itinerary` instead: destination, `days.length` days, the date range,
+the number of activities, and day 1's activities from `toDayPlans(itinerary)[0]`. Hide the hotel and price rows rather
+than showing mock values. In the dossier, hide the hotel section when `trip.hotels` is empty.
+
+**Travel between stops.** `travelToNext` on an activity is the trip to the next stop. When `isEstimate` is `true` it is
+a straight-line estimate: show "about 37 min (estimated)". When `basis` is `road` it comes from a road routing server:
+"about 37 min by road". Never show an estimate as an exact time.
+
+## 7. Insights, warnings and sources
+
+`reply.insights` (type `TripInsight[]`) comes with every plan. Show them in a small "Before you go" panel:
+
+| `status` | Meaning | How to show it |
+|---|---|---|
+| `checked` | From an approved source, as of `checkedAt` | `title`: `detail`, with the date for day-specific ones |
+| `stale` | An older check that no longer changes the plan | the same, marked "earlier forecast" |
+| `not_checked` | No approved source, or the check failed | "Not checked: events" (from `title`); never as "all clear" |
+
+- `severity: 'warning'` with `effect: 'rain'` means heavy rain is likely on `date`; the plan has already moved that day
+  indoors and says so in the day's `warnings`.
+- Each insight names its `source`, `sourceUrl` and `licence`. Link them: Open-Meteo data is CC BY 4.0 and Wikivoyage
+  is CC BY-SA 4.0, and both require the credit.
+- Events, one-off closures, travel advisories and entry rules are always `not_checked` for now. That is honest, not a
+  bug: keep showing them as not checked.
+
+**Warnings and assumptions.** `itinerary.warnings` (plan-wide) and `days[].warnings` (per day) are things the traveller
+should know, such as "Heavy rain is likely on 15 December, so this day keeps to indoor places" or that travel times are
+estimates. Show them where they apply. `itinerary.assumptions` ("A balanced pace", "2 travellers", "Visit lengths are
+typical times…") can sit in a collapsible "How this plan was made" section.
+
+**Sources (required).** Wherever the plan is shown, render `itinerary.sources`, for example in the dossier footer:
+
+```tsx
+<p className="text-xs">
+  {itinerary.sources.map((s) => (
+    <a key={s.name} href={s.url} target="_blank" rel="noreferrer">{s.attribution}{s.licence ? ` (${s.licence})` : ''}</a>
+  ))}
+</p>
+```
+
+The "© OpenStreetMap contributors" credit is a condition of the place data's licence, so it can't be hidden or left
+out.
+
+## 8. Revisions and alternatives
+
+Revisions are ordinary chat messages. The backend rebuilds the plan and sends a new `itinerary` with `version` one
+higher and `planning.action: 'revise'`. The saved preferences stay as they are ("make it cheaper" is for this trip
+only). Phrases the planner recognises:
+
+| The customer wants | Send (or let them type) |
+|---|---|
+| A cheaper plan | `Make it cheaper` |
+| A slower trip, or one slower day | `Make it more relaxed`, `Make day 2 more relaxed` |
+| A busier trip | `See more`, `Add more stops` |
+| To drop a place in the plan | `Skip Chapora Fort`, `I don't want to go to Chapora Fort` |
+| Other dates or party size | `Move it to 21 to 23 December`, `We are 4 people now` |
+
+`itinerary.alternatives` lists ready-made variations the backend has already checked. Show them as suggestion chips
+(the existing `suggestions` field fits) with `summary` as the label and `changes` as the detail, and send this text
+when one is tapped:
+
+| `alternative.kind` | Send |
+|---|---|
+| `cheaper` | `Make it cheaper` |
+| `more_relaxed` | `Make it more relaxed` |
+| `more_adventurous` | `Add more nature and adventure and see more` |
+
+Use exactly these messages. "Make it more adventurous", for example, is answered as a question and does not rebuild
+the plan.
+
+## 9. Preferences screen (profile)
+
+The traveller's preferences are saved per session and reused for every new trip: the planner then skips those
+questions and says "I'll use your saved preferences: …". The `TravelMatchQuiz` answers can be saved here.
+
+```ts
+const profile = await api.profile();
+const saved = await api.updateProfile({ travelStyle: 'relaxed', interests: ['beach', 'food'], dietaryNeeds: ['vegetarian'] });
+await api.updateProfile({ travelStyle: null }); // null clears a field
+const empty = await api.resetProfile();         // "Forget my preferences"
+```
+
+| Field | Values |
+|---|---|
+| `travelStyle` | `relaxed`, `balanced`, `packed` (or `null`) |
+| `budgetStyle` | `budget`, `value`, `comfort`, `premium` (or `null`) |
+| `homeCity` | short text (or `null`) |
+| `interests`, `dislikes` | e.g. `beach`, `mountains`, `nature`, `wildlife`, `adventure`, `trekking`, `culture`, `history`, `spiritual`, `food`, `nightlife`, `shopping`, `wellness`, `photography`; `dislikes` also `crowds`, `long drives`, `early mornings`, `heat` |
+| `dietaryNeeds` | `vegetarian`, `vegan`, `jain`, `halal`, `gluten-free`, `eggless` |
+| `mobilityNeeds` | `wheelchair`, `limited walking` |
+| `accommodationPreferences` | e.g. `villa`, `resort`, `homestay`, `hostel`, `boutique`, `beachfront`, `private pool`, `pet-friendly` |
+
+- A list you send replaces the saved list. Common synonyms are folded into these words ("veg" becomes `vegetarian`);
+  other words are kept as typed, in lower case.
+- An unknown field or a `travelStyle`/`budgetStyle` outside the list rejects with code `invalid_profile` and a message
+  you can show next to the field.
+- Diet and mobility are hard constraints: the planner never puts a wheelchair user somewhere marked inaccessible, and
+  meal suggestions only list places that match the diet.
+- `sourceByField` says whether each preference was set by the traveller (`explicit`) or picked up from chat
+  (`inferred`). A preferences screen can mark inferred ones as "learned from your chats".
+
+## 10. Sidebar: real conversations, restored
+
+Replace the four hard-coded expeditions with the session's threads, and restore a thread on click:
+
+```ts
+const threads = await api.threads(); // most recently active first: { id, title, destination, isActive, createdAt, updatedAt }
+
+async function openThread(id: number) {
+  const [history, plan] = await Promise.all([api.messages(id), api.itinerary(id)]);
+  threadIdRef.current = id;
+  setMessages(history.map((m, n) => ({ id: `${m.role}-${n}`, role: m.role, content: m.content, timestamp: m.createdAt })));
+  if (plan) await showPlan(id, plan); // the latest version, revisions included; null before the first plan
+  setHasStarted(true);
+}
+```
+
+`messages` returns what the customer saw (user and assistant text). The structured plan comes from `itinerary`, and
+the trip facts from `trip`.
+
+## 11. Booking: Confirm and Change
+
+When a reply has `pendingBooking`, its text is a booking summary built from supplier data (dates, travellers, total
+with taxes, cancellation terms). Render two buttons under it:
 
 ```ts
 async function onConfirm(p: PendingBooking) {
-  const result = await api.confirm({ threadId: threadIdRef.current!, offerId: p.offer_id, travelers: p.travelers });
-  setMessages((prev) => [...prev, { id: `bot-${Date.now()}`, role: 'assistant', content: result.message, timestamp: 'Just now' }]);
+  try {
+    const result = await api.confirm({ threadId: threadIdRef.current!, offerId: p.offer_id, travelers: p.travelers });
+    setMessages((prev) => [...prev, { id: `bot-${Date.now()}`, role: 'assistant', content: result.message, timestamp: 'Just now' }]);
+  } catch (err) {
+    setMessages((prev) => [...prev, { id: `bot-${Date.now()}`, role: 'assistant', content: errorText(err), timestamp: 'Just now' }]);
+  }
 }
 // Change: focus the input. The customer's next message carries on the conversation.
 ```
 
 `result.status` is `PENDING_SUPPLIER_CONFIRMATION`: show it as *requested, not confirmed*. Never show "booked",
-"confirmed" or confetti for it.
+"confirmed" or confetti for it. Pressing Confirm twice returns the same request, not a second booking.
 
-Deals can be requested the same way: `api.confirm({ threadId, offerId: deal.campaignItineraryId, travelers })`, but only
+A deal can be requested the same way, `api.confirm({ threadId, offerId: deal.campaignItineraryId, travelers })`, but only
 for a deal the server sent in that thread.
 
-## 5. Sidebar: real conversations
+## 12. Errors
 
-Replace the four hard-coded expeditions with `await api.threads()`. On click, load `await api.messages(thread.id)`
-into `messages` and set `threadIdRef.current = thread.id`.
-
-## 5a. The plan, its insights and the traveller's preferences
-
-When the planner builds or revises a plan, the reply from `api.chat` also carries:
-
-- `reply.itinerary` (`ItineraryDraft`): days, timed blocks (`activity`, `meal`, `rest`), reasons, warnings,
-  assumptions, alternatives and `sources`. It is the source of truth; `reply.message` is only its text rendering.
-  Show `sources` wherever the plan is shown: the OpenStreetMap credit is required by its licence.
-- `reply.insights` (`TripInsight[]`): weather, season notes, and the things that were **not checked** (events,
-  closures, advisories, entry rules). Show `not_checked` as "not checked", never as "all clear".
-- `reply.planning`: `action` is `ask`, `draft`, `revise` or `converse`; `field` is the question the planner asked.
-
-Travel legs (`item.travelToNext`) say `isEstimate`; label those "about N min (estimated)". Revisions ("make it cheaper",
-"skip the fort") go through `api.chat` like any message and come back as a new `itinerary.version`.
-
-To restore a thread, `await api.itinerary(threadId)` (null before the first plan) and `await api.trip(threadId)`. A
-preferences screen uses `await api.profile()`, `await api.updateProfile({ travelStyle: 'relaxed', interests: ['beach'] })`
-(a list replaces the saved list, `null` clears a field) and `await api.resetProfile()`.
-
-## 6. Error codes
+Every failure is a `TakeoffApiError` with a `code`; `errorText(err)` gives customer-facing text for the chat ones.
 
 | `err.code` | When | What to show |
 |---|---|---|
@@ -131,19 +464,58 @@ preferences screen uses `await api.profile()`, `await api.updateProfile({ travel
 | `message_too_long` | over 4,000 characters | `errorText(err)` |
 | `aborted` | Stop or New journey | nothing |
 | `network`, `stream_ended` | connection dropped | `errorText(err)` and Retry |
-| `invalid_profile` | `updateProfile` with an unknown field or value | the field's error next to it (`err.message`) |
-| `thread_not_found` | `trip` / `itinerary` / `messages` for a thread this session doesn't own | drop the thread from the sidebar |
-| `bad_response` | a `done` event without its message | `errorText(err)` and Retry |
+| `bad_response` | a reply without its message | `errorText(err)` and Retry |
+| `invalid_profile` | `updateProfile` with an unknown field or value | `err.message` next to the field |
+| `thread_not_found` | `trip`, `itinerary` or `messages` for a thread this session doesn't own | drop it from the sidebar |
+| `offer_not_found` | Confirm on an offer not shown in that thread | `errorText(err)` |
 
-`session_not_found` is handled inside the client (it starts a new session once).
+`session_not_found` is handled inside the client: it starts a new session once and the reply begins a new thread.
 
-## 7. What the backend does not provide yet
+## 13. Rules the UI must keep
 
-These parts of the UI have no backend behind them; decide whether to hide them or build them:
+These keep the product honest; the backend enforces its side, and the UI must not undo it.
 
-- **Hotels and totals in the itinerary dossier.** Day plans now come from `reply.itinerary` (section 5a), for
-  destinations with place data (Goa so far); hotels, transport and trip totals are not part of it.
-- **Suggestion chips** under replies, hotel swap cards, multi-currency prices.
-- **The checkout drawer** ("Pay ₹10,000 refundable token"): there is no payment system. It must not collect names,
-  emails or phone numbers, or show a success alert, until there's a backend that receives and stores them.
-- Saved trips, the contact form, careers applications and pricing plans.
+- **No invented data.** Prices, hotels, photos, ratings and availability shown to the customer come from the backend
+  (deals, offers, `itinerary`) or are clearly marked as examples. No mock hotels or prices next to a real plan.
+- **Requested is not booked.** Booking requests stay "requested" until the backend says otherwise.
+- **Unknown stays unknown.** Unpublished hours, unpublished fees, estimated travel times and `not_checked` insights are
+  shown as such, never as confirmed, free or all clear.
+- **Credit the sources.** `itinerary.sources` and each insight's source are shown with the plan.
+- **No personal data in forms that go nowhere.** The checkout drawer must not collect names, emails, phone numbers or
+  payment details, or show a success alert, until a backend receives them.
+- **One message at a time,** under 4,000 characters, and only what the customer typed.
+
+## 14. What the backend does not provide yet
+
+- **Place data outside Goa.** Other destinations still get chat replies and deals, but no `itinerary`; the reply is
+  then text only. More regions are being added.
+- **Hotels, flights and trip totals inside the plan.** Hotel and flight offers arrive separately as `reply.offers`
+  when the customer asks for them.
+- **Photos** of places, and **multi-currency** prices (everything is in INR).
+- **Payments.** There is no payment system; the "Pay ₹10,000 refundable token" drawer has nothing behind it.
+- **Accounts and login.** The session in `localStorage` is the user for now.
+- **Saved trips, the contact form, careers applications and pricing plans.**
+
+## 15. Check the integration
+
+With the backend running (section 2) and the frontend on `bun run dev`:
+
+1. Type `I want to plan a trip`. Kodi asks where to; `planning.field` is `destination`.
+2. `Goa`: Kodi asks when. `15 to 17 December, me and my wife`: Kodi asks about the budget.
+3. `around 60k`: a three-day plan appears in the dossier within about 15 seconds, with times, travel between stops
+   marked "(estimated)", warnings, a "Before you go" panel and the OpenStreetMap credit.
+4. Type `Make day 2 more relaxed`: day 2 is rebuilt with fewer stops, and the plan is version 2. (The "Fewer stops a
+   day" chip sends `Make it more relaxed`, which relaxes every day.)
+5. Reload the page: the conversation is in the sidebar, and opening it restores the messages and the latest plan.
+6. Save `relaxed` and `beach` in preferences, start a New journey and type `Plan a trip to Goa`: Kodi says it will use
+   your saved preferences and doesn't ask about pace.
+7. Stop the model server and ask a side question such as `Is Goa safe in the monsoon?`: the reply is the
+   `model_unavailable` text, not a hang or a blank bubble. Questions and plans still work without the model, because
+   code builds them; only the short note above a plan falls back to a fixed sentence.
+
+If something doesn't match, compare with the backend's own end-to-end check, which runs the same flow against a
+running server:
+
+```bash
+node scripts/smoke.mjs flow http://127.0.0.1:5590 /tmp/takeoff-state.json
+```

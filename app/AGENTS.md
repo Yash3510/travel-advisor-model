@@ -65,7 +65,7 @@ Categories code: region codes follow ISO-3 (idn, jpn, tha, are, mdv, sgp) in `ba
 
 - The assistant is **Kodi**. The client shows its own welcome; it doesn't need to send it. The server stores its own greeting as the first assistant turn of each thread (`GREETING` in routes.ts).
 - Replies are **plain text**: the server strips emojis and markdown (lists arrive as `•` lines), matching the frontend's plain-text rendering and its no-emoji design rule.
-- The ready-made client is `client/takeoff-api.ts`; wiring steps are in `docs/frontend-integration.md`.
+- The ready-made client is `client/takeoff-api.ts`; wiring steps are in `integration.md`.
 - The **server ignores the client's history** — its SQLite store is authoritative. The `messages[]` array is used only to find the latest user turn (and to replay context, which must therefore be non-spammy).
 - Send `threadId` on every message after the first so the thread is reused (server auto-creates on first). A `threadId` that belongs to another session is ignored and a new thread is started.
 - A turn is saved only after the model answers; on `model_unavailable` the client can simply resend.

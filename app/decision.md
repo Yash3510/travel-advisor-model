@@ -73,7 +73,7 @@ Decisions log — newest at bottom. Never delete an entry; strike through if rev
 - Verified with the real model (llama.cpp b11714, CPU): search → "book the cheapest one" → summary of the right offer → Confirm → pending → `get_booking` reports pending.
 
 ## D-012 — Align with the production frontend
-- The frontend (React 19, Vite, Tailwind v4, Bun, oxlint) has no backend calls yet; everything is faked in the browser. So the backend ships a typed, dependency-free client (`client/takeoff-api.ts`), tested against the real routes, plus `docs/frontend-integration.md`.
+- The frontend (React 19, Vite, Tailwind v4, Bun, oxlint) has no backend calls yet; everything is faked in the browser. So the backend ships a typed, dependency-free client (`client/takeoff-api.ts`), tested against the real routes, plus a wiring guide (now `integration.md`).
 - The assistant is Kodi: the server greeting no longer uses another company's persona.
 - Replies are plain text with no emojis (`toPlainText` in harness.ts). The frontend renders plain text, and its design rules ban emojis. Stripping in code keeps the trained prompt unchanged.
 - oxlint (the frontend's linter) now runs on the backend and the client, in CI too.
