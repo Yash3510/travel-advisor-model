@@ -31,7 +31,7 @@ frontend (friend's)  →  backend :5590  →  llama-server :8081 (0.8B v2 fine-t
 Production: `docker compose up -d --build` (see README). Config is env vars, all listed in `backend/.env.example`.
 
 - Restart only llama-server if it was restarted: health probe is `curl http://127.0.0.1:8081/health` → `{"status":"ok"}`.
-- Backend health: `curl http://127.0.0.1:5590/health` (liveness) and `/ready` (503 until the model answers).
+- Backend health: `curl http://127.0.0.1:5590/health` (liveness) and `/ready` (503 until the model answers and the planner's data files are present).
 
 ## Backend wire contract (must stay EXACTLY this)
 
@@ -51,8 +51,9 @@ Production: `docker compose up -d --build` (see README). Config is env vars, all
 7. `GET /api/profile?sessionId=` → `{"profile":{…}}`; `PATCH /api/profile` `{"sessionId", "travelStyle"?, "budgetStyle"?, "homeCity"?, "interests"?, "dislikes"?, "dietaryNeeds"?, "mobilityNeeds"?, "accommodationPreferences"?}` → `{"profile"}` (lists given are replaced, `null` clears a field, unknown fields or values → 400 `invalid_profile`); `POST /api/profile/reset` `{"sessionId"}` → empty profile. Unknown session → 404. The session is the user until accounts exist (additive).
 8. `GET /api/threads/:id/trip?sessionId=` → `{"trip":{destination, origin, startDate, endDate, month, durationDays, travelers, travelerTypes, purpose, budgetInr, budgetPerPerson, asked, planningTurns, status}}` — 404 unless that session's thread (additive).
 9. `done` carries an additive `"planning":{"state","action","field"?,"assumptions":[…],"missing":[…]}`. `action` is `ask` (the planner asked a question itself), `draft` (first plan), `revise` (the plan was rebuilt after "make it cheaper", "slower", "skip X", new dates or party size) or `converse`. `state` is `trip_basics`, `profile_context`, `high_value_refinement`, `draft_ready` or `revision`.
-10. When a plan is built from place data, `done` also carries `"itinerary":{version, destination, startDate?, days:[{day, date?, items:[{kind (activity|meal|rest), block, start, end, title, poiId?, durationMinutes, durationBasis, travelToNext?, hours (open|unknown), costInr?, why:{matched, tradeoffs}, notes, suggestions?, source, confidence}], warnings}], totalEstimatedCostInr?, assumptions, warnings, alternatives, confidence, sources, rejected}` and `"insights":[{type, title, detail, source, sourceUrl?, licence?, checkedAt, severity, confidence, status (checked|not_checked|stale), date?, poiId?, effect?}]` (additive). The structured itinerary is the source of truth; `message` is its rendering. The frontend must show `sources` (the OpenStreetMap credit is required by its licence).
+10. When a plan is built from place data, `done` also carries `"itinerary":{version, destination, startDate?, days:[{day, date?, items:[{kind (activity|meal|rest), block, start, end, title, poiId?, durationMinutes, durationBasis, travelToNext?:{minutes, km, basis (road|straight_line_estimate), source, isEstimate, confidence}, hours (open|unknown), costInr?, why:{matched, tradeoffs}, notes, suggestions?, source, confidence}], warnings}], totalEstimatedCostInr?, assumptions, warnings, alternatives, confidence, sources, rejected}` and `"insights":[{type, title, detail, source, sourceUrl?, licence?, checkedAt, severity, confidence, status (checked|not_checked|stale), date?, poiId?, effect?}]` (additive). The structured itinerary is the source of truth; `message` is its rendering. The frontend must show `sources` (the OpenStreetMap credit is required by its licence).
 11. `GET /api/threads/:id/itinerary?sessionId=` → `{"itinerary": <latest version> | null}` — 404 unless that session's thread (additive).
+12. `GET /ready` → `{"ok", "model": "ok"|"unreachable", "data": {"ok", "regions": ["goa"], "missing": ["place data for goa: /app/data/poi/goa.json", …]}, "routing": "osrm"|"estimate"}`; 503 unless the model answers and no planner file is missing (additive).
 
 ### Deal object shape (frontend must render these keys)
 
@@ -128,7 +129,7 @@ Expect: `destination_selected` (Bali) → `campaign_deals` (1 deal) → `done` w
 - `backend/src/prompts.ts` is the exact prompt the model was trained with (`prompts/runtime_system_prompt.txt` in the model repo) plus its deployment block. Tool schemas in `tools.ts` match the model repo's `travel/tools.py`. Do not reword either: the model learned its behaviour from that text.
 - The model was trained for trips **within India**; the catalog's international deals work but are outside its training focus.
 - `get_destination_info` (a model tool) returns `found: false` until the model repo's `kb/destinations.json` is built; the itinerary engine reads the Wikivoyage pages directly for season notes.
-- Place data exists for Goa only so far. OSM publishes opening hours for about 8% of Goa's places and wheelchair access for about 11%; the rest is shown as unknown. Travel times are straight-line estimates. Only published entry fees are counted.
+- Place data exists for Goa only so far. OSM publishes opening hours for about 8% of Goa's places and wheelchair access for about 11%; the rest is shown as unknown. Travel times are straight-line estimates unless a self-hosted OSRM server is configured (`ROUTING_URL`); estimates are always labelled. Only published entry fees are counted.
 - Tool history (calls and results) is stored per thread so the model can book an offer from an earlier turn; each model call sends the newest `MAX_HISTORY_CHARS` (default 30k) of it.
 
 ## Style for agents making changes here

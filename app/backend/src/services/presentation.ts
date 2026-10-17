@@ -27,7 +27,7 @@ function itemLine(i: ItineraryItem): string {
     if (i.hours === 'unknown') parts.push('Opening hours not published.');
     if (i.costInr !== undefined) parts.push(`Entry about ${inr(i.costInr)} for the group.`);
     for (const n of i.notes) parts.push(sentence(n));
-    if (i.travelToNext) parts.push(`Then about ${i.travelToNext.minutes} min to the next stop.`);
+    if (i.travelToNext) parts.push(i.travelToNext.isEstimate ? `Then about ${i.travelToNext.minutes} min to the next stop (estimated).` : `Then about ${i.travelToNext.minutes} min by road to the next stop.`);
   } else if (i.kind === 'meal') {
     if (i.suggestions?.length) parts.push(`Nearby options that match your diet: ${i.suggestions.map((s) => s.name).join(', ')}.`);
     for (const n of i.notes) parts.push(sentence(n));

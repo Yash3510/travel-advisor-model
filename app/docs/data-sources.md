@@ -12,7 +12,7 @@ No commercial website is scraped.
 | Places to visit (name, coordinates, category, opening hours, wheelchair access, fees, vegetarian-friendly restaurants) | OpenStreetMap | ODbL 1.0 | "© OpenStreetMap contributors", linking to https://www.openstreetmap.org/copyright | Re-run the importer per destination (dev: Overpass; production: regional extract) |
 | Destination guide (when to go, climate, getting in, permits, seasonal closures) | Wikivoyage, cached in `data/raw/wikivoyage/` (121 Indian destinations, fetched 2026-10-11) | CC BY-SA 4.0 | Article title and link, "CC BY-SA 4.0" | Re-fetch with the model repo's `travel/kb.py`, then rebuild |
 | Weather forecast | Open-Meteo | Data CC BY 4.0 | "Weather data by Open-Meteo.com" | Fetched per plan, at most 16 days ahead |
-| Travel time between places | Computed: straight-line distance × road factor ÷ speed | — | Shown as an estimate | — |
+| Travel time between places | Self-hosted OSRM when `ROUTING_URL` is set; otherwise computed from straight-line distance | OSRM: BSD-2-Clause software, routes from OSM data (ODbL 1.0) | "© OpenStreetMap contributors"; estimates are labelled as estimates | Rebuild the OSRM graph with each OSM extract refresh |
 | Events, closures beyond opening hours, advisories, entry rules | None approved yet | — | Shown as "not checked" | Phase 3 |
 
 ## OpenStreetMap (places)
@@ -54,10 +54,41 @@ No commercial website is scraped.
 
 ## Travel time
 
-No routing provider is used in Phase 2. The OSRM public demo server is non-commercial and limited to one request per
-second, so it isn't suitable. Estimate: great-circle distance × 1.35 (roads aren't straight), at 25 km/h for short
-local legs and 40 km/h for longer ones, plus 10 minutes for parking and walking. Every leg is labelled an estimate
-with confidence 0.5. Phase 3 option: a self-hosted OSRM (BSD-2-Clause) on OSM data.
+Travel times sit behind one provider interface (`backend/src/services/travelTime.ts`):
+
+- **Road times: a self-hosted OSRM server, when `ROUTING_URL` is set.** The backend calls the standard route service,
+  `GET {ROUTING_URL}/route/v1/driving/{lon},{lat};{lon},{lat}?overview=false`, with a timeout (`ROUTING_TIMEOUT_MS`,
+  default 2000). It accepts only `code: "Ok"` with a non-negative numeric `duration` and `distance`. The leg is the
+  road time plus 10 minutes for parking and getting in and out, labelled `basis: "road"`, `source: "OSRM"`,
+  confidence 0.8. OSRM's car profile uses free-flow speeds and knows nothing about traffic, so these are still
+  planning times, not guarantees.
+- **Fallback: the straight-line estimate.** Great-circle distance × 1.35 (roads aren't straight), at 25 km/h for short
+  local legs and 40 km/h for longer ones, plus 10 minutes. It is labelled `basis: "straight_line_estimate"`,
+  `isEstimate: true`, confidence 0.5, and the plan carries a warning saying the times are estimates. When OSRM was
+  configured but failed (timeout, non-200, malformed reply), the source says "road routing unavailable" and the
+  warning says so too. After one failure the rest of that plan uses the estimate, so a dead server costs one timeout.
+  "No route" for one pair (an island, a point far from any road) falls back for that pair only.
+- **Only the plan's legs are asked.** The search compares many pairs of places with the estimate; the legs a plan
+  actually uses are then asked of OSRM (once per pair per request), the plan is rebuilt with those answers, and the
+  validator checks the final schedule against them.
+
+**The public demo server (`router.project-osrm.org`) is not used in production.** Its usage policy limits it to
+light, non-commercial use, so the backend refuses it when `NODE_ENV=production` and falls back to estimates with a
+logged warning.
+
+**Self-hosting OSRM** (software BSD-2-Clause; the road graph is built from an OSM extract, so ODbL applies and the
+"© OpenStreetMap contributors" credit the plan already carries covers it):
+
+```bash
+# a regional extract from download.geofabrik.de that covers the destination, saved as region.osm.pbf
+docker run -t -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-extract -p /opt/car.lua /data/region.osm.pbf
+docker run -t -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-partition /data/region.osrm
+docker run -t -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-customize /data/region.osrm
+docker run -d -p 5000:5000 -v "$PWD:/data" ghcr.io/project-osrm/osrm-backend osrm-routed --algorithm mld /data/region.osrm
+# then: ROUTING_URL=http://<osrm-host>:5000
+```
+
+Building the graph takes several GB of RAM for a large extract; rebuild it whenever the OSM extract is refreshed.
 
 ## Not approved, so not used
 

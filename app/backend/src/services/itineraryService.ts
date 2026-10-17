@@ -9,7 +9,8 @@ import { isOpen } from '../domain/openingHours.js';
 import type { PoiCategory, PointOfInterest } from '../domain/poi.js';
 import type { TravelerProfile, TravelStyle } from '../domain/profile.js';
 import type { TripContext } from '../domain/trip.js';
-import { blockedOn, dayPlanRules, eligibility, estimateTravel, MAX_LEG_MINUTES, type DayRules, type TravelEstimate } from './constraints.js';
+import { activityConfidence, blockedOn, dayPlanRules, eligibility, estimateTravel, MAX_LEG_MINUTES, type DayRules, type TravelEstimate, type TravelLookup } from './constraints.js';
+import { labelTravel } from './itineraryValidator.js';
 
 export interface ItineraryRequest {
   trip: TripContext;
@@ -23,6 +24,8 @@ export interface ItineraryRequest {
   /** per-day pace overrides from revisions ("make day 2 more relaxed"), 1-based */
   dayPace?: Record<number, TravelStyle>;
   withAlternatives?: boolean;
+  /** travel times for scheduling; the straight-line estimate unless the routing provider has answered */
+  travel?: TravelLookup;
 }
 
 export const DEFAULT_DAYS = 4;
@@ -30,7 +33,6 @@ const CLUSTER_MINUTES = 45; // a day's places stay within this travel time of it
 const SEEDS_TRIED = 3;
 const STEP = 15;
 const MEAL_SEARCH_KM = 5;
-const UNKNOWN_HOURS_CONFIDENCE = 0.3;
 
 interface Candidate { poi: PointOfInterest; score: number; matched: string[]; tradeoffs: string[]; notes: string[] }
 
@@ -85,12 +87,12 @@ function hoursOk(p: PointOfInterest, date: string | undefined, start: number, en
 interface Placed { c: Candidate; start: number; end: number; travel?: TravelEstimate; closedDays: string[]; hours: 'open' | 'unknown' }
 
 /** Place the stops in order, earliest feasible time each; null if any stop can't fit. */
-function place(order: Candidate[], rules: DayRules, date: string | undefined): Placed[] | null {
+function place(order: Candidate[], rules: DayRules, date: string | undefined, travelTime: TravelLookup): Placed[] | null {
   const out: Placed[] = [];
   let cursor = rules.start;
   for (const c of order) {
     const prev = out.at(-1);
-    const travel = prev ? estimateTravel(prev.c.poi.location, c.poi.location) : undefined;
+    const travel = prev ? travelTime(prev.c.poi.location, c.poi.location) : undefined;
     if (travel && travel.minutes > MAX_LEG_MINUTES) return null;
     const dur = c.poi.visitDuration.minutes;
     let found: Placed | null = null;
@@ -110,15 +112,15 @@ function place(order: Candidate[], rules: DayRules, date: string | undefined): P
 }
 
 /** Starting from a seed, add nearby stops by score while the day's budgets and the schedule allow. */
-function fillDay(seed: Candidate, pool: Candidate[], rules: DayRules, date: string | undefined): Placed[] {
+function fillDay(seed: Candidate, pool: Candidate[], rules: DayRules, date: string | undefined, travel: TravelLookup): Placed[] {
   let chosen = [seed];
-  let placed = place([seed], rules, date)!;
+  let placed = place([seed], rules, date, travel)!;
   for (const c of pool) {
     if (c === seed || estimateTravel(seed.poi.location, c.poi.location).minutes > CLUSTER_MINUTES) continue;
     if (chosen.length >= rules.maxActivities) break;
     if (chosen.some((x) => x.poi.category === c.poi.category)) continue;
     if (chosen.reduce((s, x) => s + x.poi.visitDuration.minutes, 0) + c.poi.visitDuration.minutes > rules.activityMinutes) continue;
-    const trial = place(orderStops([...chosen, c]), rules, date);
+    const trial = place(orderStops([...chosen, c]), rules, date, travel);
     if (!trial || trial.reduce((s, x) => s + (x.travel?.minutes ?? 0), 0) > rules.maxTravelMinutes) continue;
     chosen = [...chosen, c];
     placed = trial;
@@ -154,6 +156,7 @@ function mealItem(kind: 'lunch' | 'dinner', start: number, end: number, near: Po
 
 export function buildItinerary(req: ItineraryRequest): ItineraryDraft {
   const { trip, profile, insights } = req;
+  const travel = req.travel ?? estimateTravel;
   const pace: TravelStyle = profile.travelStyle ?? 'balanced';
   const travelers = trip.travelers ?? 2;
   const dayCount = Math.max(1, Math.min(14, trip.durationDays ?? DEFAULT_DAYS));
@@ -202,8 +205,8 @@ export function buildItinerary(req: ItineraryRequest): ItineraryDraft {
     // can crowd out a better combination (two strong stops beat one strong stop and two fillers)
     let placed: Placed[] = [];
     let bestScore = -Infinity;
-    for (const seed of adjusted.filter((c) => place([c], rules, date)).slice(0, SEEDS_TRIED)) {
-      const day = fillDay(seed, adjusted, rules, date);
+    for (const seed of adjusted.filter((c) => place([c], rules, date, travel)).slice(0, SEEDS_TRIED)) {
+      const day = fillDay(seed, adjusted, rules, date, travel);
       const total = day.reduce((s, p) => s + p.c.score, 0);
       if (total > bestScore) { bestScore = total; placed = day; }
     }
@@ -219,16 +222,15 @@ export function buildItinerary(req: ItineraryRequest): ItineraryDraft {
       if (p.travel && p.travel.minutes > 30) tradeoffs.push(`about ${p.travel.minutes} min from the previous stop`);
       const notes = [...p.c.notes];
       if (p.closedDays.length) notes.push(`Closed on ${p.closedDays.join(', ')}`);
-      const hoursConfidence = p.hours === 'open' ? p.c.poi.openingHours.confidence : UNKNOWN_HOURS_CONFIDENCE;
       const cost = p.c.poi.fee === 'paid' && p.c.poi.feeInr !== undefined ? p.c.poi.feeInr * travelers : undefined;
       return {
         kind: 'activity', block: blockOf(p.start), start: toClock(p.start), end: toClock(p.end), title: p.c.poi.name, poiId: p.c.poi.id,
         durationMinutes: p.end - p.start, durationBasis: 'category_default',
-        ...(leg ? { travelToNext: { minutes: leg.minutes, km: leg.km, basis: leg.basis } } : {}),
+        ...(leg ? { travelToNext: { ...leg } } : {}),
         hours: p.hours, ...(cost !== undefined ? { costInr: cost, costBasis: 'osm_charge' as const } : {}),
         why: { matched: p.c.matched, tradeoffs }, notes,
         source: { name: p.c.poi.source.name, url: p.c.poi.source.url, licence: p.c.poi.source.licence, attribution: p.c.poi.source.attribution },
-        confidence: round2((hoursConfidence + p.c.poi.visitDuration.confidence + 0.5) / 3),
+        confidence: activityConfidence(p.c.poi, p.hours, p.travel),
       } satisfies ItineraryItem;
     });
     const lastBefore = (t: number) => placed.filter((p) => p.end <= t).at(-1)?.c.poi ?? placed[0]?.c.poi;
@@ -257,7 +259,6 @@ export function buildItinerary(req: ItineraryRequest): ItineraryDraft {
     if (totalEstimatedCostInr > budget) warnings.push(`Entry fees in this plan (${inr(totalEstimatedCostInr)}) are above your budget (${inr(budget)})`);
   }
   assumptions.push('Visit lengths are typical times for each kind of place, not published figures');
-  assumptions.push('Travel times are straight-line estimates (roads add about a third), plus 10 minutes');
   assumptions.push('Each day starts near where you are staying');
   const unknownHours = activities.filter((a) => a.hours === 'unknown').length;
   if (unknownHours) assumptions.push(`Opening hours aren't published for ${unknownHours} of the places in this plan; check before you go`);
@@ -277,6 +278,7 @@ export function buildItinerary(req: ItineraryRequest): ItineraryDraft {
     confidence: activities.length ? round2(activities.reduce((s, a) => s + a.confidence, 0) / activities.length) : 0,
     sources, rejected,
   };
+  labelTravel(draft);
   if (req.withAlternatives !== false) draft.alternatives = alternatives(req, draft);
   return draft;
 }

@@ -103,7 +103,7 @@ export async function openMeteo(ctx: InsightContext): Promise<TripInsight[]> {
 // ── Destination guide: Wikivoyage (CC BY-SA 4.0), from the pages cached in the repository
 
 // the repository's cached pages by default; GUIDE_DIR points elsewhere (the Docker image mounts them)
-const GUIDE_DIR = process.env.GUIDE_DIR ? pathToFileURL(process.env.GUIDE_DIR.replace(/\/?$/, '/')) : new URL('../../../../data/raw/wikivoyage/', import.meta.url);
+export const GUIDE_DIR = process.env.GUIDE_DIR ? pathToFileURL(process.env.GUIDE_DIR.replace(/\/?$/, '/')) : new URL('../../../../data/raw/wikivoyage/', import.meta.url);
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const MONEY = /₹|\bRs\.?\s?\d|\bINR\b|\$\d|\bUSD\b/i;
 

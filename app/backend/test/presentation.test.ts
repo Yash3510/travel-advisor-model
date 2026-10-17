@@ -24,6 +24,7 @@ describe('renderItinerary', () => {
     expect(text).toContain('Heavy rain likely on 15 December');
     expect(text).toContain('Not checked: events');
     expect(text).toContain('© OpenStreetMap contributors');
+    expect(text).toMatch(/Then about \d+ min to the next stop \(estimated\)\./);
     expect(text).not.toMatch(/(?![©®™])\p{Extended_Pictographic}/u);
   });
 });

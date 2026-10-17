@@ -102,3 +102,10 @@ Decisions log — newest at bottom. Never delete an entry; strike through if rev
 - **Revisions** ("cheaper", "slower", "day N more relaxed", "skip X", new dates or party size) rebuild the plan from trip-only overrides; the saved profile keeps its pace, budget style and tastes.
 - **Insights:** Open-Meteo forecasts within 16 days change the plan when rain is likely (stale forecasts don't); Wikivoyage season notes are shown with attribution; events, closures beyond OSM hours, advisories and entry rules are reported as not checked.
 - **Unknowns:** visit lengths are category defaults labelled as assumptions; unknown hours lower confidence; costs only from published fees.
+
+## D-016 — Travel times behind a provider: self-hosted OSRM, else a labelled estimate
+- **Interface:** `TravelTimeProvider.estimate(from, to) → {minutes, distanceKm, mode, source, checkedAt, confidence, isEstimate}`. OSRM when `ROUTING_URL` is set; the Phase 2 straight-line estimate otherwise or on failure.
+- **Why not per pair everywhere:** the search compares hundreds of pairs, which no routing call budget allows. The search uses the estimate; the plan's own legs are asked of OSRM (cached per request), the plan is rebuilt with the answers (up to three rounds), and the validator checks the result against them.
+- **Failure:** timeout, non-200 or malformed reply → the estimate, labelled "road routing unavailable", one warning per plan; one failure stops further calls for that plan. The public demo server is refused in production.
+- **Confidence:** a stop's confidence uses the confidence of the leg into it (road 0.8, estimate 0.5, unknown start 0.5); the validator recomputes legs, confidence and the travel assumption from the times it checked.
+- **Wire:** `travelToNext` keeps `minutes`, `km`, `basis` and adds `source`, `isEstimate`, `confidence`; `basis` can now be `road`. `/ready` adds `data` and `routing`. Additive.

@@ -10,7 +10,7 @@ const NOW = '2026-10-18T00:00:00.000Z';
 describe('estimateTravel', () => {
   it('labels straight-line estimates and adds a fixed buffer', () => {
     const t = estimateTravel({ lat: 15.5, lon: 73.8 }, { lat: 15.5, lon: 73.8 });
-    expect(t).toEqual({ km: 0, minutes: 10, basis: 'straight_line_estimate', confidence: 0.5 });
+    expect(t).toEqual({ km: 0, minutes: 10, basis: 'straight_line_estimate', source: 'Straight-line estimate', isEstimate: true, confidence: 0.5 });
     const far = estimateTravel({ lat: 15.0, lon: 74.0 }, { lat: 15.75, lon: 73.75 }); // ~88 km apart
     expect(far.minutes).toBeGreaterThan(MAX_LEG_MINUTES);
   });

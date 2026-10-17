@@ -7,12 +7,14 @@ import { regionFor } from './importOsm.js';
 
 export interface PlaceSet { slug: string; center: LatLon; pois: PointOfInterest[] }
 
+/** where `npm run data:import` writes, and where the Docker image mounts the place files */
+export const POI_DIR = new URL('../../data/poi/', import.meta.url);
 const cache = new Map<string, { mtimeMs: number; set: PlaceSet }>();
 
 export function loadPlaces(destination: string | undefined): PlaceSet | undefined {
   const region = regionFor(destination);
   if (!region) return undefined;
-  const file = new URL(`../../data/poi/${region.slug}.json`, import.meta.url);
+  const file = new URL(`${region.slug}.json`, POI_DIR);
   if (!fs.existsSync(file)) return undefined;
   const { mtimeMs } = fs.statSync(file);
   const hit = cache.get(region.slug);

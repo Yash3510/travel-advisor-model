@@ -1,6 +1,7 @@
 // HTTP route handlers on plain node:http (see decision.md D-006). Wire contract: app/AGENTS.md.
 import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import { fileURLToPath } from 'node:url';
 import { config } from './config.js';
 import { store, type MessageRow, type Offer, type StoredMessage } from './db.js';
 import { detectRegion, dealsForRegion } from './catalog.js';
@@ -9,7 +10,7 @@ import { log } from './log.js';
 import { applyProfileEdit, emptyProfile } from './domain/profile.js';
 import { emptyTrip } from './domain/trip.js';
 import { planTurn, type Route } from './services/promptRouter.js';
-import { loadPlaces, type PlaceSet } from './data/poiStore.js';
+import { loadPlaces, POI_DIR, type PlaceSet } from './data/poiStore.js';
 import type { LatLon } from './domain/geo.js';
 import type { TripInsight } from './domain/insights.js';
 import type { ItineraryDraft } from './domain/itinerary.js';
@@ -17,6 +18,10 @@ import type { TravelerProfile } from './domain/profile.js';
 import type { TripContext } from './domain/trip.js';
 import { gatherInsights } from './services/insightsService.js';
 import { buildCheckedPlan } from './services/planBuilder.js';
+import { travelTimeProvider, type TravelTimeProvider } from './services/travelTime.js';
+import { checkData } from './readiness.js';
+import { REGIONS_FILE } from './data/importOsm.js';
+import { GUIDE_DIR } from './services/insightsService.js';
 import { checkIntro, fallbackIntro, introRequest, renderItinerary } from './services/presentation.js';
 import { buildSystemPrompt } from './prompts.js';
 import { chatCompletion, runTurn, trimHistory, type PendingBooking, type ToolBackend, type Turn } from './modelClient.js';
@@ -34,6 +39,8 @@ export interface RequestContext {
   places?: (destination: string | undefined) => PlaceSet | undefined;
   /** trip insights (default: Open-Meteo, the Wikivoyage guide, and not-checked kinds) */
   insights?: (trip: TripContext, at: LatLon) => Promise<TripInsight[]>;
+  /** a travel-time provider for one planning request (tests inject one) */
+  travelTime?: () => TravelTimeProvider;
 }
 
 type Body = Record<string, unknown>;
@@ -185,7 +192,10 @@ async function route(req: IncomingMessage, res: ServerResponse, ctx: RequestCont
           headers: config.modelApiKey ? { Authorization: `Bearer ${config.modelApiKey}` } : {},
           signal: AbortSignal.timeout(3000),
         }).then((r) => r.ok, () => false);
-        json(res, modelOk ? 200 : 503, { ok: modelOk, model: modelOk ? 'ok' : 'unreachable' });
+        // additive: the files the planner needs, and where travel times come from
+        const data = checkData({ catalogPath: ctx.catalogPath, regionsFile: fileURLToPath(REGIONS_FILE), poiDir: fileURLToPath(POI_DIR), guideDir: fileURLToPath(GUIDE_DIR), dbPath: config.dbPath });
+        const ok = modelOk && data.ok;
+        json(res, ok ? 200 : 503, { ok, model: modelOk ? 'ok' : 'unreachable', data, routing: config.routingUrl ? 'osrm' : 'estimate' });
         return;
       }
       case '/api/session': {
@@ -315,7 +325,8 @@ function sessionTools(ctx: RequestContext, sessionId: string): ToolBackend {
 async function planItinerary(p: { ctx: RequestContext; trip: TripContext; profile: TravelerProfile; history: Turn[]; userText: string; places: PlaceSet; signal: AbortSignal; threadId?: number }) {
   const insights = await (p.ctx.insights ?? ((trip, at) => gatherInsights({ trip, at, now: new Date() })))(p.trip, p.places.center);
   const pois = p.places.pois;
-  const { draft, profile } = buildCheckedPlan({ trip: p.trip, profile: p.profile, insights, pois });
+  const travel = (p.ctx.travelTime ?? defaultTravelTime)();
+  const { draft, profile } = await buildCheckedPlan({ trip: p.trip, profile: p.profile, insights, pois, travel });
 
   let intro = fallbackIntro(draft, profile, p.trip);
   try {
@@ -336,6 +347,11 @@ async function planItinerary(p: { ctx: RequestContext; trip: TripContext; profil
 }
 
 /** Additive `planning` key on `done`: where the planner is, so the UI can show progress and assumptions. */
+const defaultTravelTime = () => travelTimeProvider({
+  url: config.routingUrl, production: process.env.NODE_ENV === 'production', timeoutMs: config.routingTimeoutMs,
+  onError: (err) => log('warn', 'routing unavailable; using straight-line estimates', { error: err.message }),
+});
+
 const planningInfo = (r: Route) => ({ state: r.state, action: r.action, ...(r.field ? { field: r.field } : {}), assumptions: r.assumptions, missing: r.missing });
 
 const busyThreads = new Set<number>();

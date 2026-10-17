@@ -14,8 +14,10 @@ export interface PoiRegion { slug: string; name: string; bbox: [number, number, 
 const DATA = new URL('../../data/', import.meta.url);
 const sha256 = (s: string) => createHash('sha256').update(s).digest('hex');
 
+export const REGIONS_FILE = new URL('poi-regions.json', DATA);
+
 export function loadRegions(): PoiRegion[] {
-  return (JSON.parse(fs.readFileSync(new URL('poi-regions.json', DATA), 'utf8')) as { regions: PoiRegion[] }).regions;
+  return (JSON.parse(fs.readFileSync(REGIONS_FILE, 'utf8')) as { regions: PoiRegion[] }).regions;
 }
 
 export function regionFor(destination: string | undefined, regions: PoiRegion[] = loadRegions()): PoiRegion | undefined {

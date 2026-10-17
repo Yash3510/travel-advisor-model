@@ -42,27 +42,27 @@ function releaseAssertions(draft: ItineraryDraft, rendered: string, trip: TripCo
 }
 
 describe('itinerary scenarios', () => {
-  it.each(file.scenarios.map((s) => [s.name, s] as const))('%s', (_name, s) => {
+  it.each(file.scenarios.map((s) => [s.name, s] as const))('%s', async (_name, s) => {
     const insights = s.insights ?? [];
     let trip = emptyTrip();
     let profile = s.profile ? applyProfileEdit(emptyProfile(), s.profile, NOW) : emptyProfile();
     const routes: Route[] = [];
     const plans: { draft: ItineraryDraft; rendered: string; profile: TravelerProfile }[] = [];
     let current: ItineraryDraft | undefined;
-    s.turns.forEach((message, i) => {
+    for (const [i, message] of s.turns.entries()) {
       const scheduled = current ? stops(current).map((a) => ({ poiId: a.poiId!, name: a.title })) : undefined;
       const r = planTurn({ trip, profile, message, today: file.today, catalogPath: config.catalogPath, firstTurnOfThread: i === 0, now: NOW, scheduled });
       trip = r.trip;
       profile = r.profile;
       routes.push(r.route);
       if (r.route.action === 'draft' || r.route.action === 'revise') {
-        const { draft } = buildCheckedPlan({ trip, profile, insights, pois: POIS });
+        const { draft } = await buildCheckedPlan({ trip, profile, insights, pois: POIS });
         trip = { ...trip, status: 'drafted', itineraryVersion: draft.version };
         current = draft;
         plans.push({ draft, rendered: renderItinerary(draft, insights), profile });
         releaseAssertions(draft, plans.at(-1)!.rendered, trip, profile, insights);
       }
-    });
+    }
 
     const e = s.expect;
     const draftAt = routes.findIndex((r) => r.action === 'draft') + 1;

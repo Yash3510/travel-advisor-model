@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { ItineraryDraft } from '../src/domain/itinerary.js';
+import { fromClock, type ItineraryDraft } from '../src/domain/itinerary.js';
 import type { PointOfInterest } from '../src/domain/poi.js';
 import { buildItinerary } from '../src/services/itineraryService.js';
-import { repairItinerary, validateItinerary, type ValidationContext } from '../src/services/itineraryValidator.js';
+import { MAX_LEG_MINUTES, type TravelLookup } from '../src/services/constraints.js';
+import { repairItinerary, TRAVEL_ESTIMATE_WARNING, validateItinerary, type ValidationContext } from '../src/services/itineraryValidator.js';
 import { poi, profileWith, TOWN, tripWith } from './fixtures.js';
 
 const FAR = poi({ id: 'osm:node/50', name: 'Distant Falls', category: 'waterfall', interests: ['nature'], indoor: false, location: { lat: 14.2, lon: 74.4 } });
@@ -118,5 +119,34 @@ describe('repairItinerary', () => {
     expect(acts(fixed)).toEqual([]);
     expect(fixed.days[0].warnings.join(' ')).toMatch(/could not be planned/);
     expect(validateItinerary(fixed, ctx)).toEqual([]);
+  });
+});
+
+const road = (minutes: number): TravelLookup => () => ({ minutes, km: 3, basis: 'road', source: 'OSRM', isEstimate: false, confidence: 0.8 });
+
+describe('travel times from the routing provider', () => {
+
+  it('accepts realistic road times and rejects legs that do not fit the schedule', () => {
+    const { draft, ctx } = setup();
+    const [a, b] = acts(draft);
+    expect(codes(draft, { ...ctx, travel: road(10) })).not.toContain('impossible_travel');
+    expect(codes(draft, { ...ctx, travel: road(fromClock(b.start) - fromClock(a.end) + 15) })).toContain('impossible_travel');
+    expect(codes(draft, { ...ctx, travel: road(MAX_LEG_MINUTES + 1) })).toContain('impossible_travel');
+  });
+
+  it('labels every leg with its source, uses its confidence, and warns when legs are only estimates', () => {
+    const { draft, ctx } = setup();
+    const estimated = repairItinerary(draft, ctx).draft;
+    expect(estimated.warnings).toContain(TRAVEL_ESTIMATE_WARNING);
+    expect(acts(estimated)[0].travelToNext).toMatchObject({ basis: 'straight_line_estimate', source: 'Straight-line estimate', isEstimate: true, confidence: 0.5 });
+
+    const routed = repairItinerary(draft, { ...ctx, travel: road(10) }).draft;
+    expect(routed.warnings).not.toContain(TRAVEL_ESTIMATE_WARNING);
+    expect(acts(routed)[0].travelToNext).toEqual({ minutes: 10, km: 3, basis: 'road', source: 'OSRM', isEstimate: false, confidence: 0.8 });
+    expect(routed.assumptions).toEqual(expect.arrayContaining([expect.stringMatching(/^Travel times are road times from OSRM/)]));
+    expect(routed.assumptions.some((a) => /straight-line/.test(a))).toBe(false);
+    expect(routed.sources.map((s) => s.name)).toContain('OSRM');
+    expect(routed.confidence).toBeGreaterThan(estimated.confidence);
+    expect(repairItinerary(routed, { ...ctx, travel: road(10) }).draft).toEqual(routed);
   });
 });

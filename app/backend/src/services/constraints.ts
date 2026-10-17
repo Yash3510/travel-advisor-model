@@ -4,25 +4,42 @@
 import type { LatLon } from '../domain/geo.js';
 import { haversineKm } from '../domain/geo.js';
 import type { TripInsight } from '../domain/insights.js';
+import type { TravelLeg } from '../domain/itinerary.js';
 import { isOpen } from '../domain/openingHours.js';
 import type { PoiCategory, PointOfInterest } from '../domain/poi.js';
 import type { TravelerProfile, TravelStyle } from '../domain/profile.js';
 
-// ── Travel time: no routing provider yet, so a labelled estimate (docs/data-sources.md)
+// ── Travel time. The planner searches with this straight-line estimate; the legs that end up in a plan are then
+// asked of the routing provider (travelTime.ts), and anything it can't answer stays a labelled estimate.
 const ROAD_FACTOR = 1.35;
 const LOCAL_KMH = 25;
 const LONG_KMH = 40;
 const LOCAL_KM = 15;
-const BUFFER_MIN = 10;
+export const BUFFER_MIN = 10;
 /** A single transfer longer than this does not fit inside a day of sightseeing. */
 export const MAX_LEG_MINUTES = 120;
+export const ESTIMATE_SOURCE = 'Straight-line estimate';
+export const UNAVAILABLE_SOURCE = 'Straight-line estimate (road routing unavailable)';
+export const ESTIMATE_CONFIDENCE = 0.5;
 
-export interface TravelEstimate { km: number; minutes: number; basis: 'straight_line_estimate'; confidence: number }
+export type TravelEstimate = TravelLeg;
+/** Travel time between two stops, answered synchronously from what is already known. */
+export type TravelLookup = (a: LatLon, b: LatLon) => TravelLeg;
 
-export function estimateTravel(a: LatLon, b: LatLon): TravelEstimate {
+export function estimateTravel(a: LatLon, b: LatLon): TravelLeg {
   const road = haversineKm(a, b) * ROAD_FACTOR;
   const hours = road <= LOCAL_KM ? road / LOCAL_KMH : LOCAL_KM / LOCAL_KMH + (road - LOCAL_KM) / LONG_KMH;
-  return { km: Math.round(road * 10) / 10, minutes: Math.round(hours * 60) + BUFFER_MIN, basis: 'straight_line_estimate', confidence: 0.5 };
+  return { km: Math.round(road * 10) / 10, minutes: Math.round(hours * 60) + BUFFER_MIN, basis: 'straight_line_estimate', source: ESTIMATE_SOURCE, isEstimate: true, confidence: ESTIMATE_CONFIDENCE };
+}
+
+// ── How sure we are of a stop: its hours, its visit length, and how reliably we know the way there
+export const UNKNOWN_HOURS_CONFIDENCE = 0.3;
+/** the first stop of a day starts from the traveller's stay, which we don't know */
+const START_CONFIDENCE = 0.5;
+
+export function activityConfidence(p: PointOfInterest, hours: 'open' | 'unknown' | undefined, arriving: TravelLeg | undefined): number {
+  const h = hours === 'open' ? p.openingHours.confidence : UNKNOWN_HOURS_CONFIDENCE;
+  return Math.round(((h + p.visitDuration.confidence + (arriving?.confidence ?? START_CONFIDENCE)) / 3) * 100) / 100;
 }
 
 // ── The shape of a day, by pace and party

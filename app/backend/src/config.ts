@@ -33,6 +33,9 @@ export const config = {
   maxHistoryChars: num(process.env.MAX_HISTORY_CHARS, 30000),
   // SSE comment lines while the model works, so proxies don't drop a quiet connection
   sseHeartbeatMs: num(process.env.SSE_HEARTBEAT_MS, 15000),
+  // self-hosted OSRM for road times between stops; empty = labelled straight-line estimates (docs/data-sources.md)
+  routingUrl: process.env.ROUTING_URL ?? '',
+  routingTimeoutMs: num(process.env.ROUTING_TIMEOUT_MS, 2000),
   logTools: process.env.LOG_TOOLS === '1',
   logRequests: process.env.LOG_REQUESTS !== '0',
 };

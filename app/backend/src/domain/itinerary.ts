@@ -13,7 +13,7 @@ export interface ItineraryItem {
   /** visit lengths are typical times for the kind of place (OSM has none) */
   durationBasis?: 'category_default' | 'fixed';
   /** to the next activity of the day */
-  travelToNext?: { minutes: number; km: number; basis: 'straight_line_estimate' };
+  travelToNext?: TravelLeg;
   /** "open": checked against published hours; "unknown": no hours published */
   hours?: 'open' | 'unknown';
   costInr?: number;
@@ -25,6 +25,9 @@ export interface ItineraryItem {
   source?: { name: string; url: string; licence: string; attribution: string };
   confidence: number;
 }
+
+/** A road time from the routing provider, or a straight-line estimate that says it is one. */
+export interface TravelLeg { minutes: number; km: number; basis: 'road' | 'straight_line_estimate'; source: string; isEstimate: boolean; confidence: number }
 
 export interface ItineraryDay { day: number; date?: string; items: ItineraryItem[]; warnings: string[] }
 

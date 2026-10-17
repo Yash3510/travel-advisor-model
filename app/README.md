@@ -49,7 +49,7 @@ The full contract with payloads is in [AGENTS.md](AGENTS.md).
 | `POST /api/chat` | SSE: `destination_selected` → `campaign_deals` → `done` (or `error`) |
 | `POST /api/confirm` | request booking of an offer shown in that thread → `PENDING_SUPPLIER_CONFIRMATION` |
 | `POST /api/events/track` | analytics sink |
-| `GET /health`, `GET /ready` | liveness, model reachability |
+| `GET /health`, `GET /ready` | liveness; readiness (model reachable, place data and guide pages present, database writable) |
 
 ## Guardrails (enforced in code, not just the prompt)
 

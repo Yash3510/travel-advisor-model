@@ -6,12 +6,15 @@ import { createHandler } from '../src/routes.js';
 import { MockBackend } from '../src/tools.js';
 import { createTakeoffApi, readSse, toDealCard, TakeoffApiError, type Deal } from '../../client/takeoff-api.js';
 import type { TripInsight } from '../src/domain/insights.js';
+import { TRAVEL_ESTIMATE_WARNING, TRAVEL_UNAVAILABLE_WARNING } from '../src/services/itineraryValidator.js';
+import { travelTimeProvider, UNAVAILABLE_SOURCE, type TravelTimeProvider } from '../src/services/travelTime.js';
 import { NOW, TOWN } from './fixtures.js';
 
 // Stand-in for llama-server: replies come from a queue; every request body is recorded.
 type Reply = { content?: string; tool_calls?: { name: string; args: object }[]; delayMs?: number } | 'fail' | ((req: any) => Reply);
 const stub = { queue: [] as Reply[], requests: [] as any[] };
 let testInsights: TripInsight[] = [];
+let testTravel: (() => TravelTimeProvider) | undefined;
 let modelServer: http.Server;
 let apiServer: http.Server;
 let base = '';
@@ -41,11 +44,12 @@ beforeAll(async () => {
     // place data and insights are injected: tests never touch the generated files or live services
     places: (d) => (d === 'Goa' ? { slug: 'goa', center: { lat: 15.5, lon: 73.8 }, pois: TOWN } : undefined),
     insights: async () => testInsights,
+    travelTime: () => (testTravel ?? (() => travelTimeProvider({})))(),
   }));
   base = await listen(apiServer);
 });
 afterAll(() => { modelServer.close(); apiServer.close(); });
-beforeEach(() => { stub.queue = []; stub.requests = []; testInsights = []; });
+beforeEach(() => { stub.queue = []; stub.requests = []; testInsights = []; testTravel = undefined; });
 
 const post = (path: string, body: unknown) =>
   fetch(`${base}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -262,6 +266,7 @@ async function toDraft(note: Reply | undefined) {
   const done = (await chat(sid, 'about 50k', threadId)).at(-1)!;
   return { sid, threadId: threadId!, done };
 }
+const legs = (plan: any) => plan.days.flatMap((d: any) => d.items).filter((i: any) => i.travelToNext).map((i: any) => i.travelToNext);
 const titles = (plan: any) => plan.days.flatMap((d: any) => d.items.filter((i: any) => i.kind === 'activity').map((i: any) => i.title));
 
 describe('itinerary flow', () => {
@@ -324,6 +329,33 @@ describe('itinerary flow', () => {
     expect(day1.every((a: any) => TOWN.find((p) => p.id === a.poiId)!.indoor)).toBe(true);
     expect(done.data.message).toContain('Heavy rain likely on 15 December');
     expect(done.data.insights).toEqual(testInsights);
+  });
+
+  it('uses road times from a routing server, and labelled estimates when it fails', async () => {
+    let down = false;
+    const osrm = http.createServer((req, res) => {
+      if (down) { res.writeHead(503).end(); return; }
+      res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify({ code: 'Ok', routes: [{ duration: 840, distance: 4100 }] }));
+    });
+    const url = await listen(osrm);
+    try {
+      testTravel = () => travelTimeProvider({ url });
+      const road = (await toDraft(undefined)).done.data;
+      expect(legs(road.itinerary).length).toBeGreaterThan(0);
+      expect(legs(road.itinerary).every((l: any) => l.basis === 'road' && l.source === 'OSRM' && l.minutes === 24 && !l.isEstimate)).toBe(true);
+      expect(road.itinerary.sources.map((s: any) => s.name)).toContain('OSRM');
+      expect(road.itinerary.warnings).not.toContain(TRAVEL_ESTIMATE_WARNING);
+      expect(road.message).toContain('Then about 24 min by road to the next stop.');
+
+      down = true;
+      const fallback = (await toDraft(undefined)).done.data;
+      expect(legs(fallback.itinerary).every((l: any) => l.isEstimate && l.source === UNAVAILABLE_SOURCE)).toBe(true);
+      expect(fallback.itinerary.warnings).toContain(TRAVEL_UNAVAILABLE_WARNING);
+      expect(fallback.message).toContain(TRAVEL_UNAVAILABLE_WARNING);
+      expect(fallback.message).toMatch(/min to the next stop \(estimated\)/);
+    } finally {
+      osrm.close();
+    }
   });
 });
 
