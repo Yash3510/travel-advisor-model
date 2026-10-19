@@ -681,6 +681,8 @@ export interface ChatReply {
   [key: string]: unknown;
 }
 export interface Destination { regionName: string; regionCode: string }
+/** Additive `status` event: what the server is doing right now ("Searching hotels"). */
+export interface ChatStatus { step: string; label: string }
 export interface Thread { id: number; title: string; destination: string | null; isActive: boolean; createdAt: string; updatedAt: string }
 export interface ThreadMessage { role: 'user' | 'assistant'; content: string; createdAt: string }
 export interface BookingResult { status: string; bookingRef: string; message: string; offer: Record<string, unknown> }
@@ -712,6 +714,7 @@ export function errorText(err: unknown): string {
     case 'thread_busy': return "I'm still answering your last message.";
     case 'message_too_long': return `Please keep messages under ${MAX_MESSAGE_CHARS} characters.`;
     case 'model_unavailable': return 'The travel assistant is unavailable right now. Please try again in a minute.';
+    case 'cannot_rewind': return 'That message can no longer be changed.';
     case 'aborted': return 'Stopped.';
     default: return 'Something went wrong. Please try again.';
   }
@@ -847,6 +850,10 @@ export function createTakeoffApi(opts: { baseUrl?: string; storage?: KeyValueSto
   async function chat(text: string, o: {
     threadId?: number; signal?: AbortSignal;
     onDestination?: (d: Destination) => void; onDeals?: (deals: Deal[]) => void;
+    /** progress while the reply is prepared */
+    onStatus?: (s: ChatStatus) => void;
+    /** the reply so far, in checked sentences; '' when the server takes back what it sent. `done` replaces it. */
+    onText?: (soFar: string) => void;
   } = {}): Promise<ChatReply> {
     const content = text.trim();
     if (!content) throw new TakeoffApiError('bad_request', 'Message is empty.');
@@ -861,9 +868,12 @@ export function createTakeoffApi(opts: { baseUrl?: string; storage?: KeyValueSto
           body: JSON.stringify({ sessionId, threadId, messages: [{ role: 'user', content, timestamp: new Date().toISOString() }] }),
         });
         if (!res.ok || !res.body) throw await failure(res);
+        let soFar = '';
         for await (const { event, data } of readSse(res.body)) {
           const d = JSON.parse(data);
-          if (event === 'destination_selected') o.onDestination?.(d as Destination);
+          if (event === 'status') o.onStatus?.(d as ChatStatus);
+          else if (event === 'delta') { soFar = d.reset ? '' : soFar + String(d.text ?? ''); o.onText?.(soFar); }
+          else if (event === 'destination_selected') o.onDestination?.(d as Destination);
           else if (event === 'campaign_deals') o.onDeals?.((d as { deals: Deal[] }).deals);
           else if (event === 'done') return parseDone(d);
           else if (event === 'error') error = new TakeoffApiError(d.code ?? 'error', d.message);
@@ -923,7 +933,28 @@ export function createTakeoffApi(opts: { baseUrl?: string; storage?: KeyValueSto
     return parseItinerary((await call<{ itinerary: unknown }>(await withSession(`/api/threads/${threadId}/itinerary`))).itinerary) ?? null;
   }
 
-  return { session, resetSession, chat, confirm, threads, messages, profile, updateProfile, resetProfile, trip, itinerary };
+  /** Take back the newest message and its reply (also its plan and trip changes); returns the message text. Edit and regenerate resend after this. */
+  async function rewind(threadId: number): Promise<string> {
+    return (await post<{ removed: string }>(`/api/threads/${threadId}/rewind`, { sessionId: await session() })).removed;
+  }
+
+  /** Rename a thread; returns the title as stored (one line, at most 80 characters). */
+  async function renameThread(threadId: number, title: string): Promise<string> {
+    const body = JSON.stringify({ sessionId: await session(), title });
+    return (await call<{ title: string }>(`/api/threads/${threadId}`, { method: 'PATCH', headers: jsonHeaders, body })).title;
+  }
+
+  /** Delete a thread and everything in it. */
+  async function deleteThread(threadId: number): Promise<void> {
+    await call(await withSession(`/api/threads/${threadId}`), { method: 'DELETE' });
+  }
+
+  /** Product analytics (e.g. a thumbs up or down on a reply); never throws. */
+  async function track(name: string, props: Record<string, unknown> = {}): Promise<void> {
+    await post('/api/events/track', { name, ...props, sessionId: await session().catch(() => null) }).catch(() => undefined);
+  }
+
+  return { session, resetSession, chat, confirm, threads, messages, profile, updateProfile, resetProfile, trip, itinerary, rewind, renameThread, deleteThread, track };
 }
 
 export type TakeoffApi = ReturnType<typeof createTakeoffApi>;

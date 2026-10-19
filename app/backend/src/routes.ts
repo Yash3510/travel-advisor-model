@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { config } from './config.js';
-import { store, type MessageRow, type Offer, type StoredMessage } from './db.js';
+import { CONFIRM_TURN, store, type MessageRow, type Offer, type StoredMessage } from './db.js';
 import { detectRegion, dealsForRegion } from './catalog.js';
 import { ingestPolicy, gateAssistantOutput, gatePrices, emergencyText, statusText, newBookingRef, toPlainText, PII_NOTICE } from './harness.js';
 import { log } from './log.js';
@@ -131,7 +131,7 @@ async function route(req: IncomingMessage, res: ServerResponse, ctx: RequestCont
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
-      'Access-Control-Allow-Methods': 'GET,POST,PATCH,OPTIONS',
+      'Access-Control-Allow-Methods': 'GET,POST,PATCH,DELETE,OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, X-Request-Id',
       'Access-Control-Max-Age': '86400',
     }).end();
@@ -180,23 +180,41 @@ async function route(req: IncomingMessage, res: ServerResponse, ctx: RequestCont
       return;
     }
 
+    // additive: take back the newest customer message (edit and regenerate resend it afterwards)
+    const rewindPath = /^\/api\/threads\/(\d+)\/rewind$/.exec(pathname);
+    if (rewindPath) {
+      allow('POST');
+      const thread = store.getThread(Number(rewindPath[1]), str((await readBody(req)).sessionId));
+      if (!thread) throw new HttpError(404, 'thread_not_found', 'Thread not found.');
+      if (busyThreads.has(thread.id)) throw new HttpError(409, 'thread_busy', 'Still answering your previous message.');
+      const out = store.rewind(thread.id);
+      if ('error' in out) {
+        throw out.error === 'booking'
+          ? new HttpError(409, 'cannot_rewind', 'A booking request was made after that message, so it stays.')
+          : new HttpError(409, 'cannot_rewind', 'There is no message to take back.');
+      }
+      json(res, 200, { ok: true, removed: out.text });
+      return;
+    }
+
+    // additive: rename (PATCH {sessionId, title}) or delete (DELETE ?sessionId=) one of the session's threads
     const singleThreadPath = /^\/api\/threads\/(\d+)$/.exec(pathname);
     if (singleThreadPath) {
       const threadId = Number(singleThreadPath[1]);
-      const sessionId = url.searchParams.get('sessionId') ?? (req.headers['x-session-id'] as string) ?? '';
       if (req.method === 'DELETE') {
-        store.deleteThread(threadId, sessionId);
-        json(res, 200, { ok: true, deleted: threadId });
+        if (busyThreads.has(threadId)) throw new HttpError(409, 'thread_busy', 'Still answering a message in that thread.');
+        if (!store.deleteThread(threadId, url.searchParams.get('sessionId') ?? '')) throw new HttpError(404, 'thread_not_found', 'Thread not found.');
+        json(res, 200, { ok: true });
         return;
       }
-      if (req.method === 'PATCH') {
-        const body = (await readBody(req)) as { title?: string };
-        if (body.title) {
-          store.renameThread(threadId, sessionId, body.title.trim());
-        }
-        json(res, 200, { ok: true, renamed: threadId });
-        return;
-      }
+      allow('PATCH');
+      const body = await readBody(req);
+      // one line of plain text: control characters out, spaces collapsed
+      const title = str(body.title).replace(/[\p{Cc}\p{Cf}]/gu, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
+      if (!title) throw new HttpError(400, 'bad_request', 'A title is required.');
+      if (!store.renameThread(threadId, str(body.sessionId), title)) throw new HttpError(404, 'thread_not_found', 'Thread not found.');
+      json(res, 200, { ok: true, title });
+      return;
     }
 
     switch (pathname) {
@@ -318,7 +336,7 @@ async function confirmBooking(ctx: RequestContext, threadId: number, offer: Offe
     if (status !== 'FAILED') store.saveBooking(bookingRef, offer.offer_id, threadId, status, travelers);
     // the model sees the outcome on its next turn, exactly as its harness records it
     for (const m of [
-      { role: 'user', content: '(The customer pressed Confirm.)' },
+      { role: 'user', content: CONFIRM_TURN },
       { role: 'assistant', content: '', tool_calls: [{ id: 'confirm', type: 'function', function: { name: 'create_booking', arguments: JSON.stringify(args) } }] },
       { role: 'tool', name: 'create_booking', tool_call_id: 'confirm', content: JSON.stringify(result) },
       { role: 'assistant', content: message },
@@ -343,13 +361,16 @@ function sessionTools(ctx: RequestContext, sessionId: string): ToolBackend {
   };
 }
 
-async function planItinerary(p: { ctx: RequestContext; trip: TripContext; profile: TravelerProfile; history: Turn[]; userText: string; places: PlaceSet; signal: AbortSignal; threadId?: number }) {
+async function planItinerary(p: { ctx: RequestContext; trip: TripContext; profile: TravelerProfile; history: Turn[]; userText: string; places: PlaceSet; signal: AbortSignal; threadId?: number; onStep?: (step: string) => void }) {
+  p.onStep?.('weather');
   const insights = await (p.ctx.insights ?? ((trip, at) => gatherInsights({ trip, at, now: new Date() })))(p.trip, p.places.center);
   const pois = p.places.pois;
   const travel = (p.ctx.travelTime ?? defaultTravelTime)();
+  p.onStep?.('plan');
   const { draft, profile } = await buildCheckedPlan({ trip: p.trip, profile: p.profile, insights, pois, travel });
 
   let intro = fallbackIntro(draft, profile, p.trip);
+  p.onStep?.('note');
   try {
     // no tools: the model can't search or book here, only write a note about the plan it is shown
     const out = await chatCompletion({
@@ -393,6 +414,43 @@ function latestUserText(messages: unknown): string {
   return '';
 }
 
+/** Additive `status` event: what the server is doing, so the client can show progress instead of a spinner. */
+const STEP_LABEL: Record<string, string> = {
+  thinking: 'Thinking', writing: 'Writing the reply',
+  search_flights: 'Searching flights', search_hotels: 'Searching hotels', get_entry_requirements: 'Checking entry rules',
+  get_travel_advisory: 'Checking travel advisories', get_destination_info: 'Reading the destination guide',
+  get_booking: 'Looking up your booking', create_booking: 'Preparing a booking summary', handoff_to_human: 'Contacting our team',
+  weather: 'Checking weather and season', plan: 'Building your day-by-day plan', note: 'Writing a note on your plan',
+};
+
+/**
+ * Additive `delta` events: the reply in whole sentences as the model writes it. Each sentence goes through the same
+ * checks as the final reply (booking claims, unbacked prices, formatting) before it is sent. A blocked sentence
+ * stops the stream; `{reset: true}` tells the client to drop what it has. `done` stays the authoritative reply.
+ */
+function sentenceStream(res: ServerResponse, check: (piece: string) => string | null) {
+  let sent = 0;
+  let stopped = false;
+  return (soFar: string) => {
+    if (stopped) return;
+    if (!soFar || soFar.length < sent) {
+      if (sent) sse(res, 'delta', { reset: true });
+      sent = 0;
+      if (!soFar) return;
+    }
+    const boundary = /[.!?](?=\s)|\n/g;
+    boundary.lastIndex = sent;
+    let end = sent;
+    for (let m; (m = boundary.exec(soFar)); ) end = m.index + 1;
+    if (end <= sent) return;
+    const piece = soFar.slice(sent, end);
+    sent = end;
+    const out = check(piece);
+    if (out === null) { stopped = true; sse(res, 'delta', { reset: true }); return; }
+    if (out) sse(res, 'delta', { text: out });
+  };
+}
+
 async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext): Promise<void> {
   res.writeHead(200, {
     'Content-Type': 'text/event-stream; charset=utf-8',
@@ -419,6 +477,7 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext):
   const heartbeat = setInterval(() => { if (res.writable) res.write(': keep-alive\n\n'); }, config.sseHeartbeatMs);
   const clientGone = new AbortController();
   res.on('close', () => { if (!res.writableEnded) clientGone.abort(); });
+  const status = (step: string) => sse(res, 'status', { step, label: STEP_LABEL[step] ?? 'Working on it' });
   try {
     const policy = ingestPolicy(content);
     // Server-owned history; the client's messages[] only supplies the newest user turn.
@@ -433,6 +492,9 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext):
     let itinerary: ItineraryDraft | undefined;
     let tripInsights: TripInsight[] | undefined;
     const conversationText = () => [...history, toStore[0]].map((m) => m.content).join(' ');
+    // what this turn may change, so it can be taken back (POST /api/threads/:id/rewind)
+    const tripBefore = thread ? store.getTrip(thread.id) : null;
+    const versionBefore = thread ? (store.latestItinerary(thread.id)?.version ?? null) : null;
 
     if (policy.emergency) {
       // the model is not consulted; support gets an urgent handoff
@@ -456,7 +518,7 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext):
         if (!thread?.region_code) region = detectRegion(conversationText(), ctx.catalogPath);
       } else if (places) {
         // the plan comes from code; the model only adds a short, checked note
-        const built = await planItinerary({ ctx, trip: planned.trip, profile: planned.profile, history, userText: policy.redacted, places, signal: clientGone.signal, threadId: thread?.id });
+        const built = await planItinerary({ ctx, trip: planned.trip, profile: planned.profile, history, userText: policy.redacted, places, signal: clientGone.signal, threadId: thread?.id, onStep: status });
         if (!built) { log('info', 'client left before the reply', { threadId: thread?.id ?? null }); return; }
         ({ draft: itinerary, insights: tripInsights, reply } = built);
         planned.trip = { ...planned.trip, status: 'drafted', itineraryVersion: built.draft.version };
@@ -466,8 +528,21 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext):
       // no place data for this destination: the model drafts from the trip summary, added for the model only
       const modelTurn: Turn = planned.route.action === 'draft' ? { role: 'user', content: `${policy.redacted}\n\n${planned.route.brief}` } : toStore[0];
       let turn: Awaited<ReturnType<typeof runTurn>>;
+      const knownRegion = thread?.region_code ?? detectRegion(conversationText(), ctx.catalogPath)?.code;
+      const userWords = [...history, toStore[0]].filter((m) => m.role === 'user').map((m) => m.content).join('\n');
+      const priorFacts = [...history.filter((m) => m.role === 'tool').map((m) => m.content), knownRegion ? JSON.stringify(dealsForRegion(knownRegion, ctx.catalogPath)) : ''];
+      let streamFacts: string[] = [];
+      const stream = sentenceStream(res, (piece) => {
+        if (gateAssistantOutput(piece).blocked) return null;
+        const lead = /^\s*/.exec(piece)![0];
+        const trail = /\s*$/.exec(piece.slice(lead.length))![0];
+        const core = piece.slice(lead.length, piece.length - trail.length);
+        return lead + toPlainText(gatePrices(core, { facts: [...priorFacts, ...streamFacts].join('\n'), user: userWords })) + trail;
+      });
       try {
         turn = await runTurn({
+          onStep: status,
+          onDraft: (soFar, toolResults) => { streamFacts = toolResults; stream(soFar); },
           base: ctx.modelUrl, apiKey: config.modelApiKey, model: config.model, timeoutMs: config.modelTimeoutMs, signal: clientGone.signal,
           messages: [{ role: 'system', content: buildSystemPrompt(today(), planned.profile.name) }, ...trimHistory([...history, modelTurn], config.maxHistoryChars)],
           backend: sessionTools(ctx, sessionId), tools: toolSchemas,
@@ -503,7 +578,9 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext):
     const threadId = store.tx(() => {
       const id = thread?.id ?? store.createThread(sessionId, policy.redacted.slice(0, 200));
       if (!thread) store.appendMessage(id, { role: 'assistant', content: GREETING });
-      for (const m of toStore) store.appendMessage(id, m);
+      const [userTurn, ...rest] = toStore;
+      store.saveTurn(id, store.appendMessage(id, userTurn), tripBefore, versionBefore);
+      for (const m of rest) store.appendMessage(id, m);
       if (region) store.updateThread(id, { destination: region.name, region_code: region.code, stage: 'planning' });
       if (planned) { store.saveTrip(id, planned.trip); store.saveProfile(sessionId, planned.profile); }
       if (itinerary) store.saveItinerary(id, itinerary);

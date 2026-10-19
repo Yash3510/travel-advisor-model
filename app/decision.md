@@ -122,3 +122,14 @@ Decisions log — newest at bottom. Never delete an entry; strike through if rev
 - **Verified against the frontend's toolchain:** the frontend runs TypeScript 6 (strict by default), `erasableSyntaxOnly` and its own oxlint config. The brief's tagged snippets were assembled into a stand-in `App.tsx` with the frontend's real types, compiled and linted under those settings, and run in a browser against the backend. That run found two wording bugs, now fixed: meal blocks showed "Entry fee not published", and reasons read "For suits a honeymoon" (now "Why: …").
 - **The brief stays in its lane:** it keeps the design, adds no dependencies, deletes nothing, and turns off the checkout's fake payment and prefilled personal data.
 
+
+## D-019 — Live replies, and taking a turn back
+
+**Context.** The reply arrived only when complete (5–60 s on CPU), with no sign of progress; the frontend faked typing afterwards. Customers also had no way to edit a message or ask for another answer, and the thread rename/delete endpoints answered "ok" for any thread id, deleting another session's messages before checking ownership.
+
+**Decision.**
+- `POST /api/chat` adds two event types before `done`, both ignorable: `status` (the step under way: model rounds, each tool, the planner's weather, plan and note steps) and `delta` (the reply in whole sentences, streamed from the model with `stream: true`). Each sentence goes through the same checks as the final reply before it is sent: `gateAssistantOutput` (a blocked sentence ends the stream and resets it), `gatePrices` against the tool results so far, the deals for the known region and the customer's words, and `toPlainText`. Text that turns out to precede a tool call is reset. `done` is still the one authoritative reply; planner questions and itinerary notes are not streamed (the note is validated as a whole).
+- Every customer message records the trip and the plan version from before it (`turns` table). `POST /api/threads/:id/rewind` deletes that message and everything after it and restores both, so the client can edit or regenerate by resending. A turn followed by a booking request (`/api/confirm`) cannot be rewound: it is a record of a supplier request. Profile changes picked up from a rewound message stay (the profile is shared by the session's threads; the customer can edit it).
+- Rename and delete check the session owns the thread first, in one transaction; titles are one line of at most 80 characters. CORS allows DELETE.
+
+**Why not stream raw tokens.** The price and booking guards work on text; streaming unchecked tokens would show a fabricated price before it is replaced. Sentence granularity keeps the guards and still shows text within a sentence of the model writing it.

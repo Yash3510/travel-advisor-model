@@ -34,8 +34,23 @@ beforeAll(async () => {
       if (typeof next === 'function') next = next(parsed);
       if (!next || next === 'fail') { res.writeHead(500).end('boom'); return; }
       const tool_calls = next.tool_calls?.map((t) => ({ type: 'function', function: { name: t.name, arguments: JSON.stringify(t.args) } }));
-      const payload = JSON.stringify({ choices: [{ message: { role: 'assistant', content: next.content ?? '', tool_calls } }] });
-      setTimeout(() => { if (!res.destroyed) res.writeHead(200, { 'Content-Type': 'application/json' }).end(payload); }, next.delayMs ?? 0);
+      const reply = next;
+      setTimeout(() => {
+        if (res.destroyed) return;
+        if (!parsed.stream) {
+          res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify({ choices: [{ message: { role: 'assistant', content: reply.content ?? '', tool_calls } }] }));
+          return;
+        }
+        // like llama-server: content in small pieces, then each tool call as a name chunk and an arguments chunk
+        res.writeHead(200, { 'Content-Type': 'text/event-stream' });
+        const send = (delta: object) => res.write(`data: ${JSON.stringify({ choices: [{ delta }] })}\n\n`);
+        for (const piece of (reply.content ?? '').match(/.{1,7}/gs) ?? []) send({ content: piece });
+        tool_calls?.forEach((t, index) => {
+          send({ tool_calls: [{ index, id: `c${index}`, type: 'function', function: { name: t.function.name, arguments: '' } }] });
+          send({ tool_calls: [{ index, function: { arguments: t.function.arguments } }] });
+        });
+        res.end('data: [DONE]\n\n');
+      }, next.delayMs ?? 0);
     });
   });
   const modelUrl = await listen(modelServer);
@@ -62,13 +77,19 @@ async function chatRaw(sessionId: string, content: string, threadId?: number) {
   return (await post('/api/chat', { sessionId, threadId, messages: [{ role: 'user', content, timestamp: null }] })).text();
 }
 
-async function chat(sessionId: string, content: string, threadId?: number) {
+/** Every event, progress (`status`) and partial text (`delta`) included. */
+async function chatAll(sessionId: string, content: string, threadId?: number) {
   const text = await chatRaw(sessionId, content, threadId);
   // SSE comment lines (": keep-alive") carry no event
   return text.trim().split('\n\n').filter((b) => !b.startsWith(':')).map((b) => ({
     event: /^event: (.*)$/m.exec(b)![1],
     data: JSON.parse(/^data: (.*)$/m.exec(b)![1]),
   }));
+}
+
+/** The original contract's events, as a client that predates `status` and `delta` sees them. */
+async function chat(sessionId: string, content: string, threadId?: number) {
+  return (await chatAll(sessionId, content, threadId)).filter((e) => e.event !== 'status' && e.event !== 'delta');
 }
 
 describe('POST /api/chat', () => {
@@ -428,5 +449,124 @@ describe('drop-in client (client/takeoff-api.ts)', () => {
     const events = [];
     for await (const e of readSse(body)) events.push(e);
     expect(events).toEqual([{ event: 'done', data: '{"a":\n1}' }, { event: 'error', data: '{"code":"x"}' }]);
+  });
+});
+
+const get = async (path: string) => (await fetch(`${base}${path}`)).json();
+const deltas = (ev: { event: string; data: any }[]) => ev.filter((e) => e.event === 'delta');
+
+describe('live replies and turn control (additive)', () => {
+
+  it('streams progress and checked sentences; done stays the full reply', async () => {
+    const sid = await session();
+    stub.queue = [
+      { tool_calls: [{ name: 'search_hotels', args: { city: 'bali', check_in: '2026-12-10', check_out: '2026-12-15', guests: 2 } }] },
+      { content: 'I found a few places for you. Flights are about ₹87,654. Want me to hold one?' },
+    ];
+    const ev = await chatAll(sid, 'find me a hotel in Bali from 10 to 15 December for 2');
+    expect(ev.filter((e) => e.event === 'status').map((e) => e.data.step)).toEqual(['thinking', 'search_hotels', 'writing']);
+    expect(ev.find((e) => e.event === 'status')!.data.label).toBe('Thinking');
+    const streamed = deltas(ev).map((e) => e.data.text).join('');
+    // whole sentences only, checked like the final reply: the invented price never reaches the screen
+    expect(streamed).toBe('I found a few places for you. Flights are about (price to be confirmed).');
+    const done = ev.at(-1)!;
+    expect(done.event).toBe('done');
+    expect(done.data.message.startsWith(streamed)).toBe(true);
+    expect(done.data.message).not.toContain('87,654');
+  });
+
+  it('takes back streamed text that turned out to lead into a tool call', async () => {
+    const sid = await session();
+    stub.queue = [
+      { content: 'Let me check that. ', tool_calls: [{ name: 'search_hotels', args: { city: 'bali', check_in: '2026-12-10', check_out: '2026-12-15', guests: 2 } }] },
+      { content: 'Here are the options.' },
+    ];
+    const ev = deltas(await chatAll(sid, 'hotels in Bali 10 to 15 December for 2'));
+    expect(ev.map((e) => e.data)).toEqual([{ text: 'Let me check that.' }, { reset: true }]);
+  });
+
+  it('stops the stream at a sentence that claims a booking', async () => {
+    const sid = await session();
+    stub.queue = [{ content: 'Great choice. Your booking reference is TK-1. Enjoy the trip!' }];
+    const ev = await chatAll(sid, 'just book something nice in Bali');
+    expect(deltas(ev).map((e) => e.data)).toEqual([{ text: 'Great choice.' }, { reset: true }]);
+    expect(ev.at(-1)!.data.message).not.toContain('TK-1');
+  });
+
+  it('rewinds the newest message: messages, plan and trip go back to before it', async () => {
+    const sid = await session();
+    stub.queue = [{ content: 'A slow first visit.' }];
+    const first = (await chat(sid, '3 days in Goa in December, just me, relaxed pace')).at(-1)!;
+    const threadId = first.data.threadId;
+    expect(first.data.itinerary).toBeTruthy();
+    const before = await get(`/api/threads/${threadId}/trip?sessionId=${sid}`);
+    stub.queue = [{ content: 'Sure.' }];
+    await chat(sid, 'what should I pack?', threadId);
+
+    const out = await (await post(`/api/threads/${threadId}/rewind`, { sessionId: sid })).json();
+    expect(out).toEqual({ ok: true, removed: 'what should I pack?' });
+    const msgs = (await get(`/api/threads/${threadId}/messages?sessionId=${sid}`)).messages;
+    expect(msgs.at(-1).role).toBe('assistant');
+    expect(msgs.some((m: any) => m.content === 'what should I pack?')).toBe(false);
+    expect(await get(`/api/threads/${threadId}/trip?sessionId=${sid}`)).toEqual(before);
+
+    // taking back the first message also takes back the plan it built
+    await post(`/api/threads/${threadId}/rewind`, { sessionId: sid });
+    expect((await get(`/api/threads/${threadId}/itinerary?sessionId=${sid}`)).itinerary).toBeNull();
+    expect((await get(`/api/threads/${threadId}/trip?sessionId=${sid}`)).trip.destination).toBeUndefined();
+    const again = await post(`/api/threads/${threadId}/rewind`, { sessionId: sid });
+    expect(again.status).toBe(409);
+  });
+
+  it('will not rewind past a booking request, nor touch another session', async () => {
+    const sid = await session();
+    const first = await chat(sid, 'Plan a trip to Bali');
+    const threadId = first.at(-1)!.data.threadId;
+    const deal = first.find((e) => e.event === 'campaign_deals')!.data.deals[0];
+    await post('/api/confirm', { sessionId: sid, threadId, offerId: deal.campaignItineraryId });
+    const r = await post(`/api/threads/${threadId}/rewind`, { sessionId: sid });
+    expect(r.status).toBe(409);
+    expect((await r.json()).error.code).toBe('cannot_rewind');
+    const other = await session();
+    expect((await post(`/api/threads/${threadId}/rewind`, { sessionId: other })).status).toBe(404);
+  });
+
+  it('renames and deletes only the session own threads', async () => {
+    const sid = await session();
+    const threadId = (await chat(sid, 'Plan a trip to Bali')).at(-1)!.data.threadId;
+    const other = await session();
+    const patch = (sessionId: string, title: string) =>
+      fetch(`${base}/api/threads/${threadId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId, title }) });
+    expect((await patch(other, 'mine now')).status).toBe(404);
+    expect(await (await patch(sid, '  Bali\n honeymoon  ')).json()).toEqual({ ok: true, title: 'Bali honeymoon' });
+    expect((await patch(sid, '   ')).status).toBe(400);
+    expect((await get(`/api/threads?sessionId=${sid}`)).threads[0].title).toBe('Bali honeymoon');
+
+    const del = (sessionId: string) => fetch(`${base}/api/threads/${threadId}?sessionId=${sessionId}`, { method: 'DELETE' });
+    expect((await del(other)).status).toBe(404);
+    expect((await get(`/api/threads/${threadId}/messages?sessionId=${sid}`)).messages.length).toBeGreaterThan(0);
+    expect((await del(sid)).status).toBe(200);
+    expect((await get(`/api/threads?sessionId=${sid}`)).threads).toEqual([]);
+    const pre = await fetch(`${base}/api/threads/${threadId}`, { method: 'OPTIONS' });
+    expect(pre.headers.get('access-control-allow-methods')).toContain('DELETE');
+  });
+
+  it('drop-in client: live text and progress, rewind, rename and delete', async () => {
+    const api = createTakeoffApi({ baseUrl: base, storage: memory() });
+    stub.queue = [{ content: 'Bali is lovely in May. It is dry and warm. Shall I plan it?' }];
+    const steps: string[] = [];
+    const texts: string[] = [];
+    const reply = await api.chat('Is Bali good in May?', { onStatus: (st) => steps.push(st.label), onText: (t) => texts.push(t) });
+    expect(steps).toEqual(['Thinking']);
+    expect(texts).toEqual(['Bali is lovely in May.', 'Bali is lovely in May. It is dry and warm.']);
+    expect(reply.message).toBe('Bali is lovely in May. It is dry and warm. Shall I plan it?');
+
+    expect(await api.rewind(reply.threadId)).toBe('Is Bali good in May?');
+    await expect(api.rewind(reply.threadId)).rejects.toMatchObject({ code: 'cannot_rewind' });
+    expect(await api.renameThread(reply.threadId, 'May in Bali')).toBe('May in Bali');
+    expect((await api.threads())[0].title).toBe('May in Bali');
+    await api.deleteThread(reply.threadId);
+    expect(await api.threads()).toEqual([]);
+    await api.track('reply_feedback', { rating: 'up' }); // never throws
   });
 });

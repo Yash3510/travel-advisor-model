@@ -81,6 +81,14 @@ CREATE TABLE IF NOT EXISTS itineraries (
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (thread_id, version)
 );
+-- What one customer message changed, so it can be taken back (edit or regenerate): the trip before it and
+-- the plan version before it. Keyed by the message's id.
+CREATE TABLE IF NOT EXISTS turns (
+  user_message_id INTEGER PRIMARY KEY,
+  thread_id INTEGER NOT NULL REFERENCES threads(id),
+  trip_before TEXT,
+  itinerary_version_before INTEGER
+);
 CREATE INDEX IF NOT EXISTS idx_messages_thread ON messages(thread_id);
 CREATE INDEX IF NOT EXISTS idx_threads_session ON threads(session_id);
 CREATE INDEX IF NOT EXISTS idx_offers_thread ON offers(thread_id);
@@ -101,6 +109,9 @@ export interface MessageRow {
   tool_calls: string | null; tool_call_id: string | null; name: string | null; created_at: string;
 }
 export interface Offer { offer_id: string; [k: string]: unknown }
+
+/** The user turn /api/confirm records; shared with routes.ts. */
+export const CONFIRM_TURN = '(The customer pressed Confirm.)';
 
 const touch = db.prepare("UPDATE threads SET updated_at = datetime('now') WHERE id = ?");
 
@@ -124,25 +135,57 @@ export const store = {
   getThread(id: number, sessionId: string) {
     return db.prepare('SELECT * FROM threads WHERE id = ? AND session_id = ?').get(id, sessionId) as ThreadRow | undefined;
   },
-  deleteThread(id: number, sessionId: string) {
-    db.prepare('DELETE FROM messages WHERE thread_id = ?').run(id);
-    db.prepare('DELETE FROM offers WHERE thread_id = ?').run(id);
-    db.prepare('DELETE FROM booking_requests WHERE thread_id = ?').run(id);
-    db.prepare('DELETE FROM trips WHERE thread_id = ?').run(id);
-    db.prepare('DELETE FROM itineraries WHERE thread_id = ?').run(id);
-    return db.prepare('DELETE FROM threads WHERE id = ? AND session_id = ?').run(id, sessionId);
+  /** Delete a thread and everything in it; false when it is not this session's thread. */
+  deleteThread(id: number, sessionId: string): boolean {
+    return db.transaction(() => {
+      if (!db.prepare('SELECT 1 FROM threads WHERE id = ? AND session_id = ?').get(id, sessionId)) return false;
+      for (const table of ['messages', 'offers', 'booking_requests', 'trips', 'itineraries', 'turns']) {
+        db.prepare(`DELETE FROM ${table} WHERE thread_id = ?`).run(id);
+      }
+      db.prepare('DELETE FROM threads WHERE id = ?').run(id);
+      return true;
+    })();
   },
-  renameThread(id: number, sessionId: string, title: string) {
-    return db.prepare("UPDATE threads SET title = ?, updated_at = datetime('now') WHERE id = ? AND session_id = ?").run(title, id, sessionId);
+  /** Rename; false when it is not this session's thread. */
+  renameThread(id: number, sessionId: string, title: string): boolean {
+    return db.prepare('UPDATE threads SET title = ? WHERE id = ? AND session_id = ?').run(title, id, sessionId).changes > 0;
   },
   updateThread(id: number, fields: { destination: string; region_code: string; stage: string }) {
     db.prepare("UPDATE threads SET destination = @destination, region_code = @region_code, stage = @stage, updated_at = datetime('now') WHERE id = @id")
       .run({ ...fields, id });
   },
-  appendMessage(threadId: number, m: StoredMessage) {
-    db.prepare('INSERT INTO messages(thread_id, role, content, tool_calls, tool_call_id, name) VALUES (?, ?, ?, ?, ?, ?)')
+  appendMessage(threadId: number, m: StoredMessage): number {
+    const info = db.prepare('INSERT INTO messages(thread_id, role, content, tool_calls, tool_call_id, name) VALUES (?, ?, ?, ?, ?, ?)')
       .run(threadId, m.role, m.content, m.tool_calls ? JSON.stringify(m.tool_calls) : null, m.tool_call_id ?? null, m.name ?? null);
     touch.run(threadId);
+    return Number(info.lastInsertRowid);
+  },
+  /** Remember what a customer message is about to change (see `turns`). */
+  saveTurn(threadId: number, userMessageId: number, tripBefore: TripContext | null, itineraryVersionBefore: number | null) {
+    db.prepare('INSERT OR REPLACE INTO turns(user_message_id, thread_id, trip_before, itinerary_version_before) VALUES (?, ?, ?, ?)')
+      .run(userMessageId, threadId, tripBefore ? JSON.stringify(tripBefore) : null, itineraryVersionBefore);
+  },
+  /**
+   * Take back the newest customer message and everything after it, and restore the trip and plan from before it.
+   * Returns the message text, or why it can't: 'empty' (nothing to take back), 'booking' (a booking request came after it).
+   */
+  rewind(threadId: number): { text: string } | { error: 'empty' | 'booking' } {
+    return db.transaction(() => {
+      const last = db.prepare("SELECT id, content FROM messages WHERE thread_id = ? AND role = 'user' ORDER BY id DESC LIMIT 1").get(threadId) as { id: number; content: string } | undefined;
+      if (!last) return { error: 'empty' as const };
+      // the Confirm button's turn is a record of a supplier request, not something to rewrite
+      if (last.content === CONFIRM_TURN || db.prepare("SELECT 1 FROM messages WHERE thread_id = ? AND id > ? AND tool_call_id = 'confirm'").get(threadId, last.id)) return { error: 'booking' as const };
+      const turn = db.prepare('SELECT trip_before, itinerary_version_before FROM turns WHERE user_message_id = ?').get(last.id) as { trip_before: string | null; itinerary_version_before: number | null } | undefined;
+      db.prepare('DELETE FROM messages WHERE thread_id = ? AND id >= ?').run(threadId, last.id);
+      if (turn) {
+        db.prepare('DELETE FROM itineraries WHERE thread_id = ? AND version > ?').run(threadId, turn.itinerary_version_before ?? 0);
+        if (turn.trip_before) db.prepare('UPDATE trips SET data = ? WHERE thread_id = ?').run(turn.trip_before, threadId);
+        else db.prepare('DELETE FROM trips WHERE thread_id = ?').run(threadId);
+      }
+      db.prepare('DELETE FROM turns WHERE thread_id = ? AND user_message_id >= ?').run(threadId, last.id);
+      touch.run(threadId);
+      return { text: last.content };
+    })();
   },
   getMessages(threadId: number): MessageRow[] {
     return db.prepare('SELECT * FROM messages WHERE thread_id = ? ORDER BY id').all(threadId) as MessageRow[];
