@@ -574,3 +574,29 @@ describe('live replies and turn control (additive)', () => {
     await api.track('reply_feedback', { rating: 'up' }); // never throws
   });
 });
+
+describe('feedback and contact (additive)', () => {
+  it('stores reply feedback with a plain name and ignores junk, always answering ok', async () => {
+    const sid = await session();
+    for (const body of [{ name: 'reply_feedback', sessionId: sid, rating: 'up', threadId: 1 }, { name: 'Bad Name!', x: 1 }, { name: 'big', blob: 'x'.repeat(5000) }]) {
+      expect(await (await post('/api/events/track', body)).json()).toEqual({ ok: true });
+    }
+    const { store } = await import('../src/db.js');
+    const saved = store.listEvents('reply_feedback').filter((e) => e.session_id === sid);
+    expect(saved).toHaveLength(1);
+    expect(JSON.parse(saved[0].props)).toEqual({ rating: 'up', threadId: 1 });
+    expect(store.listEvents('big')).toEqual([]);
+  });
+
+  it('stores a valid contact message with card numbers removed, and rejects an invalid one', async () => {
+    const ok = await post('/api/contact', { name: '  Asha\nRao ', email: 'asha@example.com', topic: 'trip', message: 'Help with Goa. My card is 4111 1111 1111 1111' });
+    expect(await ok.json()).toEqual({ ok: true });
+    const { store } = await import('../src/db.js');
+    const last = store.listContacts().at(-1)!;
+    expect(last).toMatchObject({ name: 'Asha Rao', email: 'asha@example.com', topic: 'trip' });
+    expect(last.message).not.toContain('4111');
+    const bad = await post('/api/contact', { name: 'A', email: 'not-an-email', topic: 'trip', message: 'hello there' });
+    expect(bad.status).toBe(400);
+    expect((await post('/api/contact', { name: 'A', email: 'a@b.co', topic: 'spam', message: 'hello there' })).status).toBe(400);
+  });
+});

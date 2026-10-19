@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { config } from './config.js';
 import { CONFIRM_TURN, store, type MessageRow, type Offer, type StoredMessage } from './db.js';
 import { detectRegion, dealsForRegion } from './catalog.js';
-import { ingestPolicy, gateAssistantOutput, gatePrices, emergencyText, statusText, newBookingRef, toPlainText, PII_NOTICE } from './harness.js';
+import { ingestPolicy, gateAssistantOutput, gatePrices, emergencyText, statusText, newBookingRef, toPlainText, redact, PII_NOTICE } from './harness.js';
 import { log } from './log.js';
 import { applyProfileEdit, emptyProfile } from './domain/profile.js';
 import { emptyTrip } from './domain/trip.js';
@@ -93,17 +93,21 @@ function setCommonHeaders(req: IncomingMessage, res: ServerResponse): void {
 const clientIp = (req: IncomingMessage) =>
   (config.trustProxy ? String(req.headers['x-forwarded-for'] ?? '').split(',')[0].trim() : '') || req.socket.remoteAddress || 'unknown';
 
-// Fixed-window limiter for /api/chat (every message costs a model call). Per process: use one instance
-// or put a shared limiter in the reverse proxy when scaling out.
+// Fixed-window limiter per IP and bucket: chat (every message costs a model call), contact, events. Per process: use
+// one instance or put a shared limiter in the reverse proxy when scaling out.
 const hits = new Map<string, { start: number; count: number }>();
-function rateLimited(req: IncomingMessage): boolean {
-  const ip = clientIp(req);
+function rateLimited(req: IncomingMessage, bucket = 'chat', perMin = config.chatRateLimitPerMin): boolean {
+  const key = `${bucket}:${clientIp(req)}`;
   const now = Date.now();
   if (hits.size > 10_000) for (const [k, v] of hits) if (now - v.start >= 60_000) hits.delete(k);
-  const h = hits.get(ip);
-  if (!h || now - h.start >= 60_000) { hits.set(ip, { start: now, count: 1 }); return false; }
-  return ++h.count > config.chatRateLimitPerMin;
+  const h = hits.get(key);
+  if (!h || now - h.start >= 60_000) { hits.set(key, { start: now, count: 1 }); return false; }
+  return ++h.count > perMin;
 }
+
+const CONTACT_TOPICS = new Set(['trip', 'feedback', 'partnership', 'other']);
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const oneLine = (v: unknown, max: number) => str(v).replace(/[\p{Cc}\p{Cf}]/gu, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
 
 const toIso = (sqliteUtc: string) => new Date(sqliteUtc.replace(' ', 'T') + 'Z').toISOString();
 
@@ -287,7 +291,32 @@ async function route(req: IncomingMessage, res: ServerResponse, ctx: RequestCont
       }
       case '/api/events/track': {
         allow('POST');
-        await readBody(req);
+        const body = await readBody(req);
+        // still answers ok for anything (the original contract); stores events with a plain name and small props
+        const name = str(body.name);
+        const { name: _n, sessionId: _s, ...props } = body;
+        const propsJson = JSON.stringify(props);
+        if (/^[a-z][a-z0-9_]{0,39}$/.test(name) && propsJson.length <= 4000 && !rateLimited(req, 'events', 120)) {
+          const sid = str(body.sessionId);
+          store.saveEvent(sid && store.sessionExists(sid) ? sid : null, name, propsJson);
+        }
+        json(res, 200, { ok: true });
+        return;
+      }
+      case '/api/contact': {
+        allow('POST');
+        if (rateLimited(req, 'contact', 5)) throw new HttpError(429, 'rate_limited', 'Too many messages. Please wait a minute and try again.');
+        const body = await readBody(req);
+        const name = oneLine(body.name, 100);
+        const email = oneLine(body.email, 200);
+        const topic = str(body.topic);
+        // card and ID numbers are taken out, as in the chat; the reply address is its own field
+        const message = redact(str(body.message).trim().slice(0, config.maxMessageChars)).text;
+        if (!name || !EMAIL_RE.test(email) || !CONTACT_TOPICS.has(topic) || message.length < 5) {
+          throw new HttpError(400, 'bad_request', 'Please give a name, an email address, a topic and a message.');
+        }
+        store.saveContact({ name, email, topic, message });
+        log('info', 'contact message', { topic });
         json(res, 200, { ok: true });
         return;
       }

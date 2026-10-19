@@ -133,3 +133,7 @@ Decisions log — newest at bottom. Never delete an entry; strike through if rev
 - Rename and delete check the session owns the thread first, in one transaction; titles are one line of at most 80 characters. CORS allows DELETE.
 
 **Why not stream raw tokens.** The price and booking guards work on text; streaming unchecked tokens would show a fabricated price before it is replaced. Sentence granularity keeps the guards and still shows text within a sentence of the model writing it.
+
+## D-020 — Feedback and contact messages are stored
+- **Why:** the chat's thumbs up/down and the site's contact form went nowhere: `/api/events/track` discarded everything, and the contact page only pretended to send.
+- **What:** `events` keeps client events with a plain snake_case name and up to 4 KB of props (the endpoint still answers ok for anything, as the original contract says). `contact_messages` keeps contact-form messages after the same redaction as chat (card and ID numbers out). Both are rate limited per IP. Reading them is for the team (SQL for now; an admin view belongs with Phase 4's booking admin).

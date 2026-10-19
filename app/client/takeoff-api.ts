@@ -125,6 +125,10 @@ export interface ChatReply {
   [key: string]: unknown;
 }
 export interface Destination { regionName: string; regionCode: string }
+/** Topics the contact form accepts. */
+export const CONTACT_TOPICS = ['trip', 'feedback', 'partnership', 'other'] as const;
+export type ContactTopic = (typeof CONTACT_TOPICS)[number];
+
 /** Additive `status` event: what the server is doing right now ("Searching hotels"). */
 export interface ChatStatus { step: string; label: string }
 export interface Thread { id: number; title: string; destination: string | null; isActive: boolean; createdAt: string; updatedAt: string }
@@ -398,7 +402,12 @@ export function createTakeoffApi(opts: { baseUrl?: string; storage?: KeyValueSto
     await post('/api/events/track', { name, ...props, sessionId: await session().catch(() => null) }).catch(() => undefined);
   }
 
-  return { session, resetSession, chat, confirm, threads, messages, profile, updateProfile, resetProfile, trip, itinerary, rewind, renameThread, deleteThread, track };
+  /** The contact form: stored for the team to answer by email. Rejects with bad_request or rate_limited. */
+  async function contact(m: { name: string; email: string; topic: ContactTopic; message: string }): Promise<void> {
+    await post('/api/contact', m);
+  }
+
+  return { session, resetSession, chat, confirm, threads, messages, profile, updateProfile, resetProfile, trip, itinerary, rewind, renameThread, deleteThread, track, contact };
 }
 
 export type TakeoffApi = ReturnType<typeof createTakeoffApi>;

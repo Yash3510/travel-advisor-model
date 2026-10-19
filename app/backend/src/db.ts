@@ -89,6 +89,22 @@ CREATE TABLE IF NOT EXISTS turns (
   trip_before TEXT,
   itinerary_version_before INTEGER
 );
+-- Product events from the client (e.g. a thumbs up on a reply) and messages from the contact form.
+CREATE TABLE IF NOT EXISTS events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  session_id TEXT,
+  name TEXT NOT NULL,
+  props TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS contact_messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  topic TEXT NOT NULL,
+  message TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 CREATE INDEX IF NOT EXISTS idx_messages_thread ON messages(thread_id);
 CREATE INDEX IF NOT EXISTS idx_threads_session ON threads(session_id);
 CREATE INDEX IF NOT EXISTS idx_offers_thread ON offers(thread_id);
@@ -243,6 +259,18 @@ export const store = {
   latestItinerary(threadId: number): ItineraryDraft | undefined {
     const row = db.prepare('SELECT data FROM itineraries WHERE thread_id = ? ORDER BY version DESC LIMIT 1').get(threadId) as { data: string } | undefined;
     return row && (JSON.parse(row.data) as ItineraryDraft);
+  },
+  saveEvent(sessionId: string | null, name: string, props: string) {
+    db.prepare('INSERT INTO events(session_id, name, props) VALUES (?, ?, ?)').run(sessionId, name, props);
+  },
+  listEvents(name: string) {
+    return db.prepare('SELECT session_id, name, props, created_at FROM events WHERE name = ? ORDER BY id').all(name) as { session_id: string | null; name: string; props: string; created_at: string }[];
+  },
+  saveContact(m: { name: string; email: string; topic: string; message: string }): number {
+    return Number(db.prepare('INSERT INTO contact_messages(name, email, topic, message) VALUES (@name, @email, @topic, @message)').run(m).lastInsertRowid);
+  },
+  listContacts() {
+    return db.prepare('SELECT * FROM contact_messages ORDER BY id').all() as { id: number; name: string; email: string; topic: string; message: string; created_at: string }[];
   },
   /** Run several writes atomically. */
   tx<T>(fn: () => T): T { return db.transaction(fn)(); },
