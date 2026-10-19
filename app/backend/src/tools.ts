@@ -36,7 +36,7 @@ function isoDate(v: unknown): string | null {
 }
 const badDate = (field: string, why = 'must be a date in YYYY-MM-DD format') => ({ error: 'invalid_date', message: `${field} ${why}.` });
 
-const AIRLINES = ['Air India Express', 'IndiGo', 'Akasa Air', 'Emirates', 'Thai Airways', 'Scoot'];
+const AIRLINES = ['Air India', 'IndiGo', 'Vistara', 'Akasa Air', 'Air India Express', 'SpiceJet'];
 const DEFAULT_HOTELS = ['Riverside Boutique', 'Lakeshore Comfort', 'Heritage Escapes', 'The Serai Rooms', 'Meraki Hotels'];
 
 export class MockBackend implements Backend {
@@ -53,7 +53,13 @@ export class MockBackend implements Backend {
         ? { status: 'PENDING_SUPPLIER_CONFIRMATION', request_id: String(args.request_id ?? ''), payment: 'NOT_TAKEN' }
         : { status: 'FAILED', reason: 'CONFIRMATION_REQUIRED', charged: false };
       case 'get_booking': return { status: 'NOT_FOUND', booking_ref: String(args.booking_ref ?? '') };
-      case 'get_entry_requirements': return { source: 'mock_requirements', checked_at: this.today(), result: 'Visa on arrival or e-visa generally; confirm passport validity of 6 months.', also_required: ['Return flight tickets', 'Hotel booking proof'], note: 'Illustrative. Verify with the destination government site.' };
+      case 'get_entry_requirements': return {
+        source: 'mock_requirements',
+        checked_at: this.today(),
+        result: 'Pan-India Domestic Travel: Valid Govt Photo ID (Aadhaar Card, Voter ID, Driving License, or Passport). Inner Line Permits (ILP) required only for protected border regions in Arunachal Pradesh, Nagaland, Mizoram, Sikkim & parts of Ladakh.',
+        also_required: ['Govt Photo ID / Aadhaar', 'State Inner Line Permit if visiting protected tribal/border zones'],
+        note: 'Direct Pan-India Travel Protocol.'
+      };
       case 'get_travel_advisory': return { source: 'mock_advisory', checked_at: this.today(), destination: String(args.destination ?? ''), advisory: 'Generally safe. Standard precautions.' };
       case 'handoff_to_human': return { status: 'TRANSFERRED', queue: args.urgency === 'urgent' ? 'urgent' : 'normal', expected_wait_minutes: args.urgency === 'urgent' ? 2 : 10 };
       // The travel guide (kb/destinations.json, built from Wikivoyage by the model repo) is not bundled yet.
@@ -143,7 +149,7 @@ export const toolSchemas = [
   fn('create_booking', 'Create a reservation and charge the customer. Only call after the customer explicitly confirms the final summary.',
     { offer_id: S, travelers: I, total_price_inr: N, customer_confirmed_terms: B }, ['offer_id', 'travelers', 'total_price_inr', 'customer_confirmed_terms']),
   fn('get_booking', 'Look up an existing booking record by reference.', { booking_ref: S }, ['booking_ref']),
-  fn('get_entry_requirements', 'Official entry/visa requirements for a passport country and destination.',
+  fn('get_entry_requirements', 'Official entry, Inner Line Permit (ILP), and Govt ID requirements for travel destinations across India.',
     { passport_country: S, destination_country: S, purpose: S, transit_countries: { type: 'array', items: S } }, ['passport_country', 'destination_country']),
   fn('get_travel_advisory', 'Current official travel advisories and alerts for a destination.', { destination: S }, ['destination']),
   fn('handoff_to_human', 'Transfer the conversation to a human travel agent with a case summary.',

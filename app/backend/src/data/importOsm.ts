@@ -22,7 +22,11 @@ export function loadRegions(): PoiRegion[] {
 
 export function regionFor(destination: string | undefined, regions: PoiRegion[] = loadRegions()): PoiRegion | undefined {
   const d = destination?.trim().toLowerCase();
-  return d ? regions.find((r) => r.names.some((n) => n.toLowerCase() === d)) : undefined;
+  if (!d) return undefined;
+  return regions.find((r) => r.names.some((n) => {
+    const nl = n.toLowerCase();
+    return nl === d || d.includes(nl) || nl.includes(d);
+  }));
 }
 
 export function overpassQuery(r: PoiRegion): string {

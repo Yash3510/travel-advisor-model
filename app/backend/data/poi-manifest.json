@@ -1,11 +1,11 @@
 {
   "goa": {
     "region": "goa",
-    "extractedAt": "2026-10-17",
+    "extractedAt": "2026-10-18",
     "source": "OpenStreetMap via Overpass API",
     "licence": "ODbL-1.0",
     "attribution": "© OpenStreetMap contributors",
-    "rawSha256": "a1a30c6e9fd1af6829f8e3ee7084992debf7c3cc5f343080dbbae12eae3abb3f",
+    "rawSha256": "a4bd1cb12bf74e291ab6a8002b89a76627d86a32c8d0f4ab55781f2061e0645c",
     "querySha256": "f2b31fcb8b79c017e519db021a735e4cc9928e99eb5d3c064d7f9cb577f705a6",
     "counts": {
       "elements": 782,
@@ -13,5 +13,356 @@
       "rejected": 0
     },
     "rejectedReasons": {}
+  },
+  "jaipur": {
+    "region": "jaipur",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap via Overpass API",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "rawSha256": "1c2ce53d102068d43a6b5f9a3b884537f3646340798cb3709f4117c54e88c738",
+    "querySha256": "fa0017fb2d533a0dff727f6e9e299bf05d3753392d606fc8eaa0f49aa9384f19",
+    "counts": {
+      "elements": 360,
+      "pois": 351,
+      "rejected": 0
+    },
+    "rejectedReasons": {}
+  },
+  "udaipur": {
+    "region": "udaipur",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap via Overpass API",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "rawSha256": "f6d7d6d748a1c06c8018a91b526a7b4e86ab62db369e4a2c25a449e3087b6844",
+    "querySha256": "458c99a7a8aaef2e8584983594f3ef076b3c216fd506234d95c8a8e202969a67",
+    "counts": {
+      "elements": 96,
+      "pois": 93,
+      "rejected": 0
+    },
+    "rejectedReasons": {}
+  },
+  "munnar": {
+    "region": "munnar",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap via Overpass API",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "rawSha256": "58480b54851efd2596f91c3cff6e134c5ef9f4d4983dbb276c2f5a572fb8c861",
+    "querySha256": "602bdf696edc45c25c37ef10432f62f8102d32e39c945dc29950d0f8d2eca67c",
+    "counts": {
+      "elements": 80,
+      "pois": 79,
+      "rejected": 0
+    },
+    "rejectedReasons": {}
+  },
+  "manali": {
+    "region": "manali",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap via Overpass API",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "rawSha256": "87ff7d3bb952d9a988e3bf6b84d3d46d8191d095d706c663664a8dde18ca7661",
+    "querySha256": "858e6ee41737473c32c79fb93f25b8be753a870867f86695b25fd0c122d3d2ed",
+    "counts": {
+      "elements": 79,
+      "pois": 79,
+      "rejected": 0
+    },
+    "rejectedReasons": {}
+  },
+  "srinagar": {
+    "region": "srinagar",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap via Overpass API",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "rawSha256": "86dba9d6c67fb13348821fdf297710caaeb5f45458b0d4ee1a91e37b0d0b3284",
+    "querySha256": "7b934366a9b026a2e8700931d52c083cd7d8913d78731407db39c9db734e37ae",
+    "counts": {
+      "elements": 210,
+      "pois": 209,
+      "rejected": 0
+    },
+    "rejectedReasons": {}
+  },
+  "rishikesh": {
+    "region": "rishikesh",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap via Overpass API",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "rawSha256": "35ff2eff46f993c29f65f05468c9052ec440d6050dbcc6ad839aa372f3960816",
+    "querySha256": "569aa70a555e111a3b22986620657706caeae6646ee825ab88ce50f0d50fed0e",
+    "counts": {
+      "elements": 55,
+      "pois": 54,
+      "rejected": 0
+    },
+    "rejectedReasons": {}
+  },
+  "delhi": {
+    "region": "delhi",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap via Overpass API",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "rawSha256": "05dfe963c0b1a1649d38663115a0649eb03f52969e4ccea85547aadd279e8af3",
+    "querySha256": "75878b0ade2ca33c25f2a42342b8e0bf2b0afe687580d26c88510aeb1c5242eb",
+    "counts": {
+      "elements": 1747,
+      "pois": 1684,
+      "rejected": 0
+    },
+    "rejectedReasons": {}
+  },
+  "kochi": {
+    "region": "kochi",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap via Overpass API",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "rawSha256": "92a3f9c89ccac6e8cdd55c76cc39b7efdd632ab05eff329dd7a10f8f0c1bc794",
+    "querySha256": "c1a138200c1eb64c5a1c3b1a7d48ea01cdac34d2eb733dd3d87eb3f26cb9e1da",
+    "counts": {
+      "elements": 600,
+      "pois": 594,
+      "rejected": 0
+    },
+    "rejectedReasons": {}
+  },
+  "agra": {
+    "region": "agra",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap via Overpass API",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "rawSha256": "078333a14689178a4a671a74e9caec3ebded4769c431303addf76fa3f88d9a25",
+    "querySha256": "124d118e467d5f58ed527418425d464d0cf1423ea1fbe660184909c5d29e3b56",
+    "counts": {
+      "elements": 208,
+      "pois": 199,
+      "rejected": 0
+    },
+    "rejectedReasons": {}
+  },
+  "varanasi": {
+    "region": "varanasi",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap verified Indian Tourism Registry",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "counts": {
+      "elements": 14,
+      "pois": 14,
+      "rejected": 0
+    }
+  },
+  "mumbai": {
+    "region": "mumbai",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap verified Indian Tourism Registry",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "counts": {
+      "elements": 13,
+      "pois": 13,
+      "rejected": 0
+    }
+  },
+  "shimla": {
+    "region": "shimla",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap verified Indian Tourism Registry",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "counts": {
+      "elements": 10,
+      "pois": 10,
+      "rejected": 0
+    }
+  },
+  "coorg": {
+    "region": "coorg",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap verified Indian Tourism Registry",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "counts": {
+      "elements": 10,
+      "pois": 10,
+      "rejected": 0
+    }
+  },
+  "darjeeling": {
+    "region": "darjeeling",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap verified Indian Tourism Registry",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "counts": {
+      "elements": 10,
+      "pois": 10,
+      "rejected": 0
+    }
+  },
+  "ooty": {
+    "region": "ooty",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap verified Indian Tourism Registry",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "counts": {
+      "elements": 10,
+      "pois": 10,
+      "rejected": 0
+    }
+  },
+  "hampi": {
+    "region": "hampi",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap verified Indian Tourism Registry",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "counts": {
+      "elements": 10,
+      "pois": 10,
+      "rejected": 0
+    }
+  },
+  "gokarna": {
+    "region": "gokarna",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap verified Indian Tourism Registry",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "counts": {
+      "elements": 8,
+      "pois": 8,
+      "rejected": 0
+    }
+  },
+  "ladakh": {
+    "region": "ladakh",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap verified Indian Tourism Registry",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "counts": {
+      "elements": 10,
+      "pois": 10,
+      "rejected": 0
+    }
+  },
+  "amritsar": {
+    "region": "amritsar",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap verified Indian Tourism Registry",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "counts": {
+      "elements": 9,
+      "pois": 9,
+      "rejected": 0
+    }
+  },
+  "jodhpur": {
+    "region": "jodhpur",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap verified Indian Tourism Registry",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "counts": {
+      "elements": 9,
+      "pois": 9,
+      "rejected": 0
+    }
+  },
+  "jaisalmer": {
+    "region": "jaisalmer",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap verified Indian Tourism Registry",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "counts": {
+      "elements": 9,
+      "pois": 9,
+      "rejected": 0
+    }
+  },
+  "mysore": {
+    "region": "mysore",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap verified Indian Tourism Registry",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "counts": {
+      "elements": 9,
+      "pois": 9,
+      "rejected": 0
+    }
+  },
+  "pondicherry": {
+    "region": "pondicherry",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap verified Indian Tourism Registry",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "counts": {
+      "elements": 9,
+      "pois": 9,
+      "rejected": 0
+    }
+  },
+  "andaman": {
+    "region": "andaman",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap verified Indian Tourism Registry",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "counts": {
+      "elements": 8,
+      "pois": 8,
+      "rejected": 0
+    }
+  },
+  "bengaluru": {
+    "region": "bengaluru",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap verified Indian Tourism Registry",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "counts": {
+      "elements": 8,
+      "pois": 8,
+      "rejected": 0
+    }
+  },
+  "kolkata": {
+    "region": "kolkata",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap verified Indian Tourism Registry",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "counts": {
+      "elements": 8,
+      "pois": 8,
+      "rejected": 0
+    }
+  },
+  "hyderabad": {
+    "region": "hyderabad",
+    "extractedAt": "2026-10-18",
+    "source": "OpenStreetMap verified Indian Tourism Registry",
+    "licence": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "counts": {
+      "elements": 8,
+      "pois": 8,
+      "rejected": 0
+    }
   }
 }

@@ -14,9 +14,9 @@ export const ADVENTURE_INTERESTS = ['adventure', 'nature', 'trekking'];
 export const LIST_FIELDS = ['interests', 'dislikes', 'dietaryNeeds', 'mobilityNeeds', 'accommodationPreferences'] as const;
 export type ListField = (typeof LIST_FIELDS)[number];
 
-interface Scalars { homeCity?: string; travelStyle?: TravelStyle; budgetStyle?: BudgetStyle }
+interface Scalars { name?: string; homeCity?: string; travelStyle?: TravelStyle; budgetStyle?: BudgetStyle }
 type ScalarField = keyof Scalars;
-const SCALAR_FIELDS: readonly ScalarField[] = ['homeCity', 'travelStyle', 'budgetStyle'];
+const SCALAR_FIELDS: readonly ScalarField[] = ['name', 'homeCity', 'travelStyle', 'budgetStyle'];
 
 export interface TravelerProfile extends Scalars {
   interests: string[];
@@ -181,6 +181,9 @@ export function applyProfileEdit(existing: TravelerProfile, body: Record<string,
       const allowed: readonly string[] = key === 'travelStyle' ? TRAVEL_STYLES : BUDGET_STYLES;
       if (value !== null && !allowed.includes(value as string)) throw new Error(`${key} must be one of: ${allowed.join(', ')}, or null`);
       patch.set![key] = value as never;
+    } else if (key === 'name') {
+      if (value !== null && (typeof value !== 'string' || !value.trim() || value.length > 50)) throw new Error('name must be a short text, or null');
+      patch.set!.name = value === null ? null : value.trim();
     } else if (key === 'homeCity') {
       if (value !== null && (typeof value !== 'string' || !value.trim() || value.length > 60)) throw new Error('homeCity must be a short text, or null');
       patch.set!.homeCity = value === null ? null : value.trim();

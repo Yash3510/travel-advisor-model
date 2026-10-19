@@ -54,9 +54,9 @@ export function renderItinerary(d: ItineraryDraft, insights: TripInsight[]): str
     out.push('');
   }
   if (d.totalEstimatedCostInr !== undefined) out.push(`Entry fees in this plan: about ${inr(d.totalEstimatedCostInr)}, counting only published fees.`, '');
-  if (d.warnings.length) out.push('Please note:', ...d.warnings.map((w) => `• ${sentence(w)}`), '');
-  if (d.assumptions.length) out.push('Assumptions:', ...d.assumptions.map((a) => `• ${sentence(a)}`), '');
-  if (d.alternatives.length) out.push('Other options:', ...d.alternatives.map((a) => `• ${a.kind === 'cheaper' ? 'Cheaper' : a.kind === 'more_relaxed' ? 'More relaxed' : 'More adventurous'}: ${a.summary} (${a.changes.join('; ')}).`), '');
+  if (d.warnings.length) out.push('Helpful Traveler Notes:', ...d.warnings.map((w) => `• ${sentence(w)}`), '');
+  if (d.assumptions.length) out.push('Good to know:', ...d.assumptions.map((a) => `• ${sentence(a)}`), '');
+  if (d.alternatives.length) out.push('Curated Variations:', ...d.alternatives.map((a) => `• ${a.kind === 'cheaper' ? 'Cheaper' : a.kind === 'more_relaxed' ? 'More relaxed' : 'More adventurous'}: ${a.summary} (${a.changes.join('; ')}).`), '');
   if (d.sources.length) out.push(`Sources: ${d.sources.map((s) => (s.licence ? `${s.attribution} (${s.licence})` : s.attribution)).join('; ')}.`);
   return out.join('\n').trim();
 }
@@ -64,8 +64,8 @@ export function renderItinerary(d: ItineraryDraft, insights: TripInsight[]): str
 export function introRequest(d: ItineraryDraft, profile: TravelerProfile, trip: TripContext): string {
   const stops = d.days.flatMap((x) => x.items.filter((i) => i.kind === 'activity').map((i) => i.title)).slice(0, 4);
   const likes = profile.interests.length ? `, as someone who likes ${joinAnd(profile.interests)}` : '';
-  return `Here is my plan, already checked: ${d.days.length} days in ${d.destination}${stops.length ? `, including ${joinAnd(stops)}` : ''}${trip.purpose ? `, for our ${trip.purpose}` : ''}. ` +
-    `In two or three sentences, tell me warmly why it suits me${likes}. Don't change or add places, dates, times or prices, and don't search for anything.`;
+  return `You are Kodi, Takeoff's friendly travel concierge. Here is my plan, already checked: ${d.days.length} days in ${d.destination}${stops.length ? `, including ${joinAnd(stops)}` : ''}${trip.purpose ? `, for our ${trip.purpose}` : ''}. ` +
+    `In two or three sentences, tell me warmly why it suits me${likes}, with friendly concierge hospitality. Stay strictly focused on ${d.destination}. Do not mention any other cities, flights, dates, or prices. Don't change or add places, dates, times or prices, and don't search for anything.`;
 }
 
 export function fallbackIntro(d: ItineraryDraft, profile: TravelerProfile, trip: TripContext): string {

@@ -1,6 +1,33 @@
 {
   "_note": "Destinations with place data. bbox is [south, west, north, east]. names are the trip destinations (as the parser outputs them) that use this region.",
   "regions": [
-    { "slug": "goa", "name": "Goa", "bbox": [14.88, 73.67, 15.81, 74.34], "names": ["Goa", "Panaji", "Calangute", "Baga", "Anjuna", "Palolem", "Vasco da Gama", "Margao"] }
+    { "slug": "goa", "name": "Goa", "bbox": [14.88, 73.67, 15.81, 74.34], "names": ["Goa", "South Goa", "North Goa", "Panaji", "Calangute", "Baga", "Anjuna", "Palolem", "Vasco da Gama", "Margao", "Morjim", "Candolim"] },
+    { "slug": "jaipur", "name": "Jaipur & Rajasthan", "bbox": [26.75, 75.68, 27.05, 75.95], "names": ["Rajasthan", "Jaipur", "Amer", "Pink City", "Nahargarh", "Jal Mahal"] },
+    { "slug": "udaipur", "name": "Udaipur", "bbox": [24.50, 73.60, 24.68, 73.78], "names": ["Udaipur", "City of Lakes", "Pichola", "Fateh Sagar"] },
+    { "slug": "munnar", "name": "Munnar", "bbox": [9.95, 76.95, 10.20, 77.25], "names": ["Munnar", "Devikulam", "Idukki", "Anamudi", "Mattupetty"] },
+    { "slug": "kochi", "name": "Kochi & Kerala Backwaters", "bbox": [9.85, 76.20, 10.05, 76.40], "names": ["Kerala", "Kochi", "Cochin", "Fort Kochi", "Ernakulam", "Alleppey", "Alappuzha", "Kumarakom", "Wayanad"] },
+    { "slug": "manali", "name": "Manali & Kullu", "bbox": [32.15, 77.10, 32.35, 77.25], "names": ["Manali", "Old Manali", "Solang Valley", "Rohtang", "Atal Tunnel", "Kasol", "Kullu"] },
+    { "slug": "shimla", "name": "Shimla & Himachal Pradesh", "bbox": [31.05, 77.10, 31.20, 77.25], "names": ["Himachal Pradesh", "Himachal", "Shimla", "Kufri", "Mashobra", "Chail"] },
+    { "slug": "rishikesh", "name": "Rishikesh & Uttarakhand", "bbox": [30.05, 78.20, 30.18, 78.38], "names": ["Uttarakhand", "Rishikesh", "Haridwar", "Tapovan", "Shivpuri", "Dehradun", "Mussoorie", "Nainital"] },
+    { "slug": "srinagar", "name": "Srinagar & Kashmir", "bbox": [34.00, 74.70, 34.18, 74.95], "names": ["Jammu and Kashmir", "Jammu & Kashmir", "Kashmir", "Srinagar", "Dal Lake", "Gulmarg", "Pahalgam", "Sonamarg"] },
+    { "slug": "delhi", "name": "Delhi NCR", "bbox": [28.45, 77.00, 28.85, 77.35], "names": ["Delhi", "New Delhi", "Old Delhi", "NCR"] },
+    { "slug": "agra", "name": "Agra & Taj", "bbox": [27.10, 77.90, 27.25, 78.10], "names": ["Agra", "Taj Mahal", "Fatehpur Sikri"] },
+    { "slug": "varanasi", "name": "Varanasi & Uttar Pradesh", "bbox": [25.25, 82.90, 25.38, 83.05], "names": ["Uttar Pradesh", "UP", "Varanasi", "Banaras", "Kashi", "Sarnath", "Lucknow", "Ayodhya"] },
+    { "slug": "coorg", "name": "Coorg & Karnataka", "bbox": [12.10, 75.60, 12.60, 76.05], "names": ["Karnataka", "Coorg", "Kodagu", "Madikeri", "Chikmagalur", "Kabini"] },
+    { "slug": "mumbai", "name": "Mumbai & Coastal Maharashtra", "bbox": [18.88, 72.75, 19.30, 73.05], "names": ["Maharashtra", "Mumbai", "Bombay", "Lonavala", "Alibaug", "Khandala", "Pune", "Mahabaleshwar"] },
+    { "slug": "darjeeling", "name": "Darjeeling & West Bengal", "bbox": [26.95, 88.20, 27.10, 88.35], "names": ["West Bengal", "Bengal", "Darjeeling", "Kalimpong", "Mirik", "Gangtok", "Sikkim"] },
+    { "slug": "ooty", "name": "Ooty & Tamil Nadu", "bbox": [11.35, 76.65, 11.45, 76.75], "names": ["Tamil Nadu", "Tamilnadu", "Ooty", "Udhagamandalam", "Coonoor", "Kodaikanal", "Chennai", "Madurai", "Kanyakumari"] },
+    { "slug": "hampi", "name": "Hampi & Vijayanagara", "bbox": [15.28, 76.42, 15.38, 76.52], "names": ["Hampi", "Hospet", "Badami", "Anegundi"] },
+    { "slug": "gokarna", "name": "Gokarna & Coastal Karnataka", "bbox": [14.48, 74.28, 14.58, 74.38], "names": ["Gokarna", "Murudeshwar", "Karwar", "Udupi", "Kumta"] },
+    { "slug": "ladakh", "name": "Leh Ladakh & Himalayas", "bbox": [34.05, 77.45, 34.25, 77.65], "names": ["Ladakh", "Leh", "Nubra Valley", "Pangong Tso", "Spiti", "Zanskar"] },
+    { "slug": "amritsar", "name": "Amritsar & Punjab", "bbox": [31.58, 74.82, 31.68, 74.92], "names": ["Punjab", "Amritsar", "Golden Temple", "Wagah", "Chandigarh"] },
+    { "slug": "jodhpur", "name": "Jodhpur & Blue City", "bbox": [26.25, 73.00, 26.35, 73.10], "names": ["Jodhpur", "Blue City", "Osian", "Mandore"] },
+    { "slug": "jaisalmer", "name": "Jaisalmer & Thar Desert", "bbox": [26.85, 70.85, 26.98, 70.98], "names": ["Jaisalmer", "Golden City", "Sam Sand Dunes", "Thar"] },
+    { "slug": "mysore", "name": "Mysuru & Royal Heritage", "bbox": [12.25, 76.60, 12.38, 76.72], "names": ["Mysore", "Mysuru", "Srirangapatna", "Nanjangud"] },
+    { "slug": "pondicherry", "name": "Pondicherry & French Quarter", "bbox": [11.90, 79.80, 12.00, 79.88], "names": ["Puducherry", "Pondicherry", "Auroville", "White Town"] },
+    { "slug": "andaman", "name": "Andaman & Nicobar Islands", "bbox": [11.60, 92.70, 12.10, 93.10], "names": ["Andaman and Nicobar Islands", "Port Blair", "Havelock Island", "Neil Island", "Andaman", "Radhanagar"] },
+    { "slug": "bengaluru", "name": "Bengaluru & Tech Capital", "bbox": [12.85, 77.48, 13.10, 77.72], "names": ["Bangalore", "Bengaluru"] },
+    { "slug": "kolkata", "name": "Kolkata & Cultural Capital", "bbox": [22.45, 88.25, 22.65, 88.45], "names": ["Kolkata", "Calcutta", "Howrah"] },
+    { "slug": "hyderabad", "name": "Hyderabad & Deccan Heritage", "bbox": [17.30, 78.35, 17.50, 78.55], "names": ["Telangana", "Andhra Pradesh", "Hyderabad", "Secunderabad", "Golconda", "Cyberabad"] }
   ]
 }

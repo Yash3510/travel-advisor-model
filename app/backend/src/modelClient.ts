@@ -33,7 +33,7 @@ export async function chatCompletion(opts: ModelOpts & { messages: Turn[]; tools
     messages: opts.messages,
     temperature: 0.7,
     top_p: 0.8,
-    max_tokens: 600,
+    max_tokens: 1024,
     stream: false,
     chat_template_kwargs: { enable_thinking: false },
   };
@@ -61,7 +61,10 @@ export async function chatCompletion(opts: ModelOpts & { messages: Turn[]; tools
   const toolCalls = (msg.tool_calls ?? [])
     .map((tc) => ({ id: tc.id, name: tc.function?.name ?? '', args: safeParse(tc.function?.arguments) }))
     .filter((tc) => !!tc.name);
-  const content = (msg.content ?? '').replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+  const rawContent = (typeof msg.content === 'string' && msg.content.trim())
+    ? msg.content
+    : (typeof (msg as { reasoning_content?: string })?.reasoning_content === 'string' ? (msg as { reasoning_content?: string }).reasoning_content! : '');
+  const content = rawContent.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
   return { content, toolCalls };
 }
 

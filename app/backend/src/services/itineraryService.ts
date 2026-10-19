@@ -225,6 +225,7 @@ export function buildItinerary(req: ItineraryRequest): ItineraryDraft {
       const cost = p.c.poi.fee === 'paid' && p.c.poi.feeInr !== undefined ? p.c.poi.feeInr * travelers : undefined;
       return {
         kind: 'activity', block: blockOf(p.start), start: toClock(p.start), end: toClock(p.end), title: p.c.poi.name, poiId: p.c.poi.id,
+        coordinates: { lat: p.c.poi.location.lat, lng: p.c.poi.location.lon },
         durationMinutes: p.end - p.start, durationBasis: 'category_default',
         ...(leg ? { travelToNext: { ...leg } } : {}),
         hours: p.hours, ...(cost !== undefined ? { costInr: cost, costBasis: 'osm_charge' as const } : {}),

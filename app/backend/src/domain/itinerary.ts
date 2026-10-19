@@ -9,6 +9,7 @@ export interface ItineraryItem {
   end: string;
   title: string;
   poiId?: string;
+  coordinates?: { lat: number; lng: number };
   durationMinutes: number;
   /** visit lengths are typical times for the kind of place (OSM has none) */
   durationBasis?: 'category_default' | 'fixed';

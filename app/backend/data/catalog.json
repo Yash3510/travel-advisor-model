@@ -1,46 +1,122 @@
 {
   "regions": [
     {
-      "name": "Bali", "code": "idn",
-      "aliases": ["bali", "indonesia", "ubud", "seminyak", "canggu", "nusa penida", "kuta"],
+      "name": "Goa",
+      "code": "goa",
+      "aliases": [
+        "goa",
+        "south goa",
+        "north goa",
+        "palolem",
+        "panaji",
+        "cavelossim",
+        "fontainhas",
+        "vagator",
+        "anjuna",
+        "calangute",
+        "baga",
+        "candolim",
+        "madgaon"
+      ],
       "currency": "₹",
       "deals": [
         {
-          "campaignItineraryId": "tak-bali-story-001",
-          "sourceItineraryId": "src-bali-story-001",
-          "title": "6 Night Bali Complete Story: At ₹50K per Person",
-          "image": "https://d3lf10b5gahyby.cloudfront.net/city/bali.jpg",
+          "campaignItineraryId": "tak-goa-coastal-001",
+          "sourceItineraryId": "src-goa-coastal-001",
+          "title": "5 Nights South Goa Latin Quarter & Secluded Sands",
+          "image": "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=800&q=80",
           "images": [
-            "https://d3lf10b5gahyby.cloudfront.net/city/bali.jpg",
-            "https://d3lf10b5gahyby.cloudfront.net/city/ubud.jpg"
+            "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1614082242765-7c98ca0f3df3?auto=format&fit=crop&w=800&q=80"
           ],
-          "destinationString": "Ubud,Kuta",
-          "nights": 6,
-          "tripType": "Honeymoon",
-          "itineraryCost": 51401,
-          "itineraryCostWithoutFlights": 48126.117,
-          "hotelStarRating": 4,
-          "slug": "itineraries/bali-complete-story-wellness-wonders-6n",
-          "pills": [],
-          "numBookings": 538,
-          "strikedCost": 64251,
-          "dealDiscountPercentage": 20,
+          "destinationString": "South Goa, Palolem, Fontainhas",
+          "nights": 5,
+          "tripType": "Coastal & Heritage",
+          "itineraryCost": 28500,
+          "itineraryCostWithoutFlights": 22000,
+          "hotelStarRating": 5,
+          "slug": "itineraries/south-goa-latin-quarter-5n",
+          "pills": [
+            "Direct Folio",
+            "Boutique Heritage",
+            "Solar Boat Transfer"
+          ],
+          "numBookings": 642,
+          "strikedCost": 38000,
+          "dealDiscountPercentage": 25,
           "cityHotelStay": [
-            { "cityName": "Ubud", "hotelName": "Danakha Villa Ubud", "nights": 3, "hotelImages": [] },
-            { "cityName": "Ubud", "hotelName": "Purana Boutique Resort", "nights": 3, "hotelImages": [] },
-            { "cityName": "Kuta", "hotelName": "Cross Vibe Paasha Atelier Bali Kuta", "nights": 3, "hotelImages": [] },
-            { "cityName": "Kuta", "hotelName": "Harper Kuta by Aston", "nights": 3, "hotelImages": [] }
+            {
+              "cityName": "Panaji",
+              "hotelName": "The Panjim Inn Heritage",
+              "nights": 2,
+              "hotelImages": []
+            },
+            {
+              "cityName": "South Goa",
+              "hotelName": "Ahilya by the Sea",
+              "nights": 3,
+              "hotelImages": []
+            }
           ],
           "activities": [
-            "West Nusa Penida Tour with One point snorkelling and complimentary Indian Lunch",
-            "Tirta Empul & Goa Gajah Tour with Silver Jewellery Making and Aloha Swing Experience",
-            "South Bali Coastal Escape with GWK Buggy Access & Priority Kecak Dance",
-            "Balinese Sound Healing Experience with Traditional Lunch",
-            "Tandem ATV + Rafting & Monkey Forest Tour"
+            "Fontainhas Latin Quarter Walking Tour with Local Historian",
+            "Private Sunset Catamaran off Cabo de Rama Cliffs",
+            "Cavatina by Chef Avinash Martins Artisanal Goan Degustation",
+            "Palolem Bay Early Morning Skiff Dolphin Excursion"
           ],
-          "highlights": [],
-          "regionName": "Bali",
-          "regionCode": "idn",
+          "highlights": [
+            "Ahilya by the Sea ocean view",
+            "Zuari River ferry crossing pass included"
+          ],
+          "regionName": "Goa",
+          "regionCode": "goa",
+          "type": "ON_SALE",
+          "unityOptions": [],
+          "fixedItineraryDetails": null,
+          "perPersonCostByOption": {}
+        },
+        {
+          "campaignItineraryId": "tak-goa-luxury-002",
+          "sourceItineraryId": "src-goa-luxury-002",
+          "title": "4 Nights The Leela Goa Clifftop Oceanfront Escape",
+          "image": "https://images.unsplash.com/photo-1587922546307-776227941871?auto=format&fit=crop&w=800&q=80",
+          "images": [
+            "https://images.unsplash.com/photo-1587922546307-776227941871?auto=format&fit=crop&w=800&q=80"
+          ],
+          "destinationString": "Cavelossim, Mobor Beach",
+          "nights": 4,
+          "tripType": "Luxury Leisure",
+          "itineraryCost": 48000,
+          "itineraryCostWithoutFlights": 42000,
+          "hotelStarRating": 5,
+          "slug": "itineraries/the-leela-goa-luxury-4n",
+          "pills": [
+            "Direct Hotel Folio",
+            "5-Star Sanctuary",
+            "Private Chauffeur"
+          ],
+          "numBookings": 389,
+          "strikedCost": 62000,
+          "dealDiscountPercentage": 22,
+          "cityHotelStay": [
+            {
+              "cityName": "Cavelossim",
+              "hotelName": "The Leela Goa Ocean Villa",
+              "nights": 4,
+              "hotelImages": []
+            }
+          ],
+          "activities": [
+            "Private Lagoon Golf Cart Access & Riverside Dining",
+            "Ayurvedic Dosha Spa Massage Consultation",
+            "Mobor Beach Private Sunset Daybed"
+          ],
+          "highlights": [
+            "Private beachfront pavilion",
+            "Dabolim Airport private SUV pickup"
+          ],
+          "regionName": "Goa",
+          "regionCode": "goa",
           "type": "ON_SALE",
           "unityOptions": [],
           "fixedItineraryDetails": null,
@@ -49,39 +125,116 @@
       ]
     },
     {
-      "name": "Japan", "code": "jpn",
-      "aliases": ["japan", "tokyo", "osaka", "kyoto", "mount fuji"],
+      "name": "Rajasthan",
+      "code": "raj",
+      "aliases": [
+        "rajasthan",
+        "udaipur",
+        "jaipur",
+        "jodhpur",
+        "jaisalmer",
+        "lake pichola",
+        "mewar",
+        "ranakpur",
+        "mehrangarh"
+      ],
       "currency": "₹",
       "deals": [
         {
-          "campaignItineraryId": "tak-japan-blossom-001",
-          "sourceItineraryId": "src-japan-blossom-001",
-          "title": "Cherry Blossom Across Twin Cities – 5 Nights to Tokyo & Osaka",
-          "image": "https://d3lf10b5gahyby.cloudfront.net/city/tokyo.jpg",
-          "images": ["https://d3lf10b5gahyby.cloudfront.net/city/tokyo.jpg"],
-          "destinationString": "Tokyo,Osaka",
-          "nights": 5,
-          "tripType": "Honeymoon",
-          "itineraryCost": 169624.5,
-          "itineraryCostWithoutFlights": 169624.5,
-          "hotelStarRating": 3.5,
-          "slug": "itineraries/twin-delights-getaway-5-nights-to-tokyo-osaka",
-          "pills": [],
-          "numBookings": 477,
-          "strikedCost": 0,
-          "dealDiscountPercentage": 0,
+          "campaignItineraryId": "tak-raj-palace-001",
+          "sourceItineraryId": "src-raj-palace-001",
+          "title": "7 Nights Royal Rajasthan: Taj Lake Palace & RAAS Jodhpur",
+          "image": "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80",
+          "images": [
+            "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80"
+          ],
+          "destinationString": "Udaipur, Jodhpur, Ranakpur",
+          "nights": 7,
+          "tripType": "Royal Heritage",
+          "itineraryCost": 68500,
+          "itineraryCostWithoutFlights": 58000,
+          "hotelStarRating": 5,
+          "slug": "itineraries/royal-rajasthan-lake-palace-7n",
+          "pills": [
+            "Direct Palace Folio",
+            "100% Raw Receipts",
+            "Solar Boat Included"
+          ],
+          "numBookings": 812,
+          "strikedCost": 94000,
+          "dealDiscountPercentage": 27,
           "cityHotelStay": [
-            { "cityName": "Tokyo", "hotelName": "Business Hotel La Firenze", "nights": 3, "hotelImages": [] },
-            { "cityName": "Osaka", "hotelName": "Precious Terrace", "nights": 2, "hotelImages": [] }
+            {
+              "cityName": "Udaipur",
+              "hotelName": "Taj Lake Palace (Palace Lake View Suite)",
+              "nights": 4,
+              "hotelImages": []
+            },
+            {
+              "cityName": "Jodhpur",
+              "hotelName": "RAAS Jodhpur (Fort View Luxury Haveli)",
+              "nights": 3,
+              "hotelImages": []
+            }
           ],
           "activities": [
-            "Tokyo: Meiji Shrine, Asakusa, Skytree Bus Tour and Cruise",
-            "Osaka/Kyoto: Arashiyama, Nara Park & Fushimi Inari Day Tour",
-            "Tokyo: Mt Fuji & Hakone Ropeway, Lake Ashi Cruise, Owakudani"
+            "Private Solar Boat Transfer across Lake Pichola with Royal Marigold Greeting",
+            "Curator-Led City Palace Private Courtyard & Zenana Mahal Walk",
+            "Bagore Ki Haveli Dharohar Folk Dance Front-Row Heritage Pass",
+            "Mehrangarh Fort Battlements & Rao Jodha Desert Rock Park Safari"
           ],
-          "highlights": [],
-          "regionName": "Japan",
-          "regionCode": "jpn",
+          "highlights": [
+            "Taj Lake Palace island access",
+            "Private Aravalli SUV transit through Ranakpur temple"
+          ],
+          "regionName": "Rajasthan",
+          "regionCode": "raj",
+          "type": "ON_SALE",
+          "unityOptions": [],
+          "fixedItineraryDetails": null,
+          "perPersonCostByOption": {}
+        },
+        {
+          "campaignItineraryId": "tak-raj-jaipur-002",
+          "sourceItineraryId": "src-raj-jaipur-002",
+          "title": "4 Nights Jaipur Pink City Heritage & Amber Fort Safari",
+          "image": "https://images.unsplash.com/photo-1477587458883-47145ed94245?auto=format&fit=crop&w=800&q=80",
+          "images": [
+            "https://images.unsplash.com/photo-1477587458883-47145ed94245?auto=format&fit=crop&w=800&q=80"
+          ],
+          "destinationString": "Jaipur, Amer, Nahargarh",
+          "nights": 4,
+          "tripType": "Culture & Architecture",
+          "itineraryCost": 32000,
+          "itineraryCostWithoutFlights": 26000,
+          "hotelStarRating": 5,
+          "slug": "itineraries/jaipur-pink-city-heritage-4n",
+          "pills": [
+            "Palace Suite",
+            "VIP Monument Fast-Track"
+          ],
+          "numBookings": 495,
+          "strikedCost": 44000,
+          "dealDiscountPercentage": 27,
+          "cityHotelStay": [
+            {
+              "cityName": "Jaipur",
+              "hotelName": "Samode Haveli Heritage Sanctuary",
+              "nights": 4,
+              "hotelImages": []
+            }
+          ],
+          "activities": [
+            "Sunrise Private Ascent to Amber Fort before Crowds",
+            "Jantar Mantar Astronomical Observatory Guided Exploration",
+            "Johari Bazaar Artisan Block-Print & Gemstone Heritage Trail"
+          ],
+          "highlights": [
+            "Samode Haveli royal courtyards",
+            "Private city chauffeur with AC"
+          ],
+          "regionName": "Rajasthan",
+          "regionCode": "raj",
           "type": "ON_SALE",
           "unityOptions": [],
           "fixedItineraryDetails": null,
@@ -90,41 +243,78 @@
       ]
     },
     {
-      "name": "Thailand", "code": "tha",
-      "aliases": ["thailand", "phuket", "krabi", "bangkok", "ko samui", "ko chang"],
+      "name": "Kerala",
+      "code": "ker",
+      "aliases": [
+        "kerala",
+        "alleppey",
+        "alappuzha",
+        "munnar",
+        "kochi",
+        "cochin",
+        "kumarakom",
+        "thekkady",
+        "varkala",
+        "wayanad"
+      ],
       "currency": "₹",
       "deals": [
         {
-          "campaignItineraryId": "tak-thai-island-001",
-          "sourceItineraryId": "src-thai-island-001",
-          "title": "6 Night Thailand Island Hopping: At ₹65K per Person",
-          "image": "https://d3lf10b5gahyby.cloudfront.net/city/phuket.jpg",
-          "images": ["https://d3lf10b5gahyby.cloudfront.net/city/phuket.jpg"],
-          "destinationString": "Phuket,Krabi",
+          "campaignItineraryId": "tak-kerala-backwaters-001",
+          "sourceItineraryId": "src-kerala-backwaters-001",
+          "title": "6 Nights Kerala Backwaters & Misty Munnar Tea Hills",
+          "image": "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=800&q=80",
+          "images": [
+            "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=800&q=80"
+          ],
+          "destinationString": "Alleppey, Munnar, Kochi",
           "nights": 6,
-          "tripType": "Adventure",
-          "itineraryCost": 64999,
-          "itineraryCostWithoutFlights": 58999,
-          "hotelStarRating": 4,
-          "slug": "itineraries/thailand-island-hopping-6n",
-          "pills": [],
-          "numBookings": 621,
-          "strikedCost": 78999,
-          "dealDiscountPercentage": 18,
+          "tripType": "Nature & Wellness",
+          "itineraryCost": 39500,
+          "itineraryCostWithoutFlights": 32000,
+          "hotelStarRating": 5,
+          "slug": "itineraries/kerala-backwaters-munnar-6n",
+          "pills": [
+            "Solar Houseboat Included",
+            "Spice Garden Trail",
+            "Ayurvedic Spa"
+          ],
+          "numBookings": 720,
+          "strikedCost": 52000,
+          "dealDiscountPercentage": 24,
           "cityHotelStay": [
-            { "cityName": "Phuket", "hotelName": "Dusit Thani Laguna Phuket", "nights": 3, "hotelImages": [] },
-            { "cityName": "Krabi", "hotelName": "Buri Tara Resort", "nights": 3, "hotelImages": [] }
+            {
+              "cityName": "Kochi",
+              "hotelName": "Brunton Boatyard CGH Earth",
+              "nights": 1,
+              "hotelImages": []
+            },
+            {
+              "cityName": "Munnar",
+              "hotelName": "Windermere Estate Tea Bungalow",
+              "nights": 3,
+              "hotelImages": []
+            },
+            {
+              "cityName": "Alleppey",
+              "hotelName": "Private Luxury Eco-Houseboat (Vembanad Lake)",
+              "nights": 2,
+              "hotelImages": []
+            }
           ],
           "activities": [
-            "Phi Phi Island speedboat excursion with lunch",
-            "James Bond Island day trip from Phuket",
-            "4 Islands tour from Krabi with sunset dinner",
-            "Half-day Krabi rock climbing session"
+            "Private Solar Electric Houseboat Glide through Quiet Alleppey Canals",
+            "Kolukkumalai Sunrise 4x4 Jeep Safari to Highest Organic Tea Estate",
+            "Fort Kochi Heritage Walk, Chinese Fishing Nets & Spice Market Trail",
+            "Full-Body Herbal Abhyanga Ayurvedic Rejuvenation Spa"
           ],
-          "highlights": [],
-          "regionName": "Thailand",
-          "regionCode": "tha",
-          "type": "UNITY",
+          "highlights": [
+            "Private chef on houseboat with fresh Karimeen pollichathu",
+            "All transfer logistics synced"
+          ],
+          "regionName": "Kerala",
+          "regionCode": "ker",
+          "type": "ON_SALE",
           "unityOptions": [],
           "fixedItineraryDetails": null,
           "perPersonCostByOption": {}
@@ -132,125 +322,980 @@
       ]
     },
     {
-      "name": "Dubai", "code": "are",
-      "aliases": ["dubai", "uae", "abu dhabi"],
+      "name": "Kashmir",
+      "code": "ksr",
+      "aliases": [
+        "kashmir",
+        "srinagar",
+        "gulmarg",
+        "pahalgam",
+        "dal lake",
+        "sonamarg",
+        "jammu"
+      ],
       "currency": "₹",
       "deals": [
         {
-          "campaignItineraryId": "tak-dubai-family-001",
-          "sourceItineraryId": "src-dubai-family-001",
-          "title": "5 Night Dubai Family Adventure: At ₹75K per Person",
-          "image": "https://d3lf10b5gahyby.cloudfront.net/city/dubai.jpg",
-          "images": ["https://d3lf10b5gahyby.cloudfront.net/city/dubai.jpg"],
-          "destinationString": "Dubai",
+          "campaignItineraryId": "tak-kashmir-autumn-001",
+          "sourceItineraryId": "src-kashmir-autumn-001",
+          "title": "6 Nights Kashmir Alpine Snow & Dal Lake Houseboat Odyssey",
+          "image": "https://images.unsplash.com/photo-1595815771614-ade9d652a65d?auto=format&fit=crop&w=800&q=80",
+          "images": [
+            "https://images.unsplash.com/photo-1595815771614-ade9d652a65d?auto=format&fit=crop&w=800&q=80"
+          ],
+          "destinationString": "Srinagar, Gulmarg, Pahalgam",
+          "nights": 6,
+          "tripType": "Alpine Winter & Autumn",
+          "itineraryCost": 46000,
+          "itineraryCostWithoutFlights": 38000,
+          "hotelStarRating": 5,
+          "slug": "itineraries/kashmir-alpine-dal-lake-6n",
+          "pills": [
+            "Private Shikara",
+            "Gulmarg Gondola Pass",
+            "Chinar Foliage"
+          ],
+          "numBookings": 614,
+          "strikedCost": 61000,
+          "dealDiscountPercentage": 25,
+          "cityHotelStay": [
+            {
+              "cityName": "Srinagar",
+              "hotelName": "Sukoon Luxury Heritage Houseboat",
+              "nights": 3,
+              "hotelImages": []
+            },
+            {
+              "cityName": "Gulmarg",
+              "hotelName": "The Khyber Himalayan Resort & Spa",
+              "nights": 3,
+              "hotelImages": []
+            }
+          ],
+          "activities": [
+            "Dawn Private Wooden Shikara Ride through Floating Flower Markets",
+            "Gulmarg Gondola Phase 1 & 2 Fast-Track Priority Pass to Apharwat Snow",
+            "Pahalgam Betaab Valley & Aru Valley Alpine Pine Forest Trek",
+            "Traditional Kashmiri Wazwan Feast with Saffron Kahwa"
+          ],
+          "highlights": [
+            "Sukoon cedar wood handcrafted houseboat",
+            "Snow gear & heater equipped SUVs"
+          ],
+          "regionName": "Kashmir",
+          "regionCode": "ksr",
+          "type": "ON_SALE",
+          "unityOptions": [],
+          "fixedItineraryDetails": null,
+          "perPersonCostByOption": {}
+        }
+      ]
+    },
+    {
+      "name": "Andaman & Nicobar",
+      "code": "and",
+      "aliases": [
+        "andaman",
+        "andamans",
+        "andaman and nicobar",
+        "havelock",
+        "havelock island",
+        "neil island",
+        "port blair",
+        "radhanagar"
+      ],
+      "currency": "₹",
+      "deals": [
+        {
+          "campaignItineraryId": "tak-andaman-reef-001",
+          "sourceItineraryId": "src-andaman-reef-001",
+          "title": "6 Nights Andaman Emerald Reefs & Radhanagar Beach Haven",
+          "image": "https://images.unsplash.com/photo-1589308078059-be1415eab4c3?auto=format&fit=crop&w=800&q=80",
+          "images": [
+            "https://images.unsplash.com/photo-1589308078059-be1415eab4c3?auto=format&fit=crop&w=800&q=80"
+          ],
+          "destinationString": "Port Blair, Havelock Island, Neil Island",
+          "nights": 6,
+          "tripType": "Island Sanctuary",
+          "itineraryCost": 52000,
+          "itineraryCostWithoutFlights": 42000,
+          "hotelStarRating": 5,
+          "slug": "itineraries/andaman-emerald-reefs-6n",
+          "pills": [
+            "Makruzz Catamaran Pass",
+            "PADI Scuba Trial",
+            "Sunset Beach No. 7"
+          ],
+          "numBookings": 512,
+          "strikedCost": 68000,
+          "dealDiscountPercentage": 24,
+          "cityHotelStay": [
+            {
+              "cityName": "Port Blair",
+              "hotelName": "Welcomhotel by ITC Hotels Bay Island",
+              "nights": 1,
+              "hotelImages": []
+            },
+            {
+              "cityName": "Havelock Island",
+              "hotelName": "Taj Exotica Resort & Spa Radhanagar Beach",
+              "nights": 3,
+              "hotelImages": []
+            },
+            {
+              "cityName": "Neil Island",
+              "hotelName": "Sea Shell Samssara Neil Lagoon Villa",
+              "nights": 2,
+              "hotelImages": []
+            }
+          ],
+          "activities": [
+            "High-Speed Makruzz Premium Catamaran Transfers across Port Blair & Havelock",
+            "PADI-Certified Private Scuba Dive at Elephant Beach Reefs",
+            "Radhanagar Beach No. 7 Sunset Promenade & Coconut Canopy Walk",
+            "Night Kayaking through Bioluminescent Mangrove Creeks"
+          ],
+          "highlights": [
+            "Taj Exotica private villa on Radhanagar",
+            "Guaranteed maritime swell rebooking protocol"
+          ],
+          "regionName": "Andaman & Nicobar",
+          "regionCode": "and",
+          "type": "ON_SALE",
+          "unityOptions": [],
+          "fixedItineraryDetails": null,
+          "perPersonCostByOption": {}
+        }
+      ]
+    },
+    {
+      "name": "Himachal Pradesh",
+      "code": "him",
+      "aliases": [
+        "himachal",
+        "himachal pradesh",
+        "manali",
+        "shimla",
+        "kullu",
+        "spiti",
+        "kasol",
+        "dharamsala",
+        "kufri",
+        "solang"
+      ],
+      "currency": "₹",
+      "deals": [
+        {
+          "campaignItineraryId": "tak-himachal-manali-001",
+          "sourceItineraryId": "src-himachal-manali-001",
+          "title": "5 Nights Manali Mountain Trails & Solang Alpine Valleys",
+          "image": "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=800&q=80",
+          "images": [
+            "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=800&q=80"
+          ],
+          "destinationString": "Manali, Solang Valley, Naggar",
           "nights": 5,
-          "tripType": "Family",
-          "itineraryCost": 74999,
-          "itineraryCostWithoutFlights": 67999,
-          "hotelStarRating": 4,
-          "slug": "itineraries/dubai-family-adventure-5n",
-          "pills": [],
-          "numBookings": 807,
-          "strikedCost": 92999,
+          "tripType": "Alpine Adventure",
+          "itineraryCost": 31000,
+          "itineraryCostWithoutFlights": 25000,
+          "hotelStarRating": 5,
+          "slug": "itineraries/manali-mountain-trails-5n",
+          "pills": [
+            "Atal Tunnel Access",
+            "Cedar Forest Cabin",
+            "Private SUV"
+          ],
+          "numBookings": 670,
+          "strikedCost": 42000,
+          "dealDiscountPercentage": 26,
+          "cityHotelStay": [
+            {
+              "cityName": "Manali",
+              "hotelName": "The Himalayan Luxury Castle & Stone Cottages",
+              "nights": 5,
+              "hotelImages": []
+            }
+          ],
+          "activities": [
+            "Private SUV Transit through Atal Tunnel into Lahaul Snow Plateau",
+            "Old Manali Heritage Wood Carving & Cafe Trail",
+            "Solang Valley Paragliding & Alpine River Walk",
+            "Naggar Castle Historical Walk & Nicholas Roerich Art Gallery"
+          ],
+          "highlights": [
+            "Stone fireplace in cottage suite",
+            "Mountain river views"
+          ],
+          "regionName": "Himachal Pradesh",
+          "regionCode": "him",
+          "type": "ON_SALE",
+          "unityOptions": [],
+          "fixedItineraryDetails": null,
+          "perPersonCostByOption": {}
+        }
+      ]
+    },
+    {
+      "name": "Varanasi",
+      "code": "var",
+      "aliases": [
+        "varanasi",
+        "kashi",
+        "banaras",
+        "ganga",
+        "ghats",
+        "sarnath",
+        "uttar pradesh"
+      ],
+      "currency": "₹",
+      "deals": [
+        {
+          "campaignItineraryId": "tak-varanasi-ghats-001",
+          "sourceItineraryId": "src-varanasi-ghats-001",
+          "title": "4 Nights Varanasi Heritage Ghats & Sarnath Stupa Odyssey",
+          "image": "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=800&q=80",
+          "images": [
+            "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=800&q=80"
+          ],
+          "destinationString": "Varanasi, Sarnath, Ganges",
+          "nights": 4,
+          "tripType": "Spiritual & Cultural Heritage",
+          "itineraryCost": 26500,
+          "itineraryCostWithoutFlights": 21000,
+          "hotelStarRating": 5,
+          "slug": "itineraries/varanasi-heritage-ghats-4n",
+          "pills": [
+            "Palace on Ganges",
+            "VIP Aarti Access",
+            "Direct Vande Bharat Ready"
+          ],
+          "numBookings": 430,
+          "strikedCost": 35000,
+          "dealDiscountPercentage": 24,
+          "cityHotelStay": [
+            {
+              "cityName": "Varanasi",
+              "hotelName": "BrijRama Palace on Darbhanga Ghat",
+              "nights": 4,
+              "hotelImages": []
+            }
+          ],
+          "activities": [
+            "Dawn Private Wooden Rowboat Ride with Classical Flute Performance on Ganges",
+            "Reserved Front-Row Seating at Dashashwamedh Ghat Evening Maha Aarti",
+            "Ancient Sarnath Dhamek Stupa & Archaeological Museum Curated Tour",
+            "Kashi Vishwanath Corridor & Traditional Silk Weaving Atelier"
+          ],
+          "highlights": [
+            "BrijRama Palace 210-year-old riverfront access",
+            "Private Bajra boat for sunset tea"
+          ],
+          "regionName": "Varanasi",
+          "regionCode": "var",
+          "type": "ON_SALE",
+          "unityOptions": [],
+          "fixedItineraryDetails": null,
+          "perPersonCostByOption": {}
+        }
+      ]
+    },
+    {
+      "code": "kar",
+      "name": "Karnataka",
+      "currency": "INR",
+      "aliases": [
+        "karnataka",
+        "coorg",
+        "bengaluru",
+        "bangalore",
+        "hampi",
+        "mysore",
+        "gokarna",
+        "chikmagalur",
+        "kabini",
+        "kodagu"
+      ],
+      "deals": [
+        {
+          "campaignItineraryId": "tak-kar-coorg-001",
+          "sourceItineraryId": "src-kar-coorg-001",
+          "title": "4 Nights Coorg Mist Highlands & Coffee Sanctuary",
+          "image": "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?auto=format&fit=crop&w=800&q=80",
+          "images": [
+            "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?auto=format&fit=crop&w=800&q=80"
+          ],
+          "destinationString": "Coorg & Bangalore, Karnataka",
+          "nights": 4,
+          "tripType": "Heritage & Nature",
+          "itineraryCost": 38500,
+          "itineraryCostWithoutFlights": 38500,
+          "hotelStarRating": 5,
+          "slug": "coorg-coffee-sanctuary",
+          "pills": [
+            "Private Estate Villa",
+            "Circadian Trek",
+            "Direct GDS"
+          ],
+          "numBookings": 142,
+          "strikedCost": 46000,
+          "dealDiscountPercentage": 16,
+          "cityHotelStay": [
+            {
+              "cityName": "Coorg",
+              "hotelName": "Evolve Back Kuruba Safari Lodge",
+              "nights": 3,
+              "hotelImages": []
+            },
+            {
+              "cityName": "Bengaluru",
+              "hotelName": "The Leela Palace Bengaluru",
+              "nights": 1,
+              "hotelImages": []
+            }
+          ],
+          "activities": [
+            "Abbey Falls Canopy Walk",
+            "Private Coffee Roasting",
+            "Nagarhole Safari"
+          ],
+          "highlights": [
+            "Private plantation cottage",
+            "Authentic Kodava culinary tasting"
+          ],
+          "regionName": "Karnataka",
+          "regionCode": "kar",
+          "type": "bespoke",
+          "unityOptions": [],
+          "fixedItineraryDetails": {},
+          "perPersonCostByOption": {}
+        }
+      ]
+    },
+    {
+      "code": "mah",
+      "name": "Maharashtra",
+      "currency": "INR",
+      "aliases": [
+        "maharashtra",
+        "mumbai",
+        "bombay",
+        "pune",
+        "lonavala",
+        "alibaug",
+        "khandala",
+        "mahabaleshwar"
+      ],
+      "deals": [
+        {
+          "campaignItineraryId": "tak-mah-mumbai-001",
+          "sourceItineraryId": "src-mah-mumbai-001",
+          "title": "3 Nights South Bombay Heritage & Marine Drive Luxury",
+          "image": "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=800&q=80",
+          "images": [
+            "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=800&q=80"
+          ],
+          "destinationString": "South Mumbai & Colaba, Maharashtra",
+          "nights": 3,
+          "tripType": "City & Coastal Heritage",
+          "itineraryCost": 42000,
+          "itineraryCostWithoutFlights": 42000,
+          "hotelStarRating": 5,
+          "slug": "mumbai-taj-heritage",
+          "pills": [
+            "Sea-Facing Wing",
+            "Private Chauffeur",
+            "Art Deco Walk"
+          ],
+          "numBookings": 215,
+          "strikedCost": 52000,
           "dealDiscountPercentage": 19,
           "cityHotelStay": [
-            { "cityName": "Dubai", "hotelName": "Rove Downtown", "nights": 3, "hotelImages": [] },
-            { "cityName": "Dubai", "hotelName": "Novotel Deira", "nights": 2, "hotelImages": [] }
+            {
+              "cityName": "Mumbai",
+              "hotelName": "The Taj Mahal Palace Mumbai",
+              "nights": 3,
+              "hotelImages": []
+            }
           ],
           "activities": [
-            "Burj Khalifa levels 124 & 125 with sunset transfer",
-            "Desert safari with dinner & entertainment",
-            "Aquaventure waterpark day pass",
-            "Abu Dhabi city tour with Ferrari World option"
+            "Elephanta Island Private Launch",
+            "Colaba Art Deco Walking Tour",
+            "Marine Drive Sunset"
           ],
-          "highlights": [],
-          "regionName": "Dubai",
-          "regionCode": "are",
-          "type": "UNITY",
+          "highlights": [
+            "Iconic sea-facing suite",
+            "High tea at Sea Lounge"
+          ],
+          "regionName": "Maharashtra",
+          "regionCode": "mah",
+          "type": "bespoke",
           "unityOptions": [],
-          "fixedItineraryDetails": null,
+          "fixedItineraryDetails": {},
           "perPersonCostByOption": {}
         }
       ]
     },
     {
-      "name": "Maldives", "code": "mdv",
-      "aliases": ["maldives", "male", "overwater villa"],
-      "currency": "₹",
+      "code": "tam",
+      "name": "Tamil Nadu",
+      "currency": "INR",
+      "aliases": [
+        "tamil nadu",
+        "tamilnadu",
+        "ooty",
+        "chennai",
+        "madurai",
+        "kodaikanal",
+        "coonoor",
+        "kanyakumari",
+        "rameswaram"
+      ],
       "deals": [
         {
-          "campaignItineraryId": "tak-mald-overwater-001",
-          "sourceItineraryId": "src-mald-overwater-001",
-          "title": "5 Night Maldives Overwater Escape: At ₹1.2L per Person",
-          "image": "https://d3lf10b5gahyby.cloudfront.net/city/maldives.jpg",
-          "images": ["https://d3lf10b5gahyby.cloudfront.net/city/maldives.jpg"],
-          "destinationString": "Male",
-          "nights": 5,
-          "tripType": "Honeymoon",
-          "itineraryCost": 119999,
-          "itineraryCostWithoutFlights": 99999,
+          "campaignItineraryId": "tak-tam-ooty-001",
+          "sourceItineraryId": "src-tam-ooty-001",
+          "title": "4 Nights Nilgiri Blue Mountains & British Raj Bungalow",
+          "image": "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=800&q=80",
+          "images": [
+            "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=800&q=80"
+          ],
+          "destinationString": "Ooty & Coonoor, Tamil Nadu",
+          "nights": 4,
+          "tripType": "Hill Station & Nature",
+          "itineraryCost": 34000,
+          "itineraryCostWithoutFlights": 34000,
           "hotelStarRating": 5,
-          "slug": "itineraries/maldives-overwater-escape-5n",
-          "pills": [],
-          "numBookings": 312,
-          "strikedCost": 149999,
+          "slug": "ooty-nilgiri-heritage",
+          "pills": [
+            "Fireplace Suite",
+            "Toy Train Tickets",
+            "Tea Tasting"
+          ],
+          "numBookings": 98,
+          "strikedCost": 41000,
+          "dealDiscountPercentage": 17,
+          "cityHotelStay": [
+            {
+              "cityName": "Ooty",
+              "hotelName": "Savoy - IHCL SeleQtions Ooty",
+              "nights": 4,
+              "hotelImages": []
+            }
+          ],
+          "activities": [
+            "Nilgiri Steam Toy Train",
+            "Doddabetta Cloud Vista",
+            "Botanical Glasshouse"
+          ],
+          "highlights": [
+            "Colonial hearth dining",
+            "Single-estate Nilgiri tea brewing"
+          ],
+          "regionName": "Tamil Nadu",
+          "regionCode": "tam",
+          "type": "bespoke",
+          "unityOptions": [],
+          "fixedItineraryDetails": {},
+          "perPersonCostByOption": {}
+        }
+      ]
+    },
+    {
+      "code": "utt",
+      "name": "Uttarakhand",
+      "currency": "INR",
+      "aliases": [
+        "uttarakhand",
+        "rishikesh",
+        "haridwar",
+        "dehradun",
+        "mussoorie",
+        "nainital",
+        "kedarnath",
+        "auli"
+      ],
+      "deals": [
+        {
+          "campaignItineraryId": "tak-utt-rishikesh-001",
+          "sourceItineraryId": "src-utt-rishikesh-001",
+          "title": "4 Nights Ganges Riverside Sanctuary & Yoga Retreat",
+          "image": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=800&q=80",
+          "images": [
+            "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=800&q=80"
+          ],
+          "destinationString": "Rishikesh & Haridwar, Uttarakhand",
+          "nights": 4,
+          "tripType": "Wellness & Spiritual",
+          "itineraryCost": 39000,
+          "itineraryCostWithoutFlights": 39000,
+          "hotelStarRating": 5,
+          "slug": "rishikesh-ananda-ganges",
+          "pills": [
+            "Private Ghat Access",
+            "Circadian Yoga",
+            "Ganga Aarti Priority"
+          ],
+          "numBookings": 184,
+          "strikedCost": 48000,
+          "dealDiscountPercentage": 18,
+          "cityHotelStay": [
+            {
+              "cityName": "Rishikesh",
+              "hotelName": "Taj Rishikesh Resort & Spa",
+              "nights": 4,
+              "hotelImages": []
+            }
+          ],
+          "activities": [
+            "Triveni Ghat Evening Aarti",
+            "Beatles Ashram Nature Walk",
+            "Private Yoga by the Ganges"
+          ],
+          "highlights": [
+            "Private riverfront dining",
+            "Ayurvedic wellness consultation"
+          ],
+          "regionName": "Uttarakhand",
+          "regionCode": "utt",
+          "type": "bespoke",
+          "unityOptions": [],
+          "fixedItineraryDetails": {},
+          "perPersonCostByOption": {}
+        }
+      ]
+    },
+    {
+      "code": "pun",
+      "name": "Punjab",
+      "currency": "INR",
+      "aliases": [
+        "punjab",
+        "amritsar",
+        "golden temple",
+        "wagah",
+        "chandigarh"
+      ],
+      "deals": [
+        {
+          "campaignItineraryId": "tak-pun-amritsar-001",
+          "sourceItineraryId": "src-pun-amritsar-001",
+          "title": "3 Nights Amritsar Golden Splendour & Wagah Retreat",
+          "image": "https://images.unsplash.com/photo-1588096344356-9b5f9d1bb824?auto=format&fit=crop&w=800&q=80",
+          "images": [
+            "https://images.unsplash.com/photo-1588096344356-9b5f9d1bb824?auto=format&fit=crop&w=800&q=80"
+          ],
+          "destinationString": "Amritsar, Punjab",
+          "nights": 3,
+          "tripType": "Spiritual & Heritage",
+          "itineraryCost": 26500,
+          "itineraryCostWithoutFlights": 26500,
+          "hotelStarRating": 5,
+          "slug": "amritsar-golden-heritage",
+          "pills": [
+            "VIP Wagah Pass",
+            "Heritage Walk",
+            "Langar Experience"
+          ],
+          "numBookings": 165,
+          "strikedCost": 32000,
+          "dealDiscountPercentage": 17,
+          "cityHotelStay": [
+            {
+              "cityName": "Amritsar",
+              "hotelName": "Taj Swarna Amritsar",
+              "nights": 3,
+              "hotelImages": []
+            }
+          ],
+          "activities": [
+            "Golden Temple Night Aarti",
+            "Wagah Border Flag Ceremony",
+            "Jallianwala Bagh Memorial"
+          ],
+          "highlights": [
+            "Gilded sanctum priority",
+            "Authentic Amritsari kulcha feast"
+          ],
+          "regionName": "Punjab",
+          "regionCode": "pun",
+          "type": "bespoke",
+          "unityOptions": [],
+          "fixedItineraryDetails": {},
+          "perPersonCostByOption": {}
+        }
+      ]
+    },
+    {
+      "code": "del",
+      "name": "Delhi NCR",
+      "currency": "INR",
+      "aliases": [
+        "delhi",
+        "new delhi",
+        "old delhi",
+        "ncr"
+      ],
+      "deals": [
+        {
+          "campaignItineraryId": "tak-del-heritage-001",
+          "sourceItineraryId": "src-del-heritage-001",
+          "title": "3 Nights Imperial New Delhi & Mughal Citadel Tour",
+          "image": "https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=800&q=80",
+          "images": [
+            "https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=800&q=80"
+          ],
+          "destinationString": "New Delhi, NCR",
+          "nights": 3,
+          "tripType": "Capital Heritage",
+          "itineraryCost": 36000,
+          "itineraryCostWithoutFlights": 36000,
+          "hotelStarRating": 5,
+          "slug": "delhi-imperial-heritage",
+          "pills": [
+            "Lutyens Suite",
+            "Private Historian",
+            "Mughal Feast"
+          ],
+          "numBookings": 190,
+          "strikedCost": 44000,
+          "dealDiscountPercentage": 18,
+          "cityHotelStay": [
+            {
+              "cityName": "New Delhi",
+              "hotelName": "The Imperial New Delhi",
+              "nights": 3,
+              "hotelImages": []
+            }
+          ],
+          "activities": [
+            "Humayun Tomb Sunset Tour",
+            "Old Delhi Rickshaw Culinary Trail",
+            "Qutub Minar Archaeological Walk"
+          ],
+          "highlights": [
+            "Lutyens heritage architecture",
+            "Private curator guide"
+          ],
+          "regionName": "Delhi NCR",
+          "regionCode": "del",
+          "type": "bespoke",
+          "unityOptions": [],
+          "fixedItineraryDetails": {},
+          "perPersonCostByOption": {}
+        }
+      ]
+    },
+    {
+      "code": "wes",
+      "name": "West Bengal",
+      "currency": "INR",
+      "aliases": [
+        "west bengal",
+        "bengal",
+        "kolkata",
+        "darjeeling",
+        "kalimpong"
+      ],
+      "deals": [
+        {
+          "campaignItineraryId": "tak-wes-darjeeling-001",
+          "sourceItineraryId": "src-wes-darjeeling-001",
+          "title": "4 Nights Darjeeling Kanchenjunga Sunrise & Tea Estate",
+          "image": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=800&q=80",
+          "images": [
+            "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=800&q=80"
+          ],
+          "destinationString": "Darjeeling & Kolkata, West Bengal",
+          "nights": 4,
+          "tripType": "Hill & Colonial Heritage",
+          "itineraryCost": 33500,
+          "itineraryCostWithoutFlights": 33500,
+          "hotelStarRating": 5,
+          "slug": "darjeeling-tea-estate",
+          "pills": [
+            "Kanchenjunga View",
+            "First Flush Tasting",
+            "Toy Train"
+          ],
+          "numBookings": 112,
+          "strikedCost": 40000,
+          "dealDiscountPercentage": 16,
+          "cityHotelStay": [
+            {
+              "cityName": "Darjeeling",
+              "hotelName": "The Elgin Darjeeling",
+              "nights": 4,
+              "hotelImages": []
+            }
+          ],
+          "activities": [
+            "Tiger Hill Kanchenjunga Sunrise",
+            "Makaibari Tea Plucking Tour",
+            "Batasia Loop Toy Train"
+          ],
+          "highlights": [
+            "Silver service English high tea",
+            "Unobstructed Himalayan vista"
+          ],
+          "regionName": "West Bengal",
+          "regionCode": "wes",
+          "type": "bespoke",
+          "unityOptions": [],
+          "fixedItineraryDetails": {},
+          "perPersonCostByOption": {}
+        }
+      ]
+    },
+    {
+      "code": "lad",
+      "name": "Ladakh",
+      "currency": "INR",
+      "aliases": [
+        "ladakh",
+        "leh",
+        "nubra",
+        "pangong",
+        "zanskar"
+      ],
+      "deals": [
+        {
+          "campaignItineraryId": "tak-lad-leh-001",
+          "sourceItineraryId": "src-lad-leh-001",
+          "title": "6 Nights High Altitude Ladakh & Pangong Blue Waters",
+          "image": "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80",
+          "images": [
+            "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80"
+          ],
+          "destinationString": "Leh & Nubra Valley, Ladakh",
+          "nights": 6,
+          "tripType": "Himalayan Adventure",
+          "itineraryCost": 48000,
+          "itineraryCostWithoutFlights": 48000,
+          "hotelStarRating": 5,
+          "slug": "ladakh-pangong-sanctuary",
+          "pills": [
+            "Luxury Glamping",
+            "Bactrian Camel Safari",
+            "Oxygen Fitted 4x4"
+          ],
+          "numBookings": 130,
+          "strikedCost": 59000,
+          "dealDiscountPercentage": 18,
+          "cityHotelStay": [
+            {
+              "cityName": "Leh",
+              "hotelName": "The Grand Dragon Ladakh",
+              "nights": 4,
+              "hotelImages": []
+            },
+            {
+              "cityName": "Nubra Valley",
+              "hotelName": "Stone Hedge Luxury Camp",
+              "nights": 2,
+              "hotelImages": []
+            }
+          ],
+          "activities": [
+            "Thiksey Monastery Morning Prayer",
+            "Pangong Tso Sunrise Expedition",
+            "Nubra Sand Dunes Safari"
+          ],
+          "highlights": [
+            "Stargazing under 14,000 ft dark sky",
+            "Private acclimatization physician"
+          ],
+          "regionName": "Ladakh",
+          "regionCode": "lad",
+          "type": "bespoke",
+          "unityOptions": [],
+          "fixedItineraryDetails": {},
+          "perPersonCostByOption": {}
+        }
+      ]
+    },
+    {
+      "code": "pon",
+      "name": "Puducherry",
+      "currency": "INR",
+      "aliases": [
+        "pondicherry",
+        "puducherry",
+        "auroville",
+        "white town"
+      ],
+      "deals": [
+        {
+          "campaignItineraryId": "tak-pon-french-001",
+          "sourceItineraryId": "src-pon-french-001",
+          "title": "3 Nights French Quarter White Town & Promenade Retreat",
+          "image": "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=800&q=80",
+          "images": [
+            "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=800&q=80"
+          ],
+          "destinationString": "White Town, Puducherry",
+          "nights": 3,
+          "tripType": "French Coastal",
+          "itineraryCost": 28000,
+          "itineraryCostWithoutFlights": 28000,
+          "hotelStarRating": 5,
+          "slug": "pondicherry-french-heritage",
+          "pills": [
+            "Heritage Courtyard",
+            "Bicycle Pass",
+            "Croissant Breakfast"
+          ],
+          "numBookings": 145,
+          "strikedCost": 35000,
           "dealDiscountPercentage": 20,
           "cityHotelStay": [
-            { "cityName": "Male", "hotelName": "Overwater Villas Resort", "nights": 5, "hotelImages": [] }
+            {
+              "cityName": "Puducherry",
+              "hotelName": "Palais de Mahe - CGH Earth",
+              "nights": 3,
+              "hotelImages": []
+            }
           ],
           "activities": [
-            "Sunset dolphin cruise",
-            "Sandbar picnic with photoshoot",
-            "Floating breakfast experience",
-            "Couple's spa session over the lagoon"
+            "Auroville Matrimandir Meditation",
+            "White Town Architectural Walk",
+            "Promenade Beach Sunset"
           ],
-          "highlights": [],
-          "regionName": "Maldives",
-          "regionCode": "mdv",
-          "type": "ON_SALE",
+          "highlights": [
+            "French-Tamil fusion gastronomy",
+            "Private courtyard plunge pool"
+          ],
+          "regionName": "Puducherry",
+          "regionCode": "pon",
+          "type": "bespoke",
           "unityOptions": [],
-          "fixedItineraryDetails": null,
+          "fixedItineraryDetails": {},
           "perPersonCostByOption": {}
         }
       ]
     },
     {
-      "name": "Singapore", "code": "sgp",
-      "aliases": ["singapore", "sentosa", "marina bay"],
-      "currency": "₹",
+      "code": "guj",
+      "name": "Gujarat",
+      "currency": "INR",
+      "aliases": [
+        "gujarat",
+        "ahmedabad",
+        "kutch",
+        "rann of kutch",
+        "gir"
+      ],
       "deals": [
         {
-          "campaignItineraryId": "tak-sg-kids-001",
-          "sourceItineraryId": "src-sg-kids-001",
-          "title": "4 Night Singapore with Kids: At ₹70K per Person",
-          "image": "https://d3lf10b5gahyby.cloudfront.net/city/singapore.jpg",
-          "images": ["https://d3lf10b5gahyby.cloudfront.net/city/singapore.jpg"],
-          "destinationString": "Singapore",
+          "campaignItineraryId": "tak-guj-kutch-001",
+          "sourceItineraryId": "src-guj-kutch-001",
+          "title": "4 Nights White Rann of Kutch & Royal Heritage Stay",
+          "image": "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=800&q=80",
+          "images": [
+            "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=800&q=80"
+          ],
+          "destinationString": "Kutch & Ahmedabad, Gujarat",
           "nights": 4,
-          "tripType": "Family",
-          "itineraryCost": 69999,
-          "itineraryCostWithoutFlights": 62999,
-          "hotelStarRating": 4,
-          "slug": "itineraries/singapore-with-kids-4n",
-          "pills": [],
-          "numBookings": 546,
-          "strikedCost": 0,
-          "dealDiscountPercentage": 0,
+          "tripType": "Desert & Cultural Heritage",
+          "itineraryCost": 32000,
+          "itineraryCostWithoutFlights": 32000,
+          "hotelStarRating": 5,
+          "slug": "gujarat-white-rann",
+          "pills": [
+            "Luxury Tent City",
+            "Artisanal Rogan Art",
+            "Full Moon Walk"
+          ],
+          "numBookings": 110,
+          "strikedCost": 39000,
+          "dealDiscountPercentage": 18,
           "cityHotelStay": [
-            { "cityName": "Singapore", "hotelName": "Mercure Singapore on Stevens", "nights": 4, "hotelImages": [] }
+            {
+              "cityName": "Kutch",
+              "hotelName": "The Tent City Dhordo",
+              "nights": 2,
+              "hotelImages": []
+            },
+            {
+              "cityName": "Ahmedabad",
+              "hotelName": "House of MG Heritage Hotel",
+              "nights": 2,
+              "hotelImages": []
+            }
           ],
           "activities": [
-            "Universal Studios Singapore full-day pass",
-            "S.E.A. Aquarium & Adventure Cove combo",
-            "Gardens by the Bay with Cloud Forest",
-            "Sentosa cable car and luge combo"
+            "Full Moon White Desert Walk",
+            "Adalaj Stepwell Architecture",
+            "Kutch Weaving Village"
           ],
-          "highlights": [],
-          "regionName": "Singapore",
-          "regionCode": "sgp",
-          "type": "UNITY",
+          "highlights": [
+            "Agashiye rooftop Gujarati thali",
+            "Folk music performance"
+          ],
+          "regionName": "Gujarat",
+          "regionCode": "guj",
+          "type": "bespoke",
           "unityOptions": [],
-          "fixedItineraryDetails": null,
+          "fixedItineraryDetails": {},
+          "perPersonCostByOption": {}
+        }
+      ]
+    },
+    {
+      "code": "hyd",
+      "name": "Telangana",
+      "currency": "INR",
+      "aliases": [
+        "hyderabad",
+        "telangana",
+        "secunderabad",
+        "andhra pradesh"
+      ],
+      "deals": [
+        {
+          "campaignItineraryId": "tak-hyd-nizam-001",
+          "sourceItineraryId": "src-hyd-nizam-001",
+          "title": "3 Nights Nizami Splendour at Taj Falaknuma Palace",
+          "image": "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=800&q=80",
+          "images": [
+            "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=800&q=80"
+          ],
+          "destinationString": "Hyderabad, Telangana",
+          "nights": 3,
+          "tripType": "Royal Heritage",
+          "itineraryCost": 55000,
+          "itineraryCostWithoutFlights": 55000,
+          "hotelStarRating": 5,
+          "slug": "hyderabad-falaknuma-palace",
+          "pills": [
+            "Horse Carriage Arrival",
+            "Nizami Banquet",
+            "Golconda Sound & Light"
+          ],
+          "numBookings": 175,
+          "strikedCost": 68000,
+          "dealDiscountPercentage": 19,
+          "cityHotelStay": [
+            {
+              "cityName": "Hyderabad",
+              "hotelName": "Taj Falaknuma Palace",
+              "nights": 3,
+              "hotelImages": []
+            }
+          ],
+          "activities": [
+            "Palace Historical Walk with Resident Historian",
+            "Golconda Fort Private Tour",
+            "Charminar & Laad Bazaar Chanderi Trail"
+          ],
+          "highlights": [
+            "101-seat dining hall tour",
+            "Authentic Dum Biryani banquet"
+          ],
+          "regionName": "Telangana",
+          "regionCode": "hyd",
+          "type": "bespoke",
+          "unityOptions": [],
+          "fixedItineraryDetails": {},
           "perPersonCostByOption": {}
         }
       ]

@@ -41,14 +41,14 @@ const ESSENTIALS: PlanField[] = ['destination', 'when', 'travelers'];
 const REFINEMENTS: PlanField[] = ['budget', 'pace', 'interests'];
 
 const QUESTIONS: Record<AskField, string> = {
-  destination: 'Where would you like to go? A place you have in mind, or a kind of trip, such as beaches, mountains or heritage.',
-  when: 'When are you planning to travel, and for how many days?',
-  travelers: "Who's travelling: just you, a couple, family or friends? And how many people?",
-  budget: 'Do you have a rough total budget in mind? A range is fine.',
-  pace: 'What pace suits you: relaxed, balanced, or packed?',
-  interests: 'What do you enjoy most on a trip? For example beaches, nature, food, history, adventure or nightlife.',
-  'tradeoff:luxury_budget': 'Luxury stays for this many nights would stretch that budget. Should I keep the budget with comfortable stays, or keep luxury and plan for a higher budget?',
-  'tradeoff:pace': 'Should the days be relaxed with free time, or packed so you see as much as possible?',
+  destination: "Where are you dreaming of heading? If you have a specific destination in mind, or even just a vibe like sunny beaches, misty hill stations, or rich heritage, I'd love to help you explore!",
+  when: 'When are you planning to travel, and how many days would you like to spend exploring?',
+  travelers: "Who's coming along on this adventure — solo, as a couple, with family, or a group of friends? Let me know how many travelers!",
+  budget: 'Do you have a comfortable total budget in mind for this journey? Even a rough ballpark helps me tailor the best stays and experiences for you.',
+  pace: 'What kind of rhythm feels best for your days: relaxed, balanced with good downtime, or high-energy and packed?',
+  interests: 'What do you enjoy most on a trip? For example beaches, local cuisine, scenic nature, historic forts, wildlife, or lively nightlife!',
+  'tradeoff:luxury_budget': 'Luxury stays for this many nights would stretch that budget. Should I keep the budget with comfortable, charming stays, or keep luxury and plan for a higher budget?',
+  'tradeoff:pace': 'Would you love relaxed days with plenty of free time, or an action-packed plan to take in as many highlights as possible?',
 };
 
 const STATE_FOR: Record<AskField, RouteState> = {
@@ -94,9 +94,11 @@ function detectRevision(message: string, before: TripContext, after: TripContext
   return undefined;
 }
 
-const REQUEST = /\b(?:book|search|find|show me|check|compare|look up|cancel|status|confirm|refund|availability|available)\b/i;
+const REQUEST = /\b(?:book|search|find|show me|check|compare|look up|cancel|status|confirm|refund|availability|available|suggest|recommend|give me|list)\b/i;
 const PLANNING = /\b(?:plan|planning|itinerary|trip|holiday|vacation|getaway|tour|jana hai|ghumna)\b/i;
-const QUESTION = /\?\s*$|^\s*(?:what|how|is|are|can|could|should|do|does|why|which|when|where|will|would|tell me)\b/i;
+const QUESTION = /\?|(?:^|[.?!]\s*)(?:what|who|whose|which|why|where|when|how|is|are|can|could|should|do|does|did|will|would|tell me|suggest|recommend)\b/i;
+const INTRO = /\b(?:my name is|i am|i'm|call me|myself)\s+[a-z]+|\b(?:who are you|what is your name|what'?s your name|tell me about yourself|what can you do|how are you|how'?s it going|nice to meet you|pleased to meet you)\b/i;
+const GREETING = /^\s*(?:hi|hello|hey|heyy+|hiya|howdy|hola|namaste|greetings|good\s+(?:morning|afternoon|evening|day)|morning|afternoon|evening|sup|s'up|yo|yoo+|wassup|wazzup|what'?s\s*up|whatup)\b(?:\s+(?:kodi|there|takeoff|mate|buddy|bro|friend))?[!.?]*\s*$/i;
 
 function known(trip: TripContext, profile: TravelerProfile): Record<PlanField, boolean> {
   return {
@@ -131,7 +133,7 @@ function whenText(t: TripContext): string | undefined {
 
 function acknowledgement(t: TripContext): string {
   const parts = [t.destination, whenText(t), t.durationDays && `${t.durationDays} days`, t.travelers && `${t.travelers} traveller${t.travelers > 1 ? 's' : ''}`].filter(Boolean);
-  return parts.length ? `Noted: ${parts.join(', ')}.` : '';
+  return parts.length ? `Got it! ${parts.join(', ')}.` : '';
 }
 
 /** Everything known, in the customer's voice, so it reads like a message the model was trained on. */
@@ -181,13 +183,23 @@ export function routeTurn(i: {
     const revision = REQUEST.test(message) ? undefined : detectRevision(message, i.previousTrip ?? trip, trip, i.scheduled ?? [], i.extraction);
     return revision ? { action: 'revise', state: 'revision', revision, assumptions: [], missing } : { action: 'converse', state: 'revision', assumptions: [], missing };
   }
-  if (REQUEST.test(message) || (QUESTION.test(message) && !PLANNING.test(message))) {
+  const hasProfileEdits =
+    Object.keys(i.extraction.profile.explicit.add ?? {}).length > 0 ||
+    Object.keys(i.extraction.profile.explicit.set ?? {}).filter((k) => k !== 'name').length > 0;
+
+  if (
+    GREETING.test(message) ||
+    INTRO.test(message) ||
+    REQUEST.test(message) ||
+    (QUESTION.test(message) && !PLANNING.test(message)) ||
+    (trip.planningTurns === 0 && !i.extraction.hasTripFacts && !PLANNING.test(message) && !hasProfileEdits)
+  ) {
     return { action: 'converse', state: essentialsMissing.length ? 'trip_basics' : 'high_value_refinement', assumptions, missing };
   }
 
   const questionsLeft = MAX_QUESTIONS - trip.asked.length;
   const ask = (field: AskField): Route => {
-    const summary = i.firstTurnOfThread && hasPreferences(i.savedProfile)
+    const summary = i.firstTurnOfThread && hasPreferences(i.savedProfile) && (i.extraction.hasTripFacts || PLANNING.test(message))
       ? `I'll use your saved preferences: ${profileSummary(i.savedProfile)}. Tell me if anything has changed.`
       : '';
     const text = [i.extraction.hasTripFacts ? acknowledgement(trip) : '', summary, QUESTIONS[field]].filter(Boolean).join('\n\n');

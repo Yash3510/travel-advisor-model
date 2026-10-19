@@ -73,9 +73,9 @@ function findPlaces(text: string, catalogPath: string): { destination?: string; 
   out.destination = hits.find((h) => !h.isOrigin)?.display;
   out.origin = hits.find((h) => h.isOrigin)?.display;
   out.homeCity = hits.find((h) => h.isHome)?.display;
-  // an unknown place: "visit Xyzabad", "trip to Xyzabad" (case-sensitive: proper nouns only)
+  // an unknown place: "visit Xyzabad", "trip to Xyzabad", "trip in Karnataka"
   if (!out.destination) {
-    const m = /\b(?:to|visit|visiting|explore|exploring)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})\b/.exec(text);
+    const m = /\b(?:to|in|for|around|across|visit|visiting|explore|exploring)\s+([A-Za-z]+(?:\s+[A-Za-z]+){0,2})\b/i.exec(text);
     const name = m?.[1];
     if (name && !NOT_PLACES.has(name.split(' ')[0].toLowerCase()) && monthNumber(name) === 0) out.destination = name;
   }
@@ -287,8 +287,24 @@ function findPreferences(lower: string) {
 
 const nonEmpty = <T extends object>(o: T) => Object.fromEntries(Object.entries(o).filter(([, v]) => (Array.isArray(v) ? v.length : v !== undefined))) as Partial<T>;
 
+function findName(text: string): string | undefined {
+  const m = /\b(?:my name is|i am|i'm|call me|myself)\s+([A-Z][a-zA-Z]{1,25})\b/i.exec(text);
+  if (m) {
+    const raw = m[1].toLowerCase();
+    const stopWords = new Set([
+      'kodi', 'planning', 'looking', 'traveling', 'travelling', 'interested', 'ready', 'here',
+      'back', 'just', 'going', 'solo', 'fine', 'good', 'sure', 'from', 'a', 'an', 'the', 'not'
+    ]);
+    if (!stopWords.has(raw)) {
+      return m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase();
+    }
+  }
+  return undefined;
+}
+
 export function extractFacts(text: string, today: string, catalogPath: string): Extraction {
   const lower = text.toLowerCase();
+  const name = findName(text);
   const where = findPlaces(text, catalogPath);
   const dates = findDates(text, today);
   const party = findParty(lower);
@@ -310,7 +326,7 @@ export function extractFacts(text: string, today: string, catalogPath: string): 
     trip,
     profile: {
       explicit: {
-        set: nonEmpty({ travelStyle: paceConflict ? undefined : paces[0], budgetStyle, homeCity: where.homeCity }),
+        set: nonEmpty({ name, travelStyle: paceConflict ? undefined : paces[0], budgetStyle, homeCity: where.homeCity }),
         add: nonEmpty(prefs.explicit),
       },
       inferred: { set: nonEmpty({ homeCity: where.homeCity ? undefined : where.origin }), add: nonEmpty(prefs.inferred) },

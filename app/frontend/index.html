@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Travel AI — test client</title>
+<title>India Luxury Travel AI — test client</title>
 <style>
   :root { --bg:#F4F1EB; --ink:#1f2937; --muted:#6b7280; --accent:#0d9488; }
   * { box-sizing:border-box; }
@@ -35,25 +35,25 @@
 </head>
 <body>
   <aside id="side">
-    <h1>Trippie</h1>
-    <div class="sub">International travel assistant — test client</div>
-    <h2>Deals</h2>
+    <h1>Kodi Concierge</h1>
+    <div class="sub">Pan-India luxury travel assistant — test client</div>
+    <h2>Verified Indian Deals</h2>
     <div id="deals"><div class=" DEVELOPER note">no destination yet</div></div>
   </aside>
   <main>
     <div id="msgs"></div>
     <div id="chips" class="chips"></div>
     <div id="bar">
-      <textarea id="input" placeholder="Where do you want to go?" autofocus></textarea>
+      <textarea id="input" placeholder="Where would you like to travel in India?" autofocus></textarea>
       <button id="send">Send</button>
     </div>
-    <div class="note">Trippie is an AI and is in beta. It can make mistakes</div>
+    <div class="note">Kodi Concierge — Pan-India Luxury Travel Architect</div>
   </main>
 <script>
 const API = location.origin.replace(/:\d+$/, ':5590');
 let sessionId = null, threadId = null;
 
-const GREETING = "Hi! I'm Trippie, your travel assistant. Tell me where you'd like to go, when you're travelling, and who's joining — I'll craft the perfect itinerary for you!";
+const GREETING = "Hi! I'm Kodi, your India luxury travel assistant. Tell me where you'd like to travel in India, when you're travelling, and who's joining — I'll craft the perfect itinerary for you!";
 
 const msgsEl = document.getElementById('msgs'), inputEl = document.getElementById('input');
 const sendBtn = document.getElementById('send'), chipsEl = document.getElementById('chips'), dealsEl = document.getElementById('deals');

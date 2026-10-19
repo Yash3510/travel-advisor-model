@@ -124,6 +124,17 @@ export const store = {
   getThread(id: number, sessionId: string) {
     return db.prepare('SELECT * FROM threads WHERE id = ? AND session_id = ?').get(id, sessionId) as ThreadRow | undefined;
   },
+  deleteThread(id: number, sessionId: string) {
+    db.prepare('DELETE FROM messages WHERE thread_id = ?').run(id);
+    db.prepare('DELETE FROM offers WHERE thread_id = ?').run(id);
+    db.prepare('DELETE FROM booking_requests WHERE thread_id = ?').run(id);
+    db.prepare('DELETE FROM trips WHERE thread_id = ?').run(id);
+    db.prepare('DELETE FROM itineraries WHERE thread_id = ?').run(id);
+    return db.prepare('DELETE FROM threads WHERE id = ? AND session_id = ?').run(id, sessionId);
+  },
+  renameThread(id: number, sessionId: string, title: string) {
+    return db.prepare("UPDATE threads SET title = ?, updated_at = datetime('now') WHERE id = ? AND session_id = ?").run(title, id, sessionId);
+  },
   updateThread(id: number, fields: { destination: string; region_code: string; stage: string }) {
     db.prepare("UPDATE threads SET destination = @destination, region_code = @region_code, stage = @stage, updated_at = datetime('now') WHERE id = @id")
       .run({ ...fields, id });

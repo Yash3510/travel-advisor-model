@@ -62,7 +62,8 @@ def turn_score(segment, rng):
 
 def main():
     rng = random.Random(1234)
-    tok = AutoTokenizer.from_pretrained("unsloth/Qwen3.5-0.8B")
+    model_path = ROOT / "models/trained-v2-merged"
+    tok = AutoTokenizer.from_pretrained(str(model_path) if model_path.exists() else "unsloth/Qwen3.5-0.8B", fix_mistral_regex=True)
     eval_openings = [words(o) for o in evaluate.opening_messages()]
     stats, convs = collections.Counter(), []
 

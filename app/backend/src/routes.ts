@@ -180,13 +180,34 @@ async function route(req: IncomingMessage, res: ServerResponse, ctx: RequestCont
       return;
     }
 
+    const singleThreadPath = /^\/api\/threads\/(\d+)$/.exec(pathname);
+    if (singleThreadPath) {
+      const threadId = Number(singleThreadPath[1]);
+      const sessionId = url.searchParams.get('sessionId') ?? (req.headers['x-session-id'] as string) ?? '';
+      if (req.method === 'DELETE') {
+        store.deleteThread(threadId, sessionId);
+        json(res, 200, { ok: true, deleted: threadId });
+        return;
+      }
+      if (req.method === 'PATCH') {
+        const body = (await readBody(req)) as { title?: string };
+        if (body.title) {
+          store.renameThread(threadId, sessionId, body.title.trim());
+        }
+        json(res, 200, { ok: true, renamed: threadId });
+        return;
+      }
+    }
+
     switch (pathname) {
-      case '/health': {
+      case '/health':
+      case '/api/health': {
         allow('GET');
         json(res, 200, { ok: true });
         return;
       }
-      case '/ready': {
+      case '/ready':
+      case '/api/ready': {
         allow('GET');
         const modelOk = await fetch(`${ctx.modelUrl.replace(/\/$/, '')}/v1/models`, {
           headers: config.modelApiKey ? { Authorization: `Bearer ${config.modelApiKey}` } : {},
@@ -333,7 +354,7 @@ async function planItinerary(p: { ctx: RequestContext; trip: TripContext; profil
     // no tools: the model can't search or book here, only write a note about the plan it is shown
     const out = await chatCompletion({
       base: p.ctx.modelUrl, apiKey: config.modelApiKey, model: config.model, timeoutMs: config.modelTimeoutMs, signal: p.signal,
-      messages: [{ role: 'system', content: buildSystemPrompt(today()) }, ...trimHistory([...p.history, { role: 'user', content: `${p.userText}\n\n${introRequest(draft, profile, p.trip)}` }], config.maxHistoryChars)],
+      messages: [{ role: 'system', content: buildSystemPrompt(today(), profile.name) }, ...trimHistory([...p.history, { role: 'user', content: `${p.userText}\n\n${introRequest(draft, profile, p.trip)}` }], config.maxHistoryChars)],
     });
     const note = toPlainText(out.content);
     const check = out.toolCalls.length ? { ok: false as const, reason: 'tried to use a tool' } : checkIntro(note, { draft, knownPlaceNames: pois.map((x) => x.name) });
@@ -448,7 +469,7 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext):
       try {
         turn = await runTurn({
           base: ctx.modelUrl, apiKey: config.modelApiKey, model: config.model, timeoutMs: config.modelTimeoutMs, signal: clientGone.signal,
-          messages: [{ role: 'system', content: buildSystemPrompt(today()) }, ...trimHistory([...history, modelTurn], config.maxHistoryChars)],
+          messages: [{ role: 'system', content: buildSystemPrompt(today(), planned.profile.name) }, ...trimHistory([...history, modelTurn], config.maxHistoryChars)],
           backend: sessionTools(ctx, sessionId), tools: toolSchemas,
           findOffer: (id) => (thread && id.startsWith('OF-') ? store.getOffer(id, thread.id) : undefined),
         });

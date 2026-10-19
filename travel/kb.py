@@ -17,7 +17,54 @@ RAW_DIR = ROOT / "data" / "raw" / "wikivoyage"
 API = "https://en.wikivoyage.org/w/api.php"
 USER_AGENT = "travel-advisor-kb/0.1 (research build; github.com/Yash3510)"
 MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+MONTH_MAP = {
+    "jan": "January", "january": "January",
+    "feb": "February", "february": "February",
+    "mar": "March", "march": "March",
+    "apr": "April", "april": "April",
+    "may": "May",
+    "jun": "June", "june": "June",
+    "jul": "July", "july": "July",
+    "aug": "August", "august": "August",
+    "sep": "September", "sept": "September", "september": "September",
+    "oct": "October", "october": "October",
+    "nov": "November", "november": "November",
+    "dec": "December", "december": "December",
+}
 KEEP_SECTIONS = ("understand", "climate", "get in", "stay safe", "when to go", "permits")
+
+
+def months_in(text):
+    """Set of month names mentioned in text, expanding ranges (e.g. 'Oct-Mar', 'June to September') wrapping across Dec."""
+    if not text:
+        return set()
+    found = set()
+    range_pattern = re.compile(
+        r"\b(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\s*(?:to|-|–|—)\s*"
+        r"(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\b",
+        re.I,
+    )
+    for m in range_pattern.finditer(text):
+        m1 = MONTH_MAP[m.group(1).lower()]
+        m2 = MONTH_MAP[m.group(2).lower()]
+        idx1 = MONTHS.index(m1)
+        idx2 = MONTHS.index(m2)
+        if idx1 <= idx2:
+            found.update(MONTHS[idx1 : idx2 + 1])
+        else:
+            found.update(MONTHS[idx1:])
+            found.update(MONTHS[: idx2 + 1])
+
+    single_pattern = re.compile(
+        r"\b(january|february|march|april|may|june|july|august|september|october|november|december|"
+        r"jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)\b",
+        re.I,
+    )
+    for m in single_pattern.finditer(text):
+        w = m.group(1).lower()
+        if w in MONTH_MAP:
+            found.add(MONTH_MAP[w])
+    return found
 
 # key (lower case, what travellers type) -> Wikivoyage page title
 DESTINATIONS = {
@@ -130,11 +177,11 @@ def relevant_text(page, limit=7000):
     return "\n".join(keep)[:limit]
 
 
-_STALE = re.compile(r"₹|Rs\.?\s?\d|INR|\$\d|updated|as of", re.I)
-_CLIMATE = re.compile(r"(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*|monsoon|winter|summer|spring|autumn|season|"
+_STALE = re.compile(r"₹|\bRs\.?\s?\d|\bINR\b|\$\d|updated|\bas of\b", re.I)
+_CLIMATE = re.compile(r"\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b|monsoon|winter|summer|spring|autumn|season|"
                       r"weather|temperature|snow|rain|best time|°c|freez|humid", re.I)
-_CLOSURE = re.compile(r"(closed?|closes|closure|shut|snow-?bound|impassable|inaccessible|open only|opens? (in|from|between))", re.I)
-_PERMIT = re.compile(r"permit|ILP|PAP|RAP|restricted area|protected area|inner line", re.I)
+_CLOSURE = re.compile(r"\b(closed?|closes|closure|shut|snow-?bound|impassable|inaccessible|open only|opens? (in|from|between))\b", re.I)
+_PERMIT = re.compile(r"permit|\bILP\b|\bPAP\b|\bRAP\b|restricted area|protected area|inner line", re.I)
 _MODES = [("air", re.compile(r"plane|air|fly|flight", re.I)), ("rail", re.compile(r"train|rail|station", re.I)),
           ("sea", re.compile(r"boat|ferr|sea|ship|cruise", re.I)), ("road", re.compile(r"bus|road|car|taxi|drive|jeep|thumb|motorbike|bike", re.I))]
 
