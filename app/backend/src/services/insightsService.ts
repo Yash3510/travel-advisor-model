@@ -61,16 +61,17 @@ function weatherInsights(daily: Daily, checkedAt: string, today: string): TripIn
 
 export async function openMeteo(ctx: InsightContext): Promise<TripInsight[]> {
   const checkedAt = ctx.now.toISOString();
-  const notChecked = (title: string, detail: string): TripInsight[] => [{ type: 'weather', title, detail, source: 'Regional Climate Data', sourceUrl: 'https://open-meteo.com', licence: 'CC BY 4.0', checkedAt, severity: 'info', confidence: 0.8, status: 'checked' }];
+  const notChecked = (title: string, detail: string): TripInsight[] => [{ type: 'weather', title, detail, source: 'Open-Meteo', sourceUrl: 'https://open-meteo.com', licence: 'CC BY 4.0', checkedAt, severity: 'info', confidence: 0, status: 'not_checked' }];
   const env = ctx.env ?? process.env;
-  if (env.WEATHER === 'off') return notChecked('Seasonality Verified', 'Favorable seasonal weather across the destination.');
+  if (env.WEATHER === 'off') return notChecked('Weather not checked', 'Weather checks are switched off');
   const key = env.OPEN_METEO_API_KEY;
+  if (env.NODE_ENV === 'production' && !key) return notChecked('Weather not checked', "Open-Meteo's free API is non-commercial; production needs OPEN_METEO_API_KEY");
   const t = ctx.trip;
-  if (!t.startDate || !ctx.at) return notChecked('Seasonality Verified', 'Favorable seasonal weather across the destination. Detailed hourly telemetry updates automatically once departure dates are confirmed.');
+  if (!t.startDate || !ctx.at) return notChecked('Weather forecast not available yet', 'Exact dates are needed for a forecast');
   const end = t.endDate ?? addDays(t.startDate, (t.durationDays ?? 1) - 1);
   const today = checkedAt.slice(0, 10);
   const horizon = addDays(today, FORECAST_DAYS - 1);
-  if (t.startDate > horizon || end < today) return notChecked('Seasonal Climate Verified', `Travel dates fall outside the immediate 16-day live satellite window; long-range seasonal climate is favorable.`);
+  if (t.startDate > horizon || end < today) return notChecked('Weather forecast not available yet', `Forecasts cover the next ${FORECAST_DAYS} days; check again closer to the trip`);
   const from = t.startDate < today ? today : t.startDate;
   const to = end > horizon ? horizon : end;
 
@@ -95,7 +96,7 @@ export async function openMeteo(ctx: InsightContext): Promise<TripInsight[]> {
   } catch {
     // an older forecast is still worth showing, but it no longer changes the plan (only "checked" does)
     if (cached) return cached.insights.map((i) => ({ ...i, status: 'stale' as const, confidence: i.confidence / 2 }));
-    return notChecked('Seasonal Climate Verified', 'Favorable seasonal climate across the region.');
+    return notChecked('Weather not checked', 'The weather service did not respond');
   }
 }
 
@@ -146,7 +147,7 @@ const NOT_CHECKED_TEXT: Record<string, [string, string]> = {
 
 export async function gatherInsights(ctx: InsightContext): Promise<TripInsight[]> {
   const checkedAt = ctx.now.toISOString();
-  const weather = await openMeteo(ctx).catch((): TripInsight[] => [{ type: 'weather', title: 'Seasonal Climate Verified', detail: 'Favorable seasonal weather across destination.', source: 'Verified Regional Climate', checkedAt, severity: 'info', confidence: 0.8, status: 'checked' }]);
+  const weather = await openMeteo(ctx).catch((): TripInsight[] => [{ type: 'weather', title: 'Weather not checked', detail: 'The weather check failed', source: 'Open-Meteo', checkedAt, severity: 'info', confidence: 0, status: 'not_checked' }]);
   let guide: TripInsight[];
   try { guide = guideInsights(ctx); } catch { guide = [{ type: 'season', title: 'Destination guide not checked', detail: 'The guide could not be read', source: 'Wikivoyage', checkedAt, severity: 'info', confidence: 0, status: 'not_checked' }]; }
   const notChecked = NOT_CHECKED_TYPES.map((type): TripInsight => ({

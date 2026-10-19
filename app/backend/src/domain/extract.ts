@@ -73,9 +73,9 @@ function findPlaces(text: string, catalogPath: string): { destination?: string; 
   out.destination = hits.find((h) => !h.isOrigin)?.display;
   out.origin = hits.find((h) => h.isOrigin)?.display;
   out.homeCity = hits.find((h) => h.isHome)?.display;
-  // an unknown place: "visit Xyzabad", "trip to Xyzabad", "trip in Karnataka"
+  // an unknown place: "visit Xyzabad", "trip to Xyzabad" (case-sensitive: proper nouns only)
   if (!out.destination) {
-    const m = /\b(?:to|in|for|around|across|visit|visiting|explore|exploring)\s+([A-Za-z]+(?:\s+[A-Za-z]+){0,2})\b/i.exec(text);
+    const m = /\b(?:to|visit|visiting|explore|exploring)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})\b/.exec(text);
     const name = m?.[1];
     if (name && !NOT_PLACES.has(name.split(' ')[0].toLowerCase()) && monthNumber(name) === 0) out.destination = name;
   }
@@ -288,7 +288,8 @@ function findPreferences(lower: string) {
 const nonEmpty = <T extends object>(o: T) => Object.fromEntries(Object.entries(o).filter(([, v]) => (Array.isArray(v) ? v.length : v !== undefined))) as Partial<T>;
 
 function findName(text: string): string | undefined {
-  const m = /\b(?:my name is|i am|i'm|call me|myself)\s+([A-Z][a-zA-Z]{1,25})\b/i.exec(text);
+  // case-sensitive name: "I am Excited" is rare, "I am excited" is not a name
+  const m = /\b(?:[Mm]y name is|I am|I'm|[Cc]all me|[Mm]yself)\s+([A-Z][a-z]{1,25})\b/.exec(text);
   if (m) {
     const raw = m[1].toLowerCase();
     const stopWords = new Set([
