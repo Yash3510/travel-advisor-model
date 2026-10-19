@@ -4,6 +4,6 @@ export default defineConfig({
   test: {
     include: ['test/**/*.test.ts'],
     environment: 'node',
-    env: { DB_PATH: ':memory:', LOG_REQUESTS: '0', SSE_HEARTBEAT_MS: '40', CHAT_RATE_LIMIT_PER_MIN: '1000' },
+    env: { DB_PATH: ':memory:', LOG_REQUESTS: '0', SSE_HEARTBEAT_MS: '40', CHAT_RATE_LIMIT_PER_MIN: '1000', AUTH_RATE_SCALE: '100' },
   },
 });

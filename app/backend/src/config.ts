@@ -38,6 +38,19 @@ export const config = {
   routingTimeoutMs: num(process.env.ROUTING_TIMEOUT_MS, 2000),
   logTools: process.env.LOG_TOOLS === '1',
   logRequests: process.env.LOG_REQUESTS !== '0',
+  // ── accounts (D-021) ──
+  // the frontend's public address, for links in emails (verify, reset)
+  appUrl: (process.env.APP_URL ?? 'http://localhost:5173').replace(/\/$/, ''),
+  // Secure cookies need HTTPS: on in production unless COOKIE_SECURE=0
+  cookieSecure: process.env.COOKIE_SECURE ? process.env.COOKIE_SECURE === '1' : process.env.NODE_ENV === 'production',
+  authSessionDays: num(process.env.AUTH_SESSION_DAYS, 30),
+  // multiplies the sign-in rate limits (tests raise it)
+  authRateScale: num(process.env.AUTH_RATE_SCALE, 1),
+  // email: Resend when RESEND_API_KEY is set; otherwise messages go to the dev outbox (never in production)
+  resendApiKey: process.env.RESEND_API_KEY ?? '',
+  mailFrom: process.env.MAIL_FROM ?? 'Takeoff <hello@example.com>',
+  // "Continue with Google" is offered only when this is set (OAuth client of type Web application)
+  googleClientId: process.env.GOOGLE_CLIENT_ID ?? '',
 };
 
 export type Config = typeof config;

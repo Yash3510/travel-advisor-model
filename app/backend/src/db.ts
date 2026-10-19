@@ -8,7 +8,7 @@ import { emptyTrip, type TripContext } from './domain/trip.js';
 import type { ItineraryDraft } from './domain/itinerary.js';
 
 if (config.dbPath !== ':memory:') fs.mkdirSync(path.dirname(config.dbPath), { recursive: true });
-const db = new Database(config.dbPath);
+export const db = new Database(config.dbPath);
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 db.pragma('busy_timeout = 5000');
@@ -105,10 +105,48 @@ CREATE TABLE IF NOT EXISTS contact_messages (
   message TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+-- Accounts (D-021). A user owns one chat session (session_id); sessions.user_id marks every session merged into it.
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email TEXT NOT NULL UNIQUE COLLATE NOCASE,
+  name TEXT NOT NULL,
+  password_hash TEXT,
+  google_sub TEXT UNIQUE,
+  email_verified_at TEXT,
+  session_id TEXT REFERENCES sessions(session_id),
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+-- Signed-in browsers: only a hash of the cookie's token is stored.
+CREATE TABLE IF NOT EXISTS auth_sessions (
+  token_hash TEXT PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  expires_at TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+-- One-time links for email verification and password reset (hashed, expiring, single use).
+CREATE TABLE IF NOT EXISTS email_tokens (
+  token_hash TEXT PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  purpose TEXT NOT NULL CHECK(purpose IN ('verify','reset')),
+  expires_at TEXT NOT NULL,
+  used_at TEXT
+);
+-- Development only: emails that would have been sent (no RESEND_API_KEY).
+CREATE TABLE IF NOT EXISTS outbox (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  to_email TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  text TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 CREATE INDEX IF NOT EXISTS idx_messages_thread ON messages(thread_id);
 CREATE INDEX IF NOT EXISTS idx_threads_session ON threads(session_id);
 CREATE INDEX IF NOT EXISTS idx_offers_thread ON offers(thread_id);
 `);
+// sessions merged into an account (D-021)
+if (!(db.prepare('PRAGMA table_info(sessions)').all() as { name: string }[]).some((c) => c.name === 'user_id')) {
+  db.exec('ALTER TABLE sessions ADD COLUMN user_id INTEGER REFERENCES users(id)');
+}
 if (oldMessages) {
   db.exec(`INSERT INTO messages(id, thread_id, role, content, created_at)
            SELECT id, thread_id, role, content, created_at FROM messages_v0; DROP TABLE messages_v0;`);

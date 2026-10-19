@@ -3,6 +3,9 @@ import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { config } from './config.js';
+import { HttpError, json, readBody, rateLimited, str, type Body } from './http.js';
+import { accounts } from './auth/accounts.js';
+import { currentUser, handleAuth } from './auth/routes.js';
 import { CONFIRM_TURN, store, type MessageRow, type Offer, type StoredMessage } from './db.js';
 import { detectRegion, dealsForRegion } from './catalog.js';
 import { ingestPolicy, gateAssistantOutput, gatePrices, emergencyText, statusText, newBookingRef, toPlainText, redact, PII_NOTICE } from './harness.js';
@@ -43,66 +46,22 @@ export interface RequestContext {
   travelTime?: () => TravelTimeProvider;
 }
 
-type Body = Record<string, unknown>;
-
-class HttpError extends Error {
-  constructor(public status: number, public code: string, message: string) { super(message); }
-}
-
 // India market: "today" is the date in IST, recomputed per request
 const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
-
-function json(res: ServerResponse, status: number, body: unknown): void {
-  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' }).end(JSON.stringify(body));
-}
 
 export function sse(res: ServerResponse, event: string, data: unknown): void {
   if (res.writable) res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
 }
-
-function readBody(req: IncomingMessage): Promise<Body> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    let size = 0;
-    req.on('data', (c: Buffer) => {
-      size += c.length;
-      if (size > config.maxBodyBytes) reject(new HttpError(413, 'body_too_large', 'Request body is too large.'));
-      else chunks.push(c);
-    });
-    req.on('end', () => {
-      const raw = Buffer.concat(chunks).toString('utf8');
-      try {
-        const parsed: unknown = raw ? JSON.parse(raw) : {};
-        resolve(parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as Body) : {});
-      } catch { reject(new HttpError(400, 'invalid_json', 'Request body must be JSON.')); }
-    });
-    req.on('error', reject);
-  });
-}
-
-const str = (v: unknown) => (typeof v === 'string' ? v : '');
 
 function setCommonHeaders(req: IncomingMessage, res: ServerResponse): void {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Vary', 'Origin');
   const origin = req.headers.origin;
   if (config.allowedOrigins.includes('*')) res.setHeader('Access-Control-Allow-Origin', '*');
-  else if (origin && config.allowedOrigins.includes(origin)) res.setHeader('Access-Control-Allow-Origin', origin);
-}
-
-const clientIp = (req: IncomingMessage) =>
-  (config.trustProxy ? String(req.headers['x-forwarded-for'] ?? '').split(',')[0].trim() : '') || req.socket.remoteAddress || 'unknown';
-
-// Fixed-window limiter per IP and bucket: chat (every message costs a model call), contact, events. Per process: use
-// one instance or put a shared limiter in the reverse proxy when scaling out.
-const hits = new Map<string, { start: number; count: number }>();
-function rateLimited(req: IncomingMessage, bucket = 'chat', perMin = config.chatRateLimitPerMin): boolean {
-  const key = `${bucket}:${clientIp(req)}`;
-  const now = Date.now();
-  if (hits.size > 10_000) for (const [k, v] of hits) if (now - v.start >= 60_000) hits.delete(k);
-  const h = hits.get(key);
-  if (!h || now - h.start >= 60_000) { hits.set(key, { start: now, count: 1 }); return false; }
-  return ++h.count > perMin;
+  else if (origin && config.allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true'); // the sign-in cookie, for a frontend on another origin
+  }
 }
 
 const CONTACT_TOPICS = new Set(['trip', 'feedback', 'partnership', 'other']);
@@ -147,15 +106,22 @@ async function route(req: IncomingMessage, res: ServerResponse, ctx: RequestCont
   };
 
   try {
+    if (await handleAuth(req, res, pathname)) return;
+
+    // A chat session is usable by its id while anonymous; once it belongs to an account, only when signed in to it.
+    const viewer = currentUser(req)?.id ?? null;
+    const canUse = (sid: string) => { const owner = accounts.sessionOwner(sid); return owner === null || owner === viewer; };
+    const ownThread = (id: number, sid: string) => (canUse(sid) ? store.getThread(id, sid) : undefined);
+
     const requireSession = (sessionId: string) => {
-      if (!store.sessionExists(sessionId)) throw new HttpError(404, 'session_not_found', 'Session not found. Start a new session.');
+      if (!store.sessionExists(sessionId) || !canUse(sessionId)) throw new HttpError(404, 'session_not_found', 'Session not found. Start a new session.');
       return sessionId;
     };
 
     const tripPath = /^\/api\/threads\/(\d+)\/trip$/.exec(pathname);
     if (tripPath) {
       allow('GET');
-      const thread = store.getThread(Number(tripPath[1]), url.searchParams.get('sessionId') ?? '');
+      const thread = ownThread(Number(tripPath[1]), url.searchParams.get('sessionId') ?? '');
       if (!thread) throw new HttpError(404, 'thread_not_found', 'Thread not found.');
       json(res, 200, { trip: store.getTrip(thread.id) });
       return;
@@ -164,7 +130,7 @@ async function route(req: IncomingMessage, res: ServerResponse, ctx: RequestCont
     const itineraryPath = /^\/api\/threads\/(\d+)\/itinerary$/.exec(pathname);
     if (itineraryPath) {
       allow('GET');
-      const thread = store.getThread(Number(itineraryPath[1]), url.searchParams.get('sessionId') ?? '');
+      const thread = ownThread(Number(itineraryPath[1]), url.searchParams.get('sessionId') ?? '');
       if (!thread) throw new HttpError(404, 'thread_not_found', 'Thread not found.');
       json(res, 200, { itinerary: store.latestItinerary(thread.id) ?? null });
       return;
@@ -173,7 +139,7 @@ async function route(req: IncomingMessage, res: ServerResponse, ctx: RequestCont
     const messagesPath = /^\/api\/threads\/(\d+)\/messages$/.exec(pathname);
     if (messagesPath) {
       allow('GET');
-      const thread = store.getThread(Number(messagesPath[1]), url.searchParams.get('sessionId') ?? '');
+      const thread = ownThread(Number(messagesPath[1]), url.searchParams.get('sessionId') ?? '');
       if (!thread) throw new HttpError(404, 'thread_not_found', 'Thread not found.');
       json(res, 200, {
         // what the customer saw: tool calls and tool results stay server-side
@@ -188,7 +154,7 @@ async function route(req: IncomingMessage, res: ServerResponse, ctx: RequestCont
     const rewindPath = /^\/api\/threads\/(\d+)\/rewind$/.exec(pathname);
     if (rewindPath) {
       allow('POST');
-      const thread = store.getThread(Number(rewindPath[1]), str((await readBody(req)).sessionId));
+      const thread = ownThread(Number(rewindPath[1]), str((await readBody(req)).sessionId));
       if (!thread) throw new HttpError(404, 'thread_not_found', 'Thread not found.');
       if (busyThreads.has(thread.id)) throw new HttpError(409, 'thread_busy', 'Still answering your previous message.');
       const out = store.rewind(thread.id);
@@ -207,7 +173,8 @@ async function route(req: IncomingMessage, res: ServerResponse, ctx: RequestCont
       const threadId = Number(singleThreadPath[1]);
       if (req.method === 'DELETE') {
         if (busyThreads.has(threadId)) throw new HttpError(409, 'thread_busy', 'Still answering a message in that thread.');
-        if (!store.deleteThread(threadId, url.searchParams.get('sessionId') ?? '')) throw new HttpError(404, 'thread_not_found', 'Thread not found.');
+        const sid = url.searchParams.get('sessionId') ?? '';
+        if (!canUse(sid) || !store.deleteThread(threadId, sid)) throw new HttpError(404, 'thread_not_found', 'Thread not found.');
         json(res, 200, { ok: true });
         return;
       }
@@ -216,7 +183,7 @@ async function route(req: IncomingMessage, res: ServerResponse, ctx: RequestCont
       // one line of plain text: control characters out, spaces collapsed
       const title = str(body.title).replace(/[\p{Cc}\p{Cf}]/gu, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
       if (!title) throw new HttpError(400, 'bad_request', 'A title is required.');
-      if (!store.renameThread(threadId, str(body.sessionId), title)) throw new HttpError(404, 'thread_not_found', 'Thread not found.');
+      if (!canUse(str(body.sessionId)) || !store.renameThread(threadId, str(body.sessionId), title)) throw new HttpError(404, 'thread_not_found', 'Thread not found.');
       json(res, 200, { ok: true, title });
       return;
     }
@@ -250,7 +217,7 @@ async function route(req: IncomingMessage, res: ServerResponse, ctx: RequestCont
         allow('GET');
         const sessionId = url.searchParams.get('sessionId') ?? '';
         json(res, 200, {
-          threads: (sessionId ? store.listThreads(sessionId) : []).map((r) => ({
+          threads: (sessionId && canUse(sessionId) ? store.listThreads(sessionId) : []).map((r) => ({
             id: r.id,
             title: r.title.length > 64 ? r.title.slice(0, 61) + '...' : r.title,
             destination: r.destination,
@@ -298,7 +265,7 @@ async function route(req: IncomingMessage, res: ServerResponse, ctx: RequestCont
         const propsJson = JSON.stringify(props);
         if (/^[a-z][a-z0-9_]{0,39}$/.test(name) && propsJson.length <= 4000 && !rateLimited(req, 'events', 120)) {
           const sid = str(body.sessionId);
-          store.saveEvent(sid && store.sessionExists(sid) ? sid : null, name, propsJson);
+          store.saveEvent(sid && store.sessionExists(sid) && canUse(sid) ? sid : null, name, propsJson);
         }
         json(res, 200, { ok: true });
         return;
@@ -324,7 +291,7 @@ async function route(req: IncomingMessage, res: ServerResponse, ctx: RequestCont
         allow('POST');
         const body = await readBody(req);
         // thread ids are sequential and deal ids are public, so the session must own the thread
-        const thread = store.getThread(Number(body.threadId), str(body.sessionId));
+        const thread = ownThread(Number(body.threadId), str(body.sessionId));
         const offer = thread ? store.getOffer(str(body.offerId), thread.id) : undefined;
         if (!thread || !offer) throw new HttpError(404, 'offer_not_found', 'offer not found');
         json(res, 200, await confirmBooking(ctx, thread.id, offer, body.travelers));
@@ -333,7 +300,7 @@ async function route(req: IncomingMessage, res: ServerResponse, ctx: RequestCont
       case '/api/chat': {
         allow('POST');
         if (rateLimited(req)) throw new HttpError(429, 'rate_limited', 'Too many messages. Please wait a minute and try again.');
-        await handleChat(await readBody(req), res, ctx);
+        await handleChat(await readBody(req), res, ctx, canUse);
         return;
       }
       default:
@@ -480,7 +447,7 @@ function sentenceStream(res: ServerResponse, check: (piece: string) => string | 
   };
 }
 
-async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext): Promise<void> {
+async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext, canUse: (sessionId: string) => boolean): Promise<void> {
   res.writeHead(200, {
     'Content-Type': 'text/event-stream; charset=utf-8',
     'Cache-Control': 'no-cache',
@@ -491,7 +458,7 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext):
 
   const sessionId = str(body.sessionId);
   if (!sessionId || !Array.isArray(body.messages)) return fail('bad_request', 'sessionId and messages are required');
-  if (!store.sessionExists(sessionId)) return fail('session_not_found', 'Session not found. Start a new session.');
+  if (!store.sessionExists(sessionId) || !canUse(sessionId)) return fail('session_not_found', 'Session not found. Start a new session.');
   const content = latestUserText(body.messages);
   if (!content) return fail('bad_request', 'user message missing');
   if (content.length > config.maxMessageChars) return fail('message_too_long', `Messages are limited to ${config.maxMessageChars} characters.`);

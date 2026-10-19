@@ -158,11 +158,15 @@ export const MAX_MESSAGE_CHARS = 4000;
 export function errorText(err: unknown): string {
   const code = err instanceof TakeoffApiError ? err.code : 'network';
   switch (code) {
-    case 'rate_limited': return "You're sending messages quickly. Please wait a minute and try again.";
+    case 'rate_limited': return (err as TakeoffApiError).message || 'Please wait a minute and try again.';
     case 'thread_busy': return "I'm still answering your last message.";
     case 'message_too_long': return `Please keep messages under ${MAX_MESSAGE_CHARS} characters.`;
     case 'model_unavailable': return 'The travel assistant is unavailable right now. Please try again in a minute.';
     case 'cannot_rewind': return 'That message can no longer be changed.';
+    case 'invalid_login': case 'weak_password': case 'invalid_email': case 'invalid_name': case 'email_taken': case 'invalid_token': case 'wrong_password': case 'not_confirmed':
+      return (err as TakeoffApiError).message;
+    case 'not_signed_in': return 'Please sign in again.';
+    case 'invalid_google': return 'Google sign-in did not work. Please try again.';
     case 'aborted': return 'Stopped.';
     default: return 'Something went wrong. Please try again.';
   }
@@ -258,16 +262,24 @@ async function failure(res: Response): Promise<TakeoffApiError> {
  * `baseUrl`: '' when the dev server proxies /api to the backend, else e.g. 'https://api.example.com'.
  * `storage`: where the session id lives (default localStorage, so threads survive a reload).
  */
-export function createTakeoffApi(opts: { baseUrl?: string; storage?: KeyValueStore } = {}) {
+/** The signed-in user, as the server shows it (D-021). */
+export interface Account { id: number; name: string; email: string; emailVerified: boolean; hasPassword: boolean; google: boolean; createdAt: string }
+
+/**
+ * `credentials`: 'same-origin' (default) when the API is served from the site's own origin, 'include' when it lives on
+ * another origin listed in the backend's ALLOWED_ORIGINS (the sign-in cookie must travel with each request).
+ */
+export function createTakeoffApi(opts: { baseUrl?: string; storage?: KeyValueStore; credentials?: RequestCredentials } = {}) {
   const base = (opts.baseUrl ?? '').replace(/\/$/, '');
   const storage = opts.storage ?? (globalThis as { localStorage?: KeyValueStore }).localStorage;
   const KEY = 'takeoff.sessionId';
   const jsonHeaders = { 'Content-Type': 'application/json' };
+  const credentials = opts.credentials ?? 'same-origin';
 
   async function call<T>(path: string, init?: RequestInit): Promise<T> {
     let res: Response;
     try {
-      res = await fetch(base + path, init);
+      res = await fetch(base + path, { credentials, ...init });
     } catch (err) {
       throw new TakeoffApiError('network', (err as Error).message);
     }
@@ -314,6 +326,7 @@ export function createTakeoffApi(opts: { baseUrl?: string; storage?: KeyValueSto
       let error: TakeoffApiError | undefined;
       try {
         const res = await fetch(base + '/api/chat', {
+          credentials,
           method: 'POST', headers: jsonHeaders, signal: o.signal,
           body: JSON.stringify({ sessionId, threadId, messages: [{ role: 'user', content, timestamp: new Date().toISOString() }] }),
         });
@@ -409,7 +422,63 @@ export function createTakeoffApi(opts: { baseUrl?: string; storage?: KeyValueSto
     await post('/api/contact', m);
   }
 
-  return { session, resetSession, chat, confirm, threads, messages, profile, updateProfile, resetProfile, trip, itinerary, rewind, renameThread, deleteThread, track, contact };
+  // ── accounts (D-021): the server keeps the sign-in in an HttpOnly cookie; the client keeps the account's chat session id ──
+  const browserSession = () => storage?.getItem(KEY) ?? undefined;
+  const signedIn = (r: { user: Account; sessionId: string }) => { storage?.setItem(KEY, r.sessionId); return r.user; };
+
+  /** Whether "Continue with Google" is available, and its client id. */
+  async function authConfig(): Promise<{ googleClientId: string | null }> {
+    return call('/api/auth/config');
+  }
+  /** The signed-in user, or null. Signed in, the account's chat session becomes this browser's. */
+  async function me(): Promise<Account | null> {
+    const r = await call<{ user: Account | null; sessionId?: string }>('/api/auth/me');
+    if (r.user && r.sessionId) storage?.setItem(KEY, r.sessionId);
+    return r.user;
+  }
+  /** Create an account and sign in; trips planned in this browser move into it. Rejects with weak_password, invalid_email, email_taken… */
+  async function signup(a: { name: string; email: string; password: string }): Promise<Account> {
+    return signedIn(await post('/api/auth/signup', { ...a, sessionId: browserSession() }));
+  }
+  async function login(a: { email: string; password: string }): Promise<Account> {
+    return signedIn(await post('/api/auth/login', { ...a, sessionId: browserSession() }));
+  }
+  /** `credential` is the ID token from Google Identity Services. */
+  async function google(credential: string): Promise<Account> {
+    return signedIn(await post('/api/auth/google', { credential, sessionId: browserSession() }));
+  }
+  /** Sign out; this browser forgets the account's chat session. */
+  async function logout(): Promise<void> {
+    await post('/api/auth/logout', {}).catch(() => undefined);
+    resetSession();
+  }
+  async function verifyEmail(token: string): Promise<void> { await post('/api/auth/verify', { token }); }
+  async function resendVerification(): Promise<void> { await post('/api/auth/resend-verification', {}); }
+  /** Always resolves the same way, whether or not the email has an account. */
+  async function forgotPassword(email: string): Promise<void> { await post('/api/auth/forgot', { email }); }
+  /** Choose a new password from an emailed link; signs in. */
+  async function resetPassword(token: string, password: string): Promise<Account> {
+    return signedIn(await post('/api/auth/reset', { token, password, sessionId: browserSession() }));
+  }
+  async function updateAccount(a: { name: string }): Promise<Account> {
+    return (await call<{ user: Account }>('/api/account', { method: 'PATCH', headers: jsonHeaders, body: JSON.stringify(a) })).user;
+  }
+  /** Other browsers are signed out. Accounts without a password (Google only) can set one without `currentPassword`. */
+  async function changePassword(a: { currentPassword?: string; newPassword: string }): Promise<Account> {
+    return (await post<{ user: Account }>('/api/account/password', a)).user;
+  }
+  /** Everything stored about the account, as JSON. */
+  async function exportData(): Promise<unknown> { return call('/api/account/export'); }
+  /** Confirm with the password, or `confirm: 'DELETE'` for Google-only accounts. */
+  async function deleteAccount(a: { password?: string; confirm?: string }): Promise<void> {
+    await call('/api/account', { method: 'DELETE', headers: jsonHeaders, body: JSON.stringify(a) });
+    resetSession();
+  }
+
+  return {
+    session, resetSession, chat, confirm, threads, messages, profile, updateProfile, resetProfile, trip, itinerary, rewind, renameThread, deleteThread, track, contact,
+    authConfig, me, signup, login, google, logout, verifyEmail, resendVerification, forgotPassword, resetPassword, updateAccount, changePassword, exportData, deleteAccount,
+  };
 }
 
 export type TakeoffApi = ReturnType<typeof createTakeoffApi>;
