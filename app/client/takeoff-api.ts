@@ -82,6 +82,8 @@ export interface ItinerarySource { name: string; licence?: string; attribution: 
 export interface ItineraryItem {
   kind: 'activity' | 'meal' | 'rest'; block: 'morning' | 'afternoon' | 'evening';
   start: string; end: string; title: string; poiId?: string; durationMinutes: number;
+  /** the place's position, for the map (activities only) */
+  coordinates?: { lat: number; lng: number };
   durationBasis?: 'category_default' | 'fixed';
   /** to the next activity of the day */
   travelToNext?: TravelLeg;
