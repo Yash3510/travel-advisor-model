@@ -527,6 +527,10 @@ describe('live replies and turn control (additive)', () => {
     const r = await post(`/api/threads/${threadId}/rewind`, { sessionId: sid });
     expect(r.status).toBe(409);
     expect((await r.json()).error.code).toBe('cannot_rewind');
+    // a thread taken back to its start detects its destination (and shows its deals) again
+    const fresh = (await chat(sid, 'Plan a trip to Bali')).at(-1)!.data.threadId;
+    await post(`/api/threads/${fresh}/rewind`, { sessionId: sid });
+    expect((await chat(sid, 'Plan a trip to Bali', fresh)).map((e) => e.event)).toEqual(['destination_selected', 'campaign_deals', 'done']);
     const other = await session();
     expect((await post(`/api/threads/${threadId}/rewind`, { sessionId: other })).status).toBe(404);
   });

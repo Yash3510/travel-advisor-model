@@ -183,6 +183,10 @@ export const store = {
         else db.prepare('DELETE FROM trips WHERE thread_id = ?').run(threadId);
       }
       db.prepare('DELETE FROM turns WHERE thread_id = ? AND user_message_id >= ?').run(threadId, last.id);
+      // with every message taken back the thread starts over: the destination (and its deals) can be detected again
+      if (!db.prepare("SELECT 1 FROM messages WHERE thread_id = ? AND role = 'user'").get(threadId)) {
+        db.prepare("UPDATE threads SET destination = NULL, region_code = NULL, stage = 'collecting' WHERE id = ?").run(threadId);
+      }
       touch.run(threadId);
       return { text: last.content };
     })();
