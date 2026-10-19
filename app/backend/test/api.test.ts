@@ -599,4 +599,10 @@ describe('feedback and contact (additive)', () => {
     expect(bad.status).toBe(400);
     expect((await post('/api/contact', { name: 'A', email: 'a@b.co', topic: 'spam', message: 'hello there' })).status).toBe(400);
   });
+
+  it('drop-in client: calls made at the same time share one new session', async () => {
+    const api = createTakeoffApi({ baseUrl: base, storage: memory() });
+    const ids = await Promise.all([api.session(), api.session(), api.session()]);
+    expect(new Set(ids).size).toBe(1);
+  });
 });

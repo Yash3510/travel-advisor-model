@@ -832,13 +832,15 @@ export function createTakeoffApi(opts: { baseUrl?: string; storage?: KeyValueSto
   }
   const post = <T>(path: string, body: unknown) => call<T>(path, { method: 'POST', headers: jsonHeaders, body: JSON.stringify(body) });
 
-  /** The stored session id, or a new one from the server. */
+  /** The stored session id, or a new one from the server. Calls made at the same time share one new session. */
+  let creating: Promise<string> | undefined;
   async function session(): Promise<string> {
     const saved = storage?.getItem(KEY);
     if (saved) return saved;
-    const { sessionId } = await post<{ sessionId: string }>('/api/session', {});
-    storage?.setItem(KEY, sessionId);
-    return sessionId;
+    creating ??= post<{ sessionId: string }>('/api/session', {})
+      .then(({ sessionId }) => { storage?.setItem(KEY, sessionId); return sessionId; })
+      .finally(() => { creating = undefined; });
+    return creating;
   }
 
   /** Forget the session (e.g. a "start over" action). The next call creates a new one. */
