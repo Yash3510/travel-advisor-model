@@ -277,6 +277,10 @@ export interface GuidePage {
 }
 export type GuideListItem = Pick<GuidePage, 'slug' | 'name' | 'summary'>;
 
+/** A sample itinerary for the public /trips pages, built by the same engine as the chat. */
+export interface SampleCard { slug: string; title: string; blurb: string; destination: string; days: number; who: string; pace: string; interests: string[]; /** destination guide slug, when there is one */ guide: string | null }
+export interface SampleTrip extends SampleCard { itinerary: ItineraryDraft }
+
 /** The signed-in user, as the server shows it (D-021). */
 /** A browser signed in to the account (`id` signs it out). */
 export interface SignedInDevice { id: string; current: boolean; userAgent: string; createdAt: string; lastSeenAt: string }
@@ -460,6 +464,13 @@ export function createTakeoffApi(opts: { baseUrl?: string; storage?: KeyValueSto
 
   const guideList = async () => (await call<{ destinations: GuideListItem[] }>('/api/guide')).destinations;
   const guidePage = (slug: string) => call<GuidePage>(`/api/guide/${encodeURIComponent(slug)}`);
+  const sampleList = async () => (await call<{ samples: SampleCard[] }>('/api/samples')).samples;
+  async function sampleTrip(slug: string): Promise<SampleTrip> {
+    const t = await call<SampleTrip>(`/api/samples/${encodeURIComponent(slug)}`);
+    const itinerary = parseItinerary(t.itinerary);
+    if (!itinerary) throw new TakeoffApiError('bad_response', 'The sample trip could not be read.', 502);
+    return { ...t, itinerary };
+  }
 
   // ── accounts (D-021): the server keeps the sign-in in an HttpOnly cookie; the client keeps the account's chat session id ──
   const browserSession = () => storage?.getItem(KEY) ?? undefined;
@@ -528,7 +539,7 @@ export function createTakeoffApi(opts: { baseUrl?: string; storage?: KeyValueSto
     session, resetSession, chat, confirm, threads, messages, profile, updateProfile, resetProfile, trip, itinerary, rewind, renameThread, deleteThread, track, contact,
     authConfig, me, signup, login, google, logout, verifyEmail, resendVerification, forgotPassword, resetPassword, updateAccount, changePassword, exportData, deleteAccount,
     changeEmail, confirmEmailChange, devices, signOutDevice, signOutOtherDevices,
-    shareStatus, share, stopSharing, sharedTrip, guideList, guidePage,
+    shareStatus, share, stopSharing, sharedTrip, guideList, guidePage, sampleList, sampleTrip,
   };
 }
 

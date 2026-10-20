@@ -30,9 +30,9 @@ Hotels/flights stay **booking requests** a person completes; we never collect tr
 
 ### 3B. Parallel track (no model, no business papers needed) — pulled forward from Phase 5
 - [x] Destination hub `/destinations` + 117 place pages from the guide (SEO) — C
-- [ ] 10–20 sample itineraries `/trips/<slug>` that open in chat — C
-- [ ] How it works page — C
-- [ ] SEO basics: titles/descriptions, sitemap.xml, robots.txt, share images — C
+- [x] 14 sample itineraries `/trips/<slug>` that open in chat (Ladakh, Coorg skipped: map data too thin) — C
+- [x] How it works page — C
+- [x] SEO basics: titles/descriptions, sitemap.xml, robots.txt, share images — C
 - [ ] Thumbs up/down on Kodi replies (feeds future training) — C
 - [ ] Admin panel v1: dashboard, booking requests, contact inbox, users, flagged chats — C
 - [ ] Admin security: role-based, 2-step sign-in, audit log — C
@@ -61,6 +61,8 @@ Hotels/flights stay **booking requests** a person completes; we never collect tr
 - [ ] Frontend on Vercel; backend on Railway/Render/VPS; staging + production — C
 - [ ] Model server: GPU (RunPod/Vast) or CPU box for 0.8B; pick by cost/speed test — C + P (card)
 - [ ] Domain DNS, HTTPS, secrets in host settings — C + P
+- [ ] Host forwards `/sitemap.xml` to the backend; add the `Sitemap:` line to robots.txt; submit to Google Search Console — C + P
+- [ ] Pre-render public pages (destinations, trips) so search engines get HTML, not an empty shell — C
 ### Email
 - [ ] Resend on own domain (SPF/DKIM); welcome, receipt, booking-request emails — C
 ### Security

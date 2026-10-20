@@ -29,6 +29,8 @@ import { checkData } from './readiness.js';
 import { REGIONS_FILE } from './data/importOsm.js';
 import { GUIDE_DIR } from './services/insightsService.js';
 import { guideList, guidePage } from './domain/guide.js';
+import { sample, sampleList } from './domain/samples.js';
+import { sitemap } from './domain/sitemap.js';
 import { checkIntro, fallbackIntro, introRequest, renderItinerary } from './services/presentation.js';
 import { buildSystemPrompt } from './prompts.js';
 import { chatCompletion, runTurn, trimHistory, type PendingBooking, type ToolBackend, type Turn } from './modelClient.js';
@@ -169,6 +171,14 @@ async function route(req: IncomingMessage, res: ServerResponse, ctx: RequestCont
       return;
     }
 
+    // every public page, for search engines; the site host forwards /sitemap.xml here
+    if (pathname === '/sitemap.xml' || pathname === '/api/sitemap.xml') {
+      allow('GET');
+      res.writeHead(200, { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=3600' });
+      res.end(sitemap(config.appUrl));
+      return;
+    }
+
     // public destination pages: verbatim Wikivoyage sentences (CC BY-SA), the same guide the model reads
     if (pathname === '/api/guide') {
       allow('GET');
@@ -183,6 +193,23 @@ async function route(req: IncomingMessage, res: ServerResponse, ctx: RequestCont
       if (!page) throw new HttpError(404, 'destination_not_found', 'We do not have a guide for this place yet.');
       res.setHeader('Cache-Control', 'public, max-age=3600');
       json(res, 200, page);
+      return;
+    }
+
+    // sample itineraries: built by the same engine as the chat, from OpenStreetMap data
+    if (pathname === '/api/samples') {
+      allow('GET');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      json(res, 200, { samples: sampleList() });
+      return;
+    }
+    const sampleSlug = /^\/api\/samples\/([a-z0-9-]{3,80})$/.exec(pathname);
+    if (sampleSlug) {
+      allow('GET');
+      const s = sample(sampleSlug[1]);
+      if (!s) throw new HttpError(404, 'sample_not_found', 'We do not have this sample trip.');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      json(res, 200, s);
       return;
     }
 

@@ -12,6 +12,8 @@ export interface PlaceSet { slug: string; center: LatLon; pois: PointOfInterest[
 export const POI_DIR = new URL('../../data/poi/', import.meta.url);
 const cache = new Map<string, { mtimeMs: number; set: PlaceSet }>();
 
+const PRICED_NAME = /₹|\bINR\b|\bRs\.?\s?\d/i;
+
 export function loadPlaces(destination: string | undefined): PlaceSet | undefined {
   if (!destination) return undefined;
   const region = regionFor(destination);
@@ -21,7 +23,8 @@ export function loadPlaces(destination: string | undefined): PlaceSet | undefine
       const { mtimeMs } = fs.statSync(file);
       const hit = cache.get(region.slug);
       if (hit && hit.mtimeMs === mtimeMs) return hit.set;
-      const { pois } = JSON.parse(fs.readFileSync(file, 'utf8')) as { pois: PointOfInterest[] };
+      // a mapper's name like "View Point Taj Mahal 50 INR" would show a price nobody checked: leave such places out
+      const pois = (JSON.parse(fs.readFileSync(file, 'utf8')) as { pois: PointOfInterest[] }).pois.filter((p) => !PRICED_NAME.test(p.name));
       const [s, w, n, e] = region.bbox;
       const set = { slug: region.slug, center: { lat: (s + n) / 2, lon: (w + e) / 2 }, pois };
       cache.set(region.slug, { mtimeMs, set });

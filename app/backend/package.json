@@ -13,6 +13,7 @@
     "test": "vitest run",
     "lint": "oxlint --deny-warnings src test && cd ../client && oxlint --deny-warnings -c ../backend/.oxlintrc.json .",
     "data:import": "tsx src/data/importOsm.ts",
+    "data:samples": "tsx src/data/buildSamples.ts",
     "docs:sync": "node ../scripts/sync-integration.mjs"
   },
   "devDependencies": {
