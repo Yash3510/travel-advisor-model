@@ -34,14 +34,16 @@ Hotels/flights stay **booking requests** a person completes; we never collect tr
 - [x] How it works page — C
 - [x] SEO basics: titles/descriptions, sitemap.xml, robots.txt, share images — C
 - [ ] Thumbs up/down on Kodi replies (feeds future training) — C
-- [ ] Admin panel v1: dashboard, booking requests, contact inbox, users, flagged chats — C
-- [ ] Admin security: role-based, 2-step sign-in, audit log — C
+- [x] Admin panel v1: dashboard, booking requests, contact inbox, users, audit log — C
+- [ ] Admin v2: conversations (personal details hidden), flagged replies, "send to training", email customers — C
+- [x] Admin security: role-based, 2-step sign-in, audit log — C
 - [ ] Cookie policy page — C
 
 ### 3C. Pranay, now (each takes minutes; approvals take days)
 - [ ] Start Razorpay **individual** KYC (PAN, bank, Aadhaar; category: digital services/SaaS) — P
 - [ ] Buy a domain — P
 - [ ] Rotate the Resend API key (it was shared in chat) — P
+- [ ] Make yourself admin: sign up with your email, then `npm run admin -- grant <email>` on the server; set `ADMIN_SECRET_KEY` in production — P
 - [ ] Create Cloudflare Turnstile keys (free) — P
 - [ ] Decide Pro price (e.g. ₹199/month or ₹1,499/year) and the free limit — P
 

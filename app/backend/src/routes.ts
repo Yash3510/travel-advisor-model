@@ -6,6 +6,7 @@ import { config } from './config.js';
 import { HttpError, json, readBody, rateLimited, str, type Body } from './http.js';
 import { accounts } from './auth/accounts.js';
 import { currentUser, handleAuth } from './auth/routes.js';
+import { handleAdmin } from './admin/routes.js';
 import { checkHuman } from './auth/turnstile.js';
 import { feasibilityBrief, feasibilityNotes, withFeasibility, type FeasibilityNote } from './domain/feasibility.js';
 import { groundedTools } from './services/toolGrounding.js';
@@ -114,6 +115,7 @@ async function route(req: IncomingMessage, res: ServerResponse, ctx: RequestCont
 
   try {
     if (await handleAuth(req, res, pathname)) return;
+    if (await handleAdmin(req, res, pathname, url.searchParams)) return;
 
     // A chat session is usable by its id while anonymous; once it belongs to an account, only when signed in to it.
     const viewer = currentUser(req)?.id ?? null;

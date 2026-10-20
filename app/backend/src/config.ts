@@ -55,6 +55,10 @@ export const config = {
   mailFrom: process.env.MAIL_FROM ?? 'Takeoff <hello@example.com>',
   // "Continue with Google" is offered only when this is set (OAuth client of type Web application)
   googleClientId: process.env.GOOGLE_CLIENT_ID ?? '',
+  /** encrypts admins' two-step secrets at rest (D-025); 32+ random characters. Without it the admin panel stays off. */
+  adminSecretKey: process.env.ADMIN_SECRET_KEY ?? '',
+  /** how long a two-step check lasts on one browser */
+  adminMfaHours: num(process.env.ADMIN_MFA_HOURS, 12),
 };
 
 export type Config = typeof config;

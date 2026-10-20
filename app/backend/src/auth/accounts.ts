@@ -6,6 +6,8 @@ import { db, store } from '../db.js';
 export interface UserRow {
   id: number; email: string; name: string; password_hash: string | null; google_sub: string | null;
   email_verified_at: string | null; session_id: string | null; created_at: string;
+  role: 'user' | 'admin'; disabled_at: string | null;
+  totp_secret: string | null; totp_enabled_at: string | null; totp_last_step: number | null;
 }
 
 const sha256 = (t: string) => createHash('sha256').update(t).digest('hex');
@@ -17,6 +19,7 @@ const toIso = (sqliteUtc: string) => new Date(sqliteUtc.replace(' ', 'T') + 'Z')
 export const publicUser = (u: UserRow) => ({
   id: u.id, name: u.name, email: u.email, emailVerified: !!u.email_verified_at,
   hasPassword: !!u.password_hash, google: !!u.google_sub, createdAt: toIso(u.created_at),
+  ...(u.role === 'admin' ? { admin: true as const } : {}),
 });
 export type PublicUser = ReturnType<typeof publicUser>;
 
@@ -63,9 +66,19 @@ export const accounts = {
     const hash = sha256(token);
     const row = db.prepare("SELECT user_id FROM auth_sessions WHERE token_hash = ? AND expires_at > datetime('now')").get(hash) as { user_id: number } | undefined;
     if (!row) return undefined;
+    const user = accounts.byId(row.user_id);
+    if (!user || user.disabled_at) return undefined; // a disabled account is signed out everywhere at once
     // "last used", at most one write per browser every five minutes
     db.prepare("UPDATE auth_sessions SET last_seen_at = datetime('now') WHERE token_hash = ? AND (last_seen_at IS NULL OR last_seen_at < datetime('now', '-5 minutes'))").run(hash);
-    return accounts.byId(row.user_id);
+    return user;
+  },
+  /** This browser passed the admin two-step check within the last `hours` (D-025). */
+  mfaFresh(token: string | undefined, hours: number): boolean {
+    if (!token) return false;
+    return !!db.prepare("SELECT 1 FROM auth_sessions WHERE token_hash = ? AND mfa_at > datetime('now', ?)").get(sha256(token), `-${hours} hours`);
+  },
+  markMfa(token: string) {
+    db.prepare("UPDATE auth_sessions SET mfa_at = datetime('now') WHERE token_hash = ?").run(sha256(token));
   },
   /** Where the account is signed in, newest use first; `id` is a short handle for signing one out. */
   listSessions(userId: number, currentToken?: string) {

@@ -23,6 +23,7 @@ function cookieToken(req: IncomingMessage): string | undefined {
 
 /** The signed-in user of a request, if any. */
 export const currentUser = (req: IncomingMessage): UserRow | undefined => accounts.userForToken(cookieToken(req));
+export { cookieToken };
 
 function setCookie(res: ServerResponse, token: string | null) {
   const attrs = ['Path=/', 'HttpOnly', 'SameSite=Lax', ...(config.cookieSecure ? ['Secure'] : [])];
@@ -33,6 +34,7 @@ function setCookie(res: ServerResponse, token: string | null) {
 
 /** Sign the browser in and give it the account's chat session (bringing this browser's trips along). */
 function signIn(req: IncomingMessage, res: ServerResponse, user: UserRow, browserSession: string) {
+  if (user.disabled_at) throw new HttpError(403, 'account_disabled', 'This account has been turned off. Write to us from the contact page if you think this is a mistake.');
   setCookie(res, accounts.startSession(user.id, String(req.headers['user-agent'] ?? '')));
   const sessionId = accounts.adopt(user.id, browserSession || undefined);
   json(res, 200, { user: publicUser(accounts.byId(user.id)!), sessionId });

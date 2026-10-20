@@ -175,6 +175,24 @@ CREATE INDEX IF NOT EXISTS idx_offers_thread ON offers(thread_id);
 for (const col of ['user_agent TEXT', 'last_seen_at TEXT']) {
   if (!(db.prepare('PRAGMA table_info(auth_sessions)').all() as { name: string }[]).some((c) => c.name === col.split(' ')[0])) db.exec(`ALTER TABLE auth_sessions ADD COLUMN ${col}`);
 }
+// admin (D-025): roles, disabled accounts, two-step codes, handled requests, and the audit log
+const addColumns = (table: string, cols: string[]) => {
+  const have = new Set((db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]).map((c) => c.name));
+  for (const col of cols) if (!have.has(col.split(' ')[0])) db.exec(`ALTER TABLE ${table} ADD COLUMN ${col}`);
+};
+addColumns('users', ["role TEXT NOT NULL DEFAULT 'user'", 'disabled_at TEXT', 'totp_secret TEXT', 'totp_enabled_at TEXT', 'totp_last_step INTEGER']);
+addColumns('auth_sessions', ['mfa_at TEXT']);
+addColumns('booking_requests', ['admin_note TEXT', 'updated_at TEXT']);
+addColumns('contact_messages', ['handled_at TEXT']);
+db.exec(`CREATE TABLE IF NOT EXISTS admin_audit (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  admin_id INTEGER NOT NULL,
+  action TEXT NOT NULL,
+  target TEXT,
+  detail TEXT,
+  ip TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+)`);
 // sessions merged into an account (D-021)
 if (!(db.prepare('PRAGMA table_info(sessions)').all() as { name: string }[]).some((c) => c.name === 'user_id')) {
   db.exec('ALTER TABLE sessions ADD COLUMN user_id INTEGER REFERENCES users(id)');

@@ -719,7 +719,7 @@ export function errorText(err: unknown): string {
     case 'message_too_long': return `Please keep messages under ${MAX_MESSAGE_CHARS} characters.`;
     case 'model_unavailable': return 'The travel assistant is unavailable right now. Please try again in a minute.';
     case 'cannot_rewind': return 'That message can no longer be changed.';
-    case 'account_locked': case 'bot_check': case 'email_failed':
+    case 'account_locked': case 'bot_check': case 'email_failed': case 'account_disabled': case 'mfa_required': case 'invalid_code': case 'admin_off': case 'cannot_disable_admin':
     case 'invalid_login': case 'weak_password': case 'invalid_email': case 'invalid_name': case 'email_taken': case 'invalid_token': case 'wrong_password': case 'not_confirmed':
       return (err as TakeoffApiError).message;
     case 'not_signed_in': return 'Please sign in again.';
@@ -825,11 +825,35 @@ export interface SharedTrip {
   trip: Pick<TripFacts, 'destination' | 'startDate' | 'endDate' | 'month' | 'durationDays' | 'travelers' | 'travelerTypes' | 'purpose'>;
 }
 
+/** A destination page: verbatim Wikivoyage sentences (CC BY-SA 4.0), the guide the model also reads. */
+export interface GuidePage {
+  slug: string; name: string; summary: string | null; whenToGo: string[]; permits: string[];
+  gettingThere: { air: string[]; rail: string[]; road: string[]; sea: string[] };
+  source: string; sourceUrl: string; retrieved: string;
+}
+export type GuideListItem = Pick<GuidePage, 'slug' | 'name' | 'summary'>;
+
+/** A sample itinerary for the public /trips pages, built by the same engine as the chat. */
+export interface SampleCard { slug: string; title: string; blurb: string; destination: string; days: number; who: string; pace: string; interests: string[]; /** destination guide slug, when there is one */ guide: string | null }
+export interface SampleTrip extends SampleCard { itinerary: ItineraryDraft }
+
 /** The signed-in user, as the server shows it (D-021). */
 /** A browser signed in to the account (`id` signs it out). */
 export interface SignedInDevice { id: string; current: boolean; userAgent: string; createdAt: string; lastSeenAt: string }
 
-export interface Account { id: number; name: string; email: string; emailVerified: boolean; hasPassword: boolean; google: boolean; createdAt: string }
+export interface Account { id: number; name: string; email: string; emailVerified: boolean; hasPassword: boolean; google: boolean; createdAt: string; /** present only for admins (D-025) */ admin?: true }
+
+// ── admin panel (D-025) ──
+export const BOOKING_STATUSES = ['PENDING_SUPPLIER_CONFIRMATION', 'IN_PROGRESS', 'CONFIRMED', 'CANCELLED'] as const;
+export type BookingStatus = (typeof BOOKING_STATUSES)[number];
+export interface AdminOverview { users: number; usersNew7d: number; threads7d: number; messages7d: number; bookingsOpen: number; messagesOpen: number; sharesActive: number }
+export interface AdminBooking {
+  ref: string; status: BookingStatus; travelers: number; destination: string | null; threadId: number; createdAt: string; updatedAt: string | null; note: string;
+  customer: { name: string; email: string } | null; offer: Offer | null;
+}
+export interface AdminMessage { id: number; name: string; email: string; topic: string; message: string; createdAt: string; handledAt: string | null }
+export interface AdminUser { id: number; name: string; email: string; emailVerified: boolean; google: boolean; admin: boolean; disabled: boolean; threads: number; createdAt: string }
+export interface AdminAuditEntry { id: number; admin: string | null; action: string; target: string | null; detail: Record<string, unknown> | null; ip: string | null; at: string }
 
 /**
  * `credentials`: 'same-origin' (default) when the API is served from the site's own origin, 'include' when it lives on
@@ -1006,6 +1030,31 @@ export function createTakeoffApi(opts: { baseUrl?: string; storage?: KeyValueSto
     return { ...t, itinerary: parseItinerary(t.itinerary) ?? null };
   }
 
+  const guideList = async () => (await call<{ destinations: GuideListItem[] }>('/api/guide')).destinations;
+  const guidePage = (slug: string) => call<GuidePage>(`/api/guide/${encodeURIComponent(slug)}`);
+  const sampleList = async () => (await call<{ samples: SampleCard[] }>('/api/samples')).samples;
+  async function sampleTrip(slug: string): Promise<SampleTrip> {
+    const t = await call<SampleTrip>(`/api/samples/${encodeURIComponent(slug)}`);
+    const itinerary = parseItinerary(t.itinerary);
+    if (!itinerary) throw new TakeoffApiError('bad_response', 'The sample trip could not be read.', 502);
+    return { ...t, itinerary };
+  }
+
+  const patch = <T>(path: string, body: unknown) => call<T>(path, { method: 'PATCH', headers: jsonHeaders, body: JSON.stringify(body) });
+  const admin = {
+    mfaStatus: () => call<{ enrolled: boolean; verified: boolean }>('/api/admin/mfa'),
+    mfaSetup: () => post<{ secret: string; uri: string }>('/api/admin/mfa/setup', {}),
+    mfaVerify: (code: string) => post<{ ok: true }>('/api/admin/mfa/verify', { code }),
+    overview: () => call<AdminOverview>('/api/admin/overview'),
+    bookings: async () => (await call<{ bookings: AdminBooking[] }>('/api/admin/bookings')).bookings,
+    updateBooking: (ref: string, change: { status?: BookingStatus; note?: string }) => patch<{ ok: true }>(`/api/admin/bookings/${encodeURIComponent(ref)}`, change),
+    messages: async () => (await call<{ messages: AdminMessage[] }>('/api/admin/messages')).messages,
+    setHandled: (id: number, handled: boolean) => patch<{ ok: true }>(`/api/admin/messages/${id}`, { handled }),
+    users: async (q = '') => (await call<{ users: AdminUser[] }>(`/api/admin/users${q ? `?q=${encodeURIComponent(q)}` : ''}`)).users,
+    setDisabled: (id: number, disabled: boolean) => post<{ ok: true }>(`/api/admin/users/${id}/${disabled ? 'disable' : 'enable'}`, {}),
+    audit: async () => (await call<{ entries: AdminAuditEntry[] }>('/api/admin/audit')).entries,
+  };
+
   // ── accounts (D-021): the server keeps the sign-in in an HttpOnly cookie; the client keeps the account's chat session id ──
   const browserSession = () => storage?.getItem(KEY) ?? undefined;
   const signedIn = (r: { user: Account; sessionId: string }) => { storage?.setItem(KEY, r.sessionId); return r.user; };
@@ -1073,7 +1122,7 @@ export function createTakeoffApi(opts: { baseUrl?: string; storage?: KeyValueSto
     session, resetSession, chat, confirm, threads, messages, profile, updateProfile, resetProfile, trip, itinerary, rewind, renameThread, deleteThread, track, contact,
     authConfig, me, signup, login, google, logout, verifyEmail, resendVerification, forgotPassword, resetPassword, updateAccount, changePassword, exportData, deleteAccount,
     changeEmail, confirmEmailChange, devices, signOutDevice, signOutOtherDevices,
-    shareStatus, share, stopSharing, sharedTrip,
+    shareStatus, share, stopSharing, sharedTrip, guideList, guidePage, sampleList, sampleTrip, admin,
   };
 }
 

@@ -164,3 +164,10 @@ Decisions log — newest at bottom. Never delete an entry; strike through if rev
 ## D-024 — Share a trip by link
 - A thread can have one live share link: a random 128-bit token in the URL (`/trip/:token`). The public endpoint returns the plan (latest itinerary) and the trip's basics only, never the conversation, names or account details. The owner can turn it off at any time (the token is then dead); deleting the thread or account removes it.
 - PDF export is the share page printed by the browser ("Save as PDF") with a print stylesheet: no PDF library, the same content as the link.
+
+## D-025 — Admin panel: roles from the server, two-step codes, everything audited
+- **Who is an admin:** `users.role`, changed only on the server (`npm run admin -- grant|revoke|reset-2fa <email>`), never from the site. Non-admins (and visitors) get 404 for every `/api/admin/*` route, so the panel isn't advertised.
+- **Two-step:** TOTP (RFC 6238, works with any authenticator app), required per browser and lasting `ADMIN_MFA_HOURS` (12). Secrets are stored AES-256-GCM-encrypted with `ADMIN_SECRET_KEY`; without that key the panel stays off. Codes are single use (replays refused), 5 tries a minute. The key can't be swapped from the site once set; a lost phone is `reset-2fa` on the server.
+- **Audit:** every view of personal data (bookings, messages, users) and every change goes to `admin_audit` with the admin, target and IP; server-side role changes too.
+- **Actions in v1:** booking requests (status: new → in progress → confirmed/cancelled, internal note; customer email shown when they have an account), contact messages (mark replied), users (search; turn off = signed out everywhere and can't sign in; admins can't be turned off from the site).
+- **Not yet:** reading conversations with personal details hidden, flagged replies, and "send to training"; replying to customers by email from the panel.
