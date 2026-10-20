@@ -123,7 +123,7 @@ describe('POST /api/chat', () => {
     const offer = done.data.offers[0];
     expect(offer.nights).toBe(5);
     expect(done.data.message).toContain(`₹${offer.price_per_night_inr.toLocaleString('en-IN')}`);
-    expect(done.data.message).not.toContain('87,654');
+    expect(done.data.message).not.toContain('9,87,654');
 
     const sent = stub.requests[1].messages;
     expect(sent.at(-1).tool_call_id).toBe(sent.at(-2).tool_calls[0].id);
@@ -461,7 +461,7 @@ describe('live replies and turn control (additive)', () => {
     const sid = await session();
     stub.queue = [
       { tool_calls: [{ name: 'search_hotels', args: { city: 'bali', check_in: '2026-12-10', check_out: '2026-12-15', guests: 2 } }] },
-      { content: 'I found a few places for you. Flights are about ₹87,654. Want me to hold one?' },
+      { content: 'I found a few places for you. Flights are about ₹9,87,654. Want me to hold one?' },
     ];
     const ev = await chatAll(sid, 'find me a hotel in Bali from 10 to 15 December for 2');
     expect(ev.filter((e) => e.event === 'status').map((e) => e.data.step)).toEqual(['thinking', 'search_hotels', 'writing']);
@@ -604,5 +604,24 @@ describe('feedback and contact (additive)', () => {
     const api = createTakeoffApi({ baseUrl: base, storage: memory() });
     const ids = await Promise.all([api.session(), api.session(), api.session()]);
     expect(new Set(ids).size).toBe(1);
+  });
+
+  it('tells the customer what the code checked when the model leaves it out (D-023)', async () => {
+    const sid = await session();
+    stub.queue = [{ content: 'What a lovely idea!' }, { content: 'What a lovely idea!' }];
+    const done = (await chat(sid, 'We want to take the train from Chennai to the Andaman Islands for 5 days')).at(-1)!;
+    expect(done.data.message).toContain('no train or road to the Andaman Islands');
+  });
+
+  it('holds a search with details the customer never gave (D-023)', async () => {
+    const sid = await session();
+    stub.queue = [
+      { tool_calls: [{ name: 'search_hotels', args: { city: 'udaipur', check_in: '2026-12-01', check_out: '2026-12-03', guests: 2 } }] },
+      { content: 'When are you travelling, and how many of you?' },
+    ];
+    await chat(sid, 'any nice hotels in Udaipur?');
+    const toolResult = stub.requests.at(-1).messages.at(-1);
+    expect(toolResult.role).toBe('tool');
+    expect(JSON.parse(toolResult.content)).toMatchObject({ status: 'NEEDS_CUSTOMER_DETAILS', missing: expect.arrayContaining(['check-in date', 'number of guests']) });
   });
 });

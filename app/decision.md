@@ -154,3 +154,9 @@ Decisions log — newest at bottom. Never delete an entry; strike through if rev
 - **Breached passwords:** new passwords (sign-up, reset, change) are checked with Have I Been Pwned's range API: only the first five hex characters of the SHA-1 leave the server, responses are padded. If the service is unreachable the password is allowed (logged): availability over a soft check.
 - **Bots:** Cloudflare Turnstile on sign-up, forgot-password and contact when `TURNSTILE_SECRET` is set; off otherwise so local work needs no keys.
 - **Links in URLs:** the API sends `Referrer-Policy: no-referrer`; the web app also removes tokens from the address bar once read.
+
+## D-023 — Code checks for what the small model gets wrong
+- **Why:** the v2 report lists failures training hasn't fixed: invented search details for vague requests (S06), infeasible plans not recognised (S04 six cities in four days, S29 train to the Andamans). These are checkable facts, so the code checks them for any model.
+- **Searches use the customer's details:** `services/toolGrounding.ts` wraps the tools. `search_hotels` and `search_flights` need dates and travellers from the trip the parser built from the customer's own words (a departure city counts if the customer named it or saved a home city); missing details return `NEEDS_CUSTOMER_DETAILS` so the model asks, and known details replace whatever the model put in the arguments.
+- **Feasibility:** `domain/feasibility.ts` notes islands asked for by land (Andamans, Lakshadweep: fly or ship) and more places than the days allow (four or more places at under ~1.3 days each, saying so plainly when the customer asked for a relaxed trip). The note goes into the model's copy of the message; if the reply doesn't cover it, it is added to the reply.
+- **Not done here:** fictional attractions (S27) and rejected suggestions returning (S22) need data the code doesn't have yet (a full place index; tracking rejections per trip).

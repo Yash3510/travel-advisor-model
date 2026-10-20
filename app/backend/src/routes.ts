@@ -7,6 +7,8 @@ import { HttpError, json, readBody, rateLimited, str, type Body } from './http.j
 import { accounts } from './auth/accounts.js';
 import { currentUser, handleAuth } from './auth/routes.js';
 import { checkHuman } from './auth/turnstile.js';
+import { feasibilityBrief, feasibilityNotes, withFeasibility, type FeasibilityNote } from './domain/feasibility.js';
+import { groundedTools } from './services/toolGrounding.js';
 import { CONFIRM_TURN, store, type MessageRow, type Offer, type StoredMessage } from './db.js';
 import { detectRegion, dealsForRegion } from './catalog.js';
 import { ingestPolicy, gateAssistantOutput, gatePrices, emergencyText, statusText, newBookingRef, toPlainText, redact, PII_NOTICE } from './harness.js';
@@ -491,6 +493,7 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext, 
     let itinerary: ItineraryDraft | undefined;
     let tripInsights: TripInsight[] | undefined;
     const conversationText = () => [...history, toStore[0]].map((m) => m.content).join(' ');
+    let feasibility: FeasibilityNote[] = [];
     // what this turn may change, so it can be taken back (POST /api/threads/:id/rewind)
     const tripBefore = thread ? store.getTrip(thread.id) : null;
     const versionBefore = thread ? (store.latestItinerary(thread.id)?.version ?? null) : null;
@@ -509,6 +512,7 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext, 
         today: today(), catalogPath: ctx.catalogPath, firstTurnOfThread: !thread, now: new Date().toISOString(),
         scheduled: current?.days.flatMap((d) => d.items.filter((x) => x.kind === 'activity' && x.poiId).map((x) => ({ poiId: x.poiId!, name: x.title }))),
       });
+      feasibility = feasibilityNotes(policy.redacted, planned.trip);
       const planning = planned.route.action === 'draft' || planned.route.action === 'revise';
       const places = planning ? (ctx.places ?? loadPlaces)(planned.trip.destination) : undefined;
       if (planned.route.action === 'ask') {
@@ -525,7 +529,9 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext, 
         if (!thread?.region_code) region = detectRegion(conversationText(), ctx.catalogPath);
       } else {
       // no place data for this destination: the model drafts from the trip summary, added for the model only
-      const modelTurn: Turn = planned.route.action === 'draft' ? { role: 'user', content: `${policy.redacted}\n\n${planned.route.brief}` } : toStore[0];
+      // the model's copy of the message carries the planner's brief and the checked facts; the stored message stays as typed
+      const brief = (planned.route.action === 'draft' ? `\n\n${planned.route.brief}` : '') + feasibilityBrief(feasibility);
+      const modelTurn: Turn = brief ? { role: 'user', content: `${policy.redacted}${brief}` } : toStore[0];
       let turn: Awaited<ReturnType<typeof runTurn>>;
       const knownRegion = thread?.region_code ?? detectRegion(conversationText(), ctx.catalogPath)?.code;
       const userWords = [...history, toStore[0]].filter((m) => m.role === 'user').map((m) => m.content).join('\n');
@@ -544,7 +550,7 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext, 
           onDraft: (soFar, toolResults) => { streamFacts = toolResults; stream(soFar); },
           base: ctx.modelUrl, apiKey: config.modelApiKey, model: config.model, timeoutMs: config.modelTimeoutMs, signal: clientGone.signal,
           messages: [{ role: 'system', content: buildSystemPrompt(today(), planned.profile.name) }, ...trimHistory([...history, modelTurn], config.maxHistoryChars)],
-          backend: sessionTools(ctx, sessionId), tools: toolSchemas,
+          backend: groundedTools(sessionTools(ctx, sessionId), () => ({ trip: planned!.trip, homeCity: planned!.profile.homeCity, userText: userWords })), tools: toolSchemas,
           findOffer: (id) => (thread && id.startsWith('OF-') ? store.getOffer(id, thread.id) : undefined),
         });
       } catch (err) {
@@ -570,6 +576,15 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext, 
         user: [...history, toStore[0]].filter((m) => m.role === 'user').map((m) => m.content).join('\n'),
       }));
       toStore.push(...turn.added.slice(0, -1), { role: 'assistant', content: reply });
+      }
+    }
+
+    if (feasibility.length && !pendingBooking) {
+      const told = withFeasibility(reply, feasibility);
+      if (told !== reply) {
+        reply = told;
+        const last = toStore.at(-1);
+        if (last?.role === 'assistant') last.content = reply;
       }
     }
 
