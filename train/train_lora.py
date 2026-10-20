@@ -21,8 +21,8 @@ from transformers import (
 )
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-BASE_MODEL_PATH = ROOT / "models/base-Qwen3.5-0.8B-hf-weights"
-TOKENIZER_PATH = ROOT / "models/trained-v2-merged"
+BASE_MODEL_PATH = ROOT / "models/qwen3.5-0.8b-base"
+TOKENIZER_PATH = BASE_MODEL_PATH
 MAX_LEN = 4096
 
 
@@ -75,7 +75,7 @@ def main():
     device_desc = "Apple Silicon MPS (Metal)" if use_mps else ("CUDA GPU" if use_cuda else "CPU")
     print(f"Training on: {device_desc}", flush=True)
 
-    model_source = str(BASE_MODEL_PATH) if BASE_MODEL_PATH.exists() else "unsloth/Qwen3.5-0.8B"
+    model_source = arg("--base", str(BASE_MODEL_PATH) if BASE_MODEL_PATH.exists() else "unsloth/Qwen3.5-0.8B")
     tok_source = str(TOKENIZER_PATH) if TOKENIZER_PATH.exists() else model_source
 
     print(f"Loading tokenizer from {tok_source}...", flush=True)
