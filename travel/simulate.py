@@ -60,19 +60,24 @@ def customer_says(base, sc, history):
 EDITOR_NOTE = ("[Editor note, not from the customer] Your last reply breaks the chat-channel rules ({issues}). Rewrite that reply "
                "for the customer with the same facts and intent: under 120 words, at most two questions, plain sentences or short "
                "bullets, no tables, headings or emojis. Reply with the rewritten message only.")
+FACT_NOTE = ("[Editor note, not from the customer] Your last reply states facts that no tool result or customer message gave "
+             "({issues}: months, seasons or routes). Rewrite it using only what the destination guide and other tool results "
+             "actually say; where they are silent, say you don't have that detail. Reply with the rewritten message only.")
 MAX_EDITS = 2
 
 
 def edited(base, sc, history, draft):
     """Critique-and-revise: ask the teacher to rewrite a reply that breaks the format rules (review layer of the spec)."""
+    context = validate.context_of(history)
     for _ in range(MAX_EDITS):
-        issues = validate.turn_issues(draft)
+        facts = validate.fact_issues(draft, context)
+        issues = facts or validate.turn_issues(draft)
         if not issues:
             break
         out = post(base, dict(model="local", max_tokens=600, chat_template_kwargs={"enable_thinking": False},
                               temperature=0.7, top_p=0.8, top_k=20, messages=[
             {"role": "system", "content": TEACHER_PROMPT + deployment_context(sc["today"])}, *history,
-            {"role": "assistant", "content": draft}, {"role": "user", "content": EDITOR_NOTE.format(issues=", ".join(issues))}]))
+            {"role": "assistant", "content": draft}, {"role": "user", "content": (FACT_NOTE if facts else EDITOR_NOTE).format(issues=", ".join(issues))}]))
         draft = (out.get("content") or draft).strip()
     return draft
 

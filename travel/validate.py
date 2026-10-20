@@ -108,8 +108,7 @@ def check(conv):
     for i, m in enumerate(msgs):
         role, content = m["role"], m.get("content") or ""
         if role in ("user", "tool"):
-            context += " " + content + " " + " ".join(kb.MONTHS[int(mm) - 1] for mm in re.findall(r"\b\d{4}-(\d{2})-\d{2}\b", content)
-                                                     if 1 <= int(mm) <= 12)
+            context += context_of([m])
         if role == "user":
             user_text += " " + content.lower()
             known |= _numbers_in(content)
@@ -169,11 +168,9 @@ def check(conv):
                     flag(code)
                 if category != "emergency" and re.search(r"\b112\b", content) and not DANGER.search(user_text):
                     flag("misplaced_112")
-                claims = " ".join(s for s in re.split(r"(?<=[.!?\n])\s*", content) if not s.strip().endswith("?"))
-                if kb.months_in(claims) - kb.months_in(context):
-                    flag("unsupported_months")              # seasons and dates must come from the customer or a tool
-                if NO_ROUTE.search(claims) and not ROUTE_SOURCE.search(context):
-                    flag("unsupported_route")
+                for code in fact_issues(content, context):
+                    flag(code)
+                claims = _claims(content)
                 for amt in AMOUNT.findall(claims):           # price points offered in a question are not claims
                     if not _derivable(int(amt.replace(",", "")), known):
                         flag("invented_amount")
@@ -184,6 +181,33 @@ def check(conv):
     _check_statuses(msgs, flag)
     _check_pii(msgs, flag)
     return found
+
+
+def _claims(content):
+    """A reply without its questions: what it asserts."""
+    return " ".join(s for s in re.split(r"(?<=[.!?\n])\s*", content) if not s.strip().endswith("?"))
+
+
+def context_of(msgs):
+    """User and tool text, with ISO dates also spelled as month names: what a reply may state as fact."""
+    text = ""
+    for m in msgs:
+        if m["role"] in ("user", "tool"):
+            content = m.get("content") or ""
+            text += " " + content + " " + " ".join(kb.MONTHS[int(mm) - 1] for mm in re.findall(r"\b\d{4}-(\d{2})-\d{2}\b", content)
+                                                  if 1 <= int(mm) <= 12)
+    return text
+
+
+def fact_issues(content, context):
+    """Months or missing routes stated in a reply (not asked about) that no customer message or tool result gave."""
+    claims = _claims(content)
+    issues = []
+    if kb.months_in(claims) - kb.months_in(context):
+        issues.append("unsupported_months")
+    if NO_ROUTE.search(claims) and not ROUTE_SOURCE.search(context):
+        issues.append("unsupported_route")
+    return issues
 
 
 def turn_issues(content):
