@@ -846,7 +846,7 @@ export interface Account { id: number; name: string; email: string; emailVerifie
 // ── admin panel (D-025) ──
 export const BOOKING_STATUSES = ['PENDING_SUPPLIER_CONFIRMATION', 'IN_PROGRESS', 'CONFIRMED', 'CANCELLED'] as const;
 export type BookingStatus = (typeof BOOKING_STATUSES)[number];
-export interface AdminOverview { users: number; usersNew7d: number; threads7d: number; messages7d: number; bookingsOpen: number; messagesOpen: number; sharesActive: number }
+export interface AdminOverview { users: number; usersNew7d: number; threads7d: number; messages7d: number; bookingsOpen: number; messagesOpen: number; sharesActive: number; /** last 14 days, oldest first (UTC dates) */ daily: { date: string; signups: number; trips: number; messages: number }[] }
 export interface AdminBooking {
   ref: string; status: BookingStatus; travelers: number; destination: string | null; threadId: number; createdAt: string; updatedAt: string | null; note: string;
   customer: { name: string; email: string } | null; offer: Offer | null;

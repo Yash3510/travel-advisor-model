@@ -88,7 +88,10 @@ describe('admin panel access', () => {
     expect((await b.call('POST', '/api/admin/mfa/verify', { code: '000000' })).data.error.code).toBe('invalid_code');
     const code = codeAt(data.secret, stepAt(Date.now()));
     expect((await b.call('POST', '/api/admin/mfa/verify', { code })).status).toBe(200);
-    expect((await b.call('GET', '/api/admin/overview')).status).toBe(200);
+    const overview = (await b.call('GET', '/api/admin/overview')).data;
+    expect(overview.daily).toHaveLength(14);
+    expect(overview.daily.at(-1)).toMatchObject({ date: new Date().toISOString().slice(0, 10) });
+    expect(overview.daily.at(-1).signups).toBeGreaterThanOrEqual(1); // this test's own account, counted today
     expect((await b.call('POST', '/api/admin/mfa/verify', { code })).data.error.code).toBe('invalid_code'); // no replay
     expect((await b.call('POST', '/api/admin/mfa/setup')).status).toBe(409); // can't swap the key from the site
 

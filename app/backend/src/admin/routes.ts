@@ -18,6 +18,17 @@ function audit(req: IncomingMessage, admin: UserRow, action: string, target?: st
 }
 
 const n = (sql: string) => (db.prepare(sql).get() as { n: number }).n;
+/** Counts per day (UTC) for the last `days` days, oldest first; days with nothing are 0, not missing. */
+function daily(days: number) {
+  const per = (sql: string) => new Map((db.prepare(sql).all(`-${days - 1} days`) as { d: string; n: number }[]).map((r) => [r.d, r.n]));
+  const signups = per("SELECT date(created_at) d, COUNT(*) n FROM users WHERE date(created_at) >= date('now', ?) GROUP BY d");
+  const trips = per("SELECT date(created_at) d, COUNT(*) n FROM threads WHERE date(created_at) >= date('now', ?) GROUP BY d");
+  const messages = per("SELECT date(created_at) d, COUNT(*) n FROM messages WHERE role = 'user' AND date(created_at) >= date('now', ?) GROUP BY d");
+  return Array.from({ length: days }, (_, i) => {
+    const d = new Date(Date.now() - (days - 1 - i) * 86_400_000).toISOString().slice(0, 10);
+    return { date: d, signups: signups.get(d) ?? 0, trips: trips.get(d) ?? 0, messages: messages.get(d) ?? 0 };
+  });
+}
 const secretOf = (u: UserRow) => (u.totp_secret ? unseal(u.totp_secret, config.adminSecretKey) : null);
 
 export async function handleAdmin(req: IncomingMessage, res: ServerResponse, pathname: string, search: URLSearchParams): Promise<boolean> {
@@ -75,6 +86,7 @@ export async function handleAdmin(req: IncomingMessage, res: ServerResponse, pat
       bookingsOpen: n("SELECT COUNT(*) n FROM booking_requests WHERE status IN ('PENDING_SUPPLIER_CONFIRMATION', 'IN_PROGRESS')"),
       messagesOpen: n('SELECT COUNT(*) n FROM contact_messages WHERE handled_at IS NULL'),
       sharesActive: n('SELECT COUNT(*) n FROM shares'),
+      daily: daily(14),
     });
     return true;
   }
