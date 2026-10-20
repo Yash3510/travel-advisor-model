@@ -22,3 +22,24 @@ describe('destination guide (same rules as travel/kb.py lookup)', () => {
     expect(await tools.call('get_destination_info', { destination: 'Atlantis' })).toMatchObject({ found: false });
   });
 });
+
+describe('public destination pages', () => {
+  it('lists every place once, sorted, with a URL-safe slug', async () => {
+    const { guideList } = await import('../src/domain/guide.js');
+    const list = guideList();
+    expect(list.length).toBe(117);
+    expect(list.every((d) => /^[a-z-]+$/.test(d.slug))).toBe(true);
+    expect(list.map((d) => d.name)).toEqual(list.map((d) => d.name).toSorted((a, b) => a.localeCompare(b)));
+  });
+  it('a page has tidy verbatim sentences and its source; unknown slugs are null', async () => {
+    const { guidePage } = await import('../src/domain/guide.js');
+    const goa = guidePage('goa')!;
+    expect(goa.whenToGo.join(' ')).toContain('mid-November to mid-February');
+    expect(goa.gettingThere.air.some((s) => /^\d+\s/.test(s))).toBe(false);
+    expect(goa.sourceUrl).toMatch(/^https:\/\/en\.wikivoyage\.org\//);
+    expect(guidePage('mcleod-ganj')?.slug).toBe('mcleod-ganj');
+    expect(guidePage('agra')!.summary).toMatch(/^Agra, a city/);
+    expect(guidePage('atlantis')).toBeNull();
+    expect(guidePage('constructor')).toBeNull();
+  });
+});

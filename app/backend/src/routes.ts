@@ -28,6 +28,7 @@ import { travelTimeProvider, type TravelTimeProvider } from './services/travelTi
 import { checkData } from './readiness.js';
 import { REGIONS_FILE } from './data/importOsm.js';
 import { GUIDE_DIR } from './services/insightsService.js';
+import { guideList, guidePage } from './domain/guide.js';
 import { checkIntro, fallbackIntro, introRequest, renderItinerary } from './services/presentation.js';
 import { buildSystemPrompt } from './prompts.js';
 import { chatCompletion, runTurn, trimHistory, type PendingBooking, type ToolBackend, type Turn } from './modelClient.js';
@@ -165,6 +166,23 @@ async function route(req: IncomingMessage, res: ServerResponse, ctx: RequestCont
       if (req.method === 'POST') { json(res, 200, { token: store.shareToken(thread.id, true) }); return; }
       allow('GET');
       json(res, 200, { token: store.shareToken(thread.id, false) });
+      return;
+    }
+
+    // public destination pages: verbatim Wikivoyage sentences (CC BY-SA), the same guide the model reads
+    if (pathname === '/api/guide') {
+      allow('GET');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      json(res, 200, { destinations: guideList() });
+      return;
+    }
+    const guideSlug = /^\/api\/guide\/([a-z-]{2,60})$/.exec(pathname);
+    if (guideSlug) {
+      allow('GET');
+      const page = guidePage(guideSlug[1]);
+      if (!page) throw new HttpError(404, 'destination_not_found', 'We do not have a guide for this place yet.');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      json(res, 200, page);
       return;
     }
 

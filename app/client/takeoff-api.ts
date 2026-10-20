@@ -269,6 +269,14 @@ export interface SharedTrip {
   trip: Pick<TripFacts, 'destination' | 'startDate' | 'endDate' | 'month' | 'durationDays' | 'travelers' | 'travelerTypes' | 'purpose'>;
 }
 
+/** A destination page: verbatim Wikivoyage sentences (CC BY-SA 4.0), the guide the model also reads. */
+export interface GuidePage {
+  slug: string; name: string; summary: string | null; whenToGo: string[]; permits: string[];
+  gettingThere: { air: string[]; rail: string[]; road: string[]; sea: string[] };
+  source: string; sourceUrl: string; retrieved: string;
+}
+export type GuideListItem = Pick<GuidePage, 'slug' | 'name' | 'summary'>;
+
 /** The signed-in user, as the server shows it (D-021). */
 /** A browser signed in to the account (`id` signs it out). */
 export interface SignedInDevice { id: string; current: boolean; userAgent: string; createdAt: string; lastSeenAt: string }
@@ -450,6 +458,9 @@ export function createTakeoffApi(opts: { baseUrl?: string; storage?: KeyValueSto
     return { ...t, itinerary: parseItinerary(t.itinerary) ?? null };
   }
 
+  const guideList = async () => (await call<{ destinations: GuideListItem[] }>('/api/guide')).destinations;
+  const guidePage = (slug: string) => call<GuidePage>(`/api/guide/${encodeURIComponent(slug)}`);
+
   // ── accounts (D-021): the server keeps the sign-in in an HttpOnly cookie; the client keeps the account's chat session id ──
   const browserSession = () => storage?.getItem(KEY) ?? undefined;
   const signedIn = (r: { user: Account; sessionId: string }) => { storage?.setItem(KEY, r.sessionId); return r.user; };
@@ -517,7 +528,7 @@ export function createTakeoffApi(opts: { baseUrl?: string; storage?: KeyValueSto
     session, resetSession, chat, confirm, threads, messages, profile, updateProfile, resetProfile, trip, itinerary, rewind, renameThread, deleteThread, track, contact,
     authConfig, me, signup, login, google, logout, verifyEmail, resendVerification, forgotPassword, resetPassword, updateAccount, changePassword, exportData, deleteAccount,
     changeEmail, confirmEmailChange, devices, signOutDevice, signOutOtherDevices,
-    shareStatus, share, stopSharing, sharedTrip,
+    shareStatus, share, stopSharing, sharedTrip, guideList, guidePage,
   };
 }
 

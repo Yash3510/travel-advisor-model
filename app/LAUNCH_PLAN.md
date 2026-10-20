@@ -29,7 +29,7 @@ Hotels/flights stay **booking requests** a person completes; we never collect tr
 - [ ] Model-down fallback: friendly message, chat stays usable — C
 
 ### 3B. Parallel track (no model, no business papers needed) — pulled forward from Phase 5
-- [ ] Destination hub `/destinations` + 117 place pages from the guide (SEO) — C
+- [x] Destination hub `/destinations` + 117 place pages from the guide (SEO) — C
 - [ ] 10–20 sample itineraries `/trips/<slug>` that open in chat — C
 - [ ] How it works page — C
 - [ ] SEO basics: titles/descriptions, sitemap.xml, robots.txt, share images — C
