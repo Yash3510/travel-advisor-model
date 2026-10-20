@@ -154,6 +154,43 @@ async function route(req: IncomingMessage, res: ServerResponse, ctx: RequestCont
       return;
     }
 
+    // additive (D-024): a read-only link to a trip's plan. GET → {token|null}; POST creates; DELETE stops sharing.
+    const sharePath = /^\/api\/threads\/(\d+)\/share$/.exec(pathname);
+    if (sharePath) {
+      const body = req.method === 'GET' || req.method === 'DELETE' ? {} : await readBody(req);
+      const sid = url.searchParams.get('sessionId') ?? str(body.sessionId);
+      const thread = ownThread(Number(sharePath[1]), sid);
+      if (!thread) throw new HttpError(404, 'thread_not_found', 'Thread not found.');
+      if (req.method === 'DELETE') { store.stopSharing(thread.id); json(res, 200, { token: null }); return; }
+      if (req.method === 'POST') { json(res, 200, { token: store.shareToken(thread.id, true) }); return; }
+      allow('GET');
+      json(res, 200, { token: store.shareToken(thread.id, false) });
+      return;
+    }
+
+    // the public page behind a share link: the plan and trip summary only, never the conversation
+    const publicShare = /^\/api\/share\/([\w-]{16,64})$/.exec(pathname);
+    if (publicShare) {
+      allow('GET');
+      const thread = store.sharedThread(publicShare[1]);
+      if (!thread) throw new HttpError(404, 'share_not_found', 'This link has been turned off or never existed.');
+      const trip = store.getTrip(thread.id);
+      res.setHeader('Cache-Control', 'no-store');
+      json(res, 200, {
+        // not the thread title: that is the customer's first message
+        title: (() => {
+          const place = trip.destination ?? thread.destination;
+          const days = store.latestItinerary(thread.id)?.days.length ?? trip.durationDays;
+          return place ? `${days ? `${days}-day ` : ''}${place} trip` : 'A trip planned with Takeoff';
+        })(),
+        destination: thread.destination,
+        trip: { destination: trip.destination, startDate: trip.startDate, endDate: trip.endDate, month: trip.month, durationDays: trip.durationDays, travelers: trip.travelers, travelerTypes: trip.travelerTypes, purpose: trip.purpose },
+        itinerary: store.latestItinerary(thread.id) ?? null,
+        updatedAt: toIso(thread.updated_at),
+      });
+      return;
+    }
+
     // additive: take back the newest customer message (edit and regenerate resend it afterwards)
     const rewindPath = /^\/api\/threads\/(\d+)\/rewind$/.exec(pathname);
     if (rewindPath) {

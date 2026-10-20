@@ -624,4 +624,22 @@ describe('feedback and contact (additive)', () => {
     expect(toolResult.role).toBe('tool');
     expect(JSON.parse(toolResult.content)).toMatchObject({ status: 'NEEDS_CUSTOMER_DETAILS', missing: expect.arrayContaining(['check-in date', 'number of guests']) });
   });
+
+  it('shares a trip read-only: the plan without the conversation, and stops on request (D-024)', async () => {
+    const sid = await session();
+    stub.queue = [{ content: 'A slow first visit.' }];
+    const threadId = (await chat(sid, '3 days in Goa in December, just me, relaxed pace')).at(-1)!.data.threadId;
+    const other = await session();
+    expect((await post(`/api/threads/${threadId}/share`, { sessionId: other })).status).toBe(404);
+    const { token } = await (await post(`/api/threads/${threadId}/share`, { sessionId: sid })).json();
+    expect(token).toMatch(/^[\w-]{20,}$/);
+    expect((await (await post(`/api/threads/${threadId}/share`, { sessionId: sid })).json()).token).toBe(token); // one live link
+    const pub = await get(`/api/share/${token}`);
+    expect(pub.itinerary.destination).toBe('Goa');
+    expect(pub.trip.durationDays).toBe(3);
+    expect(pub.title).toBe('3-day Goa trip');
+    expect(JSON.stringify(pub)).not.toContain('relaxed pace'); // no messages
+    await fetch(`${base}/api/threads/${threadId}/share?sessionId=${sid}`, { method: 'DELETE' });
+    expect((await fetch(`${base}/api/share/${token}`)).status).toBe(404);
+  });
 });

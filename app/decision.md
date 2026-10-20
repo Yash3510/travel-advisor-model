@@ -160,3 +160,7 @@ Decisions log — newest at bottom. Never delete an entry; strike through if rev
 - **Searches use the customer's details:** `services/toolGrounding.ts` wraps the tools. `search_hotels` and `search_flights` need dates and travellers from the trip the parser built from the customer's own words (a departure city counts if the customer named it or saved a home city); missing details return `NEEDS_CUSTOMER_DETAILS` so the model asks, and known details replace whatever the model put in the arguments.
 - **Feasibility:** `domain/feasibility.ts` notes islands asked for by land (Andamans, Lakshadweep: fly or ship) and more places than the days allow (four or more places at under ~1.3 days each, saying so plainly when the customer asked for a relaxed trip). The note goes into the model's copy of the message; if the reply doesn't cover it, it is added to the reply.
 - **Not done here:** fictional attractions (S27) and rejected suggestions returning (S22) need data the code doesn't have yet (a full place index; tracking rejections per trip).
+
+## D-024 — Share a trip by link
+- A thread can have one live share link: a random 128-bit token in the URL (`/trip/:token`). The public endpoint returns the plan (latest itinerary) and the trip's basics only, never the conversation, names or account details. The owner can turn it off at any time (the token is then dead); deleting the thread or account removes it.
+- PDF export is the share page printed by the browser ("Save as PDF") with a print stylesheet: no PDF library, the same content as the link.

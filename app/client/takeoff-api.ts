@@ -263,6 +263,12 @@ async function failure(res: Response): Promise<TakeoffApiError> {
  * `baseUrl`: '' when the dev server proxies /api to the backend, else e.g. 'https://api.example.com'.
  * `storage`: where the session id lives (default localStorage, so threads survive a reload).
  */
+/** What a share link shows (D-024): the plan and the trip's basics, never the conversation. */
+export interface SharedTrip {
+  title: string; destination: string | null; updatedAt: string; itinerary: ItineraryDraft | null;
+  trip: Pick<TripFacts, 'destination' | 'startDate' | 'endDate' | 'month' | 'durationDays' | 'travelers' | 'travelerTypes' | 'purpose'>;
+}
+
 /** The signed-in user, as the server shows it (D-021). */
 /** A browser signed in to the account (`id` signs it out). */
 export interface SignedInDevice { id: string; current: boolean; userAgent: string; createdAt: string; lastSeenAt: string }
@@ -426,6 +432,24 @@ export function createTakeoffApi(opts: { baseUrl?: string; storage?: KeyValueSto
     await post('/api/contact', m);
   }
 
+  // ── share links (D-024) ──
+  /** The thread's live share token, or null. */
+  async function shareStatus(threadId: number): Promise<string | null> {
+    return (await call<{ token: string | null }>(await withSession(`/api/threads/${threadId}/share`))).token;
+  }
+  /** Turn on sharing (or get the existing link's token). */
+  async function share(threadId: number): Promise<string> {
+    return (await post<{ token: string }>(`/api/threads/${threadId}/share`, { sessionId: await session() })).token;
+  }
+  async function stopSharing(threadId: number): Promise<void> {
+    await call(await withSession(`/api/threads/${threadId}/share`), { method: 'DELETE' });
+  }
+  /** What anyone with the link sees. */
+  async function sharedTrip(token: string): Promise<SharedTrip> {
+    const t = await call<SharedTrip>(`/api/share/${encodeURIComponent(token)}`);
+    return { ...t, itinerary: parseItinerary(t.itinerary) ?? null };
+  }
+
   // ── accounts (D-021): the server keeps the sign-in in an HttpOnly cookie; the client keeps the account's chat session id ──
   const browserSession = () => storage?.getItem(KEY) ?? undefined;
   const signedIn = (r: { user: Account; sessionId: string }) => { storage?.setItem(KEY, r.sessionId); return r.user; };
@@ -493,6 +517,7 @@ export function createTakeoffApi(opts: { baseUrl?: string; storage?: KeyValueSto
     session, resetSession, chat, confirm, threads, messages, profile, updateProfile, resetProfile, trip, itinerary, rewind, renameThread, deleteThread, track, contact,
     authConfig, me, signup, login, google, logout, verifyEmail, resendVerification, forgotPassword, resetPassword, updateAccount, changePassword, exportData, deleteAccount,
     changeEmail, confirmEmailChange, devices, signOutDevice, signOutOtherDevices,
+    shareStatus, share, stopSharing, sharedTrip,
   };
 }
 

@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'node:path';
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { config } from './config.js';
 import { emptyProfile, type TravelerProfile } from './domain/profile.js';
 import { emptyTrip, type TripContext } from './domain/trip.js';
@@ -131,6 +131,13 @@ CREATE TABLE IF NOT EXISTS email_tokens (
   expires_at TEXT NOT NULL,
   used_at TEXT
 );
+-- Read-only share links for a trip's plan (D-024). The token is the link; revoking ends it.
+CREATE TABLE IF NOT EXISTS shares (
+  token TEXT PRIMARY KEY,
+  thread_id INTEGER NOT NULL REFERENCES threads(id),
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  revoked_at TEXT
+);
 -- A pending change of email address: confirmed by a link sent to the new address.
 CREATE TABLE IF NOT EXISTS email_changes (
   token_hash TEXT PRIMARY KEY,
@@ -218,7 +225,7 @@ export const store = {
   deleteThread(id: number, sessionId: string): boolean {
     return db.transaction(() => {
       if (!db.prepare('SELECT 1 FROM threads WHERE id = ? AND session_id = ?').get(id, sessionId)) return false;
-      for (const table of ['messages', 'offers', 'booking_requests', 'trips', 'itineraries', 'turns']) {
+      for (const table of ['messages', 'offers', 'booking_requests', 'trips', 'itineraries', 'turns', 'shares']) {
         db.prepare(`DELETE FROM ${table} WHERE thread_id = ?`).run(id);
       }
       db.prepare('DELETE FROM threads WHERE id = ?').run(id);
@@ -322,6 +329,21 @@ export const store = {
   latestItinerary(threadId: number): ItineraryDraft | undefined {
     const row = db.prepare('SELECT data FROM itineraries WHERE thread_id = ? ORDER BY version DESC LIMIT 1').get(threadId) as { data: string } | undefined;
     return row && (JSON.parse(row.data) as ItineraryDraft);
+  },
+  /** The thread's live share link, creating one if asked. */
+  shareToken(threadId: number, create: boolean): string | null {
+    const live = db.prepare('SELECT token FROM shares WHERE thread_id = ? AND revoked_at IS NULL').get(threadId) as { token: string } | undefined;
+    if (live || !create) return live?.token ?? null;
+    const token = randomBytes(16).toString('base64url');
+    db.prepare('INSERT INTO shares(token, thread_id) VALUES (?, ?)').run(token, threadId);
+    return token;
+  },
+  stopSharing(threadId: number) {
+    db.prepare("UPDATE shares SET revoked_at = datetime('now') WHERE thread_id = ? AND revoked_at IS NULL").run(threadId);
+  },
+  sharedThread(token: string) {
+    const row = db.prepare('SELECT thread_id FROM shares WHERE token = ? AND revoked_at IS NULL').get(token) as { thread_id: number } | undefined;
+    return row && (db.prepare('SELECT * FROM threads WHERE id = ?').get(row.thread_id) as ThreadRow | undefined);
   },
   saveEvent(sessionId: string | null, name: string, props: string) {
     db.prepare('INSERT INTO events(session_id, name, props) VALUES (?, ?, ?)').run(sessionId, name, props);
