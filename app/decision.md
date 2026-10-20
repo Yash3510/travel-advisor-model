@@ -171,3 +171,9 @@ Decisions log — newest at bottom. Never delete an entry; strike through if rev
 - **Audit:** every view of personal data (bookings, messages, users) and every change goes to `admin_audit` with the admin, target and IP; server-side role changes too.
 - **Actions in v1:** booking requests (status: new → in progress → confirmed/cancelled, internal note; customer email shown when they have an account), contact messages (mark replied), users (search; turn off = signed out everywhere and can't sign in; admins can't be turned off from the site).
 - **Not yet:** reading conversations with personal details hidden, flagged replies, and "send to training"; replying to customers by email from the panel.
+
+## D-026 — Basic mode, reply feedback, and admin v2
+- **Basic mode:** when the model can't be reached, the chat no longer errors. It answers from the destination guide (best-time sentences first, quoted, with the source) and says what still works; plans are built by code anyway. The reply is stored like any other and marked `degraded`.
+- **Feedback:** thumbs up/down are stored per assistant message (`feedback` table, one row per message, optional reason on a thumbs down) and come back on reload. Only the thread's owner can rate; deleting the trip deletes its ratings.
+- **Flagged replies:** when the checks remove an unsupported price or block a false booking claim, the model's original text is kept as a `reply_flagged` event for review.
+- **Admin v2:** feedback (worst first) with a training queue and a JSONL export (conversation up to the reply, personal details masked); flagged replies (what the model wrote vs what the customer saw); a read-only conversation view with emails and phone numbers masked; emailing a contact-form sender or a booking's account holder from Takeoff's address. All of it is in the audit log.

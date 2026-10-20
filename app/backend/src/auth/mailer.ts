@@ -30,7 +30,7 @@ const sign = 'Takeoff\n(If you did not ask for this, you can ignore this email.)
 const esc = (v: string) => v.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
 /** The site's look in email-safe HTML: warm off-white page, white card, bold wordmark, one black pill button. */
-function branded(o: { preview: string; heading: string; body: string; button: string; link: string; note: string }): string {
+function branded(o: { preview: string; heading: string; body: string; button?: string; link?: string; note?: string; footer?: string }): string {
   const font = "-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif";
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><meta name="color-scheme" content="light"><title>${esc(o.heading)}</title></head>
 <body style="margin:0;padding:0;background:#FAF8F5;font-family:${font};color:#18181b">
@@ -41,10 +41,10 @@ function branded(o: { preview: string; heading: string; body: string; button: st
 <tr><td style="background:#ffffff;border:1px solid #E0DEDC;border-radius:28px;padding:32px">
 <h1 style="margin:0 0 12px;font-size:24px;line-height:1.2;font-weight:800;letter-spacing:-0.6px;color:#0c0a09">${esc(o.heading)}</h1>
 <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#57534e">${o.body}</p>
-<a href="${esc(o.link)}" style="display:inline-block;background:#000000;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 22px;border-radius:999px">${esc(o.button)}</a>
-<p style="margin:24px 0 0;font-size:12px;line-height:1.6;color:#78716c">${esc(o.note)}<br>Or paste this link into your browser:<br><span style="color:#57534e;word-break:break-all">${esc(o.link)}</span></p>
+${o.button && o.link ? `<a href="${esc(o.link)}" style="display:inline-block;background:#000000;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 22px;border-radius:999px">${esc(o.button)}</a>
+<p style="margin:24px 0 0;font-size:12px;line-height:1.6;color:#78716c">${esc(o.note ?? '')}<br>Or paste this link into your browser:<br><span style="color:#57534e;word-break:break-all">${esc(o.link)}</span></p>` : ''}
 </td></tr>
-<tr><td style="padding:20px 8px 0;font-size:12px;line-height:1.6;color:#a8a29e">If you did not ask for this, you can ignore this email.</td></tr>
+<tr><td style="padding:20px 8px 0;font-size:12px;line-height:1.6;color:#a8a29e">${esc(o.footer ?? 'If you did not ask for this, you can ignore this email.')}</td></tr>
 </table></td></tr></table></body></html>`;
 }
 
@@ -68,4 +68,12 @@ export const resetMail = (to: string, name: string, link: string): Mail => ({
   to, subject: 'Reset your Takeoff password',
   text: `Hi ${name},\n\nUse this link to choose a new password:\n${link}\n\nThe link works for 1 hour and can be used once.\n\n${sign}`,
   html: branded({ preview: 'Choose a new password for Takeoff.', heading: 'Choose a new password', body: `Hi ${esc(name)}, someone (hopefully you) asked to reset the password for your Takeoff account. Use the button below to choose a new one. You'll be signed out on other devices.`, button: 'Choose a new password', link, note: 'The link works for 1 hour and can be used once.' }),
+});
+
+/** A reply from the Takeoff team (admin panel, D-026): the admin's own words, in the site's frame. */
+export const teamReplyMail = (to: string, name: string, subject: string, body: string): Mail => ({
+  to, subject,
+  text: `Hi ${name},\n\n${body}\n\nThe Takeoff team`,
+  html: branded({ preview: body.slice(0, 90), heading: subject, body: `Hi ${esc(name)},<br><br>${esc(body).replace(/\n/g, '<br>')}<br><br>The Takeoff team`,
+    footer: 'You are getting this because you wrote to Takeoff or asked for a booking.' }),
 });

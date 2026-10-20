@@ -590,6 +590,7 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext, 
     let reply: string;
     let degraded = false;
     let replyId: number | undefined;
+    let flagged: { kind: string; model: string } | undefined;
     let offers: Offer[] = [];
     let pendingBooking: PendingBooking | undefined;
     let region: { name: string; code: string } | null = null;
@@ -673,7 +674,8 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext, 
 
       // The confirmation summary is built from supplier data; model text is checked against
       // the numbers it was given: every tool result in the thread, the deals on screen, the user's words.
-      reply = toPlainText(pendingBooking ? turn.reply : gatePrices(gateAssistantOutput(turn.reply).text, {
+      const checked = pendingBooking ? { text: turn.reply, blocked: false } : gateAssistantOutput(turn.reply);
+      reply = toPlainText(pendingBooking ? turn.reply : gatePrices(checked.text, {
         facts: [
           ...history.filter((m) => m.role === 'tool').map((m) => m.content),
           ...turn.added.filter((m) => m.role === 'tool').map((m) => m.content),
@@ -682,6 +684,10 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext, 
         user: [...history, toStore[0]].filter((m) => m.role === 'user').map((m) => m.content).join('\n'),
       }));
       toStore.push(...turn.added.slice(0, -1), { role: 'assistant', content: reply });
+      // the checks had to step in: kept for the admin's flagged list and the next round of training (D-026)
+      if (!degraded && (checked.blocked || toPlainText(checked.text) !== reply)) {
+        flagged = { kind: checked.blocked ? 'blocked_claim' : 'price_removed', model: turn.reply.slice(0, 2000) };
+      }
       }
     }
 
@@ -701,6 +707,7 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext, 
       const [userTurn, ...rest] = toStore;
       store.saveTurn(id, store.appendMessage(id, userTurn), tripBefore, versionBefore);
       for (const m of rest) { const mid = store.appendMessage(id, m); if (m.role === 'assistant' && m.content) replyId = mid; }
+      if (flagged && replyId) store.saveEvent(sessionId, 'reply_flagged', JSON.stringify({ threadId: id, messageId: replyId, ...flagged }));
       if (region) store.updateThread(id, { destination: region.name, region_code: region.code, stage: 'planning' });
       if (planned) { store.saveTrip(id, planned.trip); store.saveProfile(sessionId, planned.profile); }
       if (itinerary) store.saveItinerary(id, itinerary);

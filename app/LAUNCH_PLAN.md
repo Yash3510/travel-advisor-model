@@ -26,18 +26,18 @@ Hotels/flights stay **booking requests** a person completes; we never collect tr
 - [ ] Export GGUF, run 30-scenario eval; ship only if avg ≥3 and 0 critical — C
 - [ ] If it fails: fix weak spots, add data, retrain (≈ +1 day per round) — C
 - [ ] Put v3 in the app; end-to-end check in the real chat — C
-- [ ] Model-down fallback: friendly message, chat stays usable — C
+- [x] Model-down fallback: friendly message, chat stays usable — C
 
 ### 3B. Parallel track (no model, no business papers needed) — pulled forward from Phase 5
 - [x] Destination hub `/destinations` + 117 place pages from the guide (SEO) — C
 - [x] 14 sample itineraries `/trips/<slug>` that open in chat (Ladakh, Coorg skipped: map data too thin) — C
 - [x] How it works page — C
 - [x] SEO basics: titles/descriptions, sitemap.xml, robots.txt, share images — C
-- [ ] Thumbs up/down on Kodi replies (feeds future training) — C
+- [x] Thumbs up/down on Kodi replies (feeds future training) — C
 - [x] Admin panel v1: dashboard, booking requests, contact inbox, users, audit log — C
-- [ ] Admin v2: conversations (personal details hidden), flagged replies, "send to training", email customers — C
+- [x] Admin v2: conversations (personal details hidden), flagged replies, "send to training", email customers — C
 - [x] Admin security: role-based, 2-step sign-in, audit log — C
-- [ ] Cookie policy page — C
+- [x] Cookie policy page — C
 
 ### 3C. Pranay, now (each takes minutes; approvals take days)
 - [ ] Start Razorpay **individual** KYC (PAN, bank, Aadhaar; category: digital services/SaaS) — P

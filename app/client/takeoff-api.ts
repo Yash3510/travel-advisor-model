@@ -292,13 +292,19 @@ export interface Account { id: number; name: string; email: string; emailVerifie
 // ── admin panel (D-025) ──
 export const BOOKING_STATUSES = ['PENDING_SUPPLIER_CONFIRMATION', 'IN_PROGRESS', 'CONFIRMED', 'CANCELLED'] as const;
 export type BookingStatus = (typeof BOOKING_STATUSES)[number];
-export interface AdminOverview { users: number; usersNew7d: number; threads7d: number; messages7d: number; bookingsOpen: number; messagesOpen: number; sharesActive: number; /** last 14 days, oldest first (UTC dates) */ daily: { date: string; signups: number; trips: number; messages: number }[] }
+export interface AdminOverview { users: number; usersNew7d: number; threads7d: number; messages7d: number; bookingsOpen: number; messagesOpen: number; sharesActive: number; feedbackDown: number; flags7d: number; /** last 14 days, oldest first (UTC dates) */ daily: { date: string; signups: number; trips: number; messages: number }[] }
 export interface AdminBooking {
   ref: string; status: BookingStatus; travelers: number; destination: string | null; threadId: number; createdAt: string; updatedAt: string | null; note: string;
   customer: { name: string; email: string } | null; offer: Offer | null;
 }
 export interface AdminMessage { id: number; name: string; email: string; topic: string; message: string; createdAt: string; handledAt: string | null }
 export interface AdminUser { id: number; name: string; email: string; emailVerified: boolean; google: boolean; admin: boolean; disabled: boolean; threads: number; createdAt: string }
+export interface AdminFeedback { messageId: number; threadId: number; rating: 'up' | 'down'; reason: string | null; destination: string | null; asked: string | null; reply: string; training: boolean; at: string }
+export interface AdminFlag { id: number; threadId: number; messageId: number; kind: 'price_removed' | 'blocked_claim' | string; model: string; shown: string | null; at: string }
+export interface AdminConversation {
+  id: number; title: string; destination: string | null; createdAt: string; account: boolean;
+  messages: { id: number; role: 'user' | 'assistant'; content: string; at: string; feedback: { rating: 'up' | 'down'; reason: string | null } | null }[];
+}
 export interface AdminAuditEntry { id: number; admin: string | null; action: string; target: string | null; detail: Record<string, unknown> | null; ip: string | null; at: string }
 
 /**
@@ -503,6 +509,17 @@ export function createTakeoffApi(opts: { baseUrl?: string; storage?: KeyValueSto
     users: async (q = '') => (await call<{ users: AdminUser[] }>(`/api/admin/users${q ? `?q=${encodeURIComponent(q)}` : ''}`)).users,
     setDisabled: (id: number, disabled: boolean) => post<{ ok: true }>(`/api/admin/users/${id}/${disabled ? 'disable' : 'enable'}`, {}),
     audit: async () => (await call<{ entries: AdminAuditEntry[] }>('/api/admin/audit')).entries,
+    feedback: async () => (await call<{ feedback: AdminFeedback[] }>('/api/admin/feedback')).feedback,
+    setTraining: (messageId: number, training: boolean) => patch<{ ok: true }>(`/api/admin/feedback/${messageId}`, { training }),
+    /** the queued replies as a JSONL file */
+    trainingExport: async (): Promise<Blob> => {
+      const res = await fetch(`${base}/api/admin/training-export`, { credentials });
+      if (!res.ok) throw await failure(res);
+      return res.blob();
+    },
+    flags: async () => (await call<{ flags: AdminFlag[] }>('/api/admin/flags')).flags,
+    conversation: (threadId: number) => call<AdminConversation>(`/api/admin/threads/${threadId}`),
+    email: (to: { kind: 'message' | 'booking'; id: number | string }, subject: string, body: string) => post<{ ok: true }>('/api/admin/email', { ...to, subject, body }),
   };
 
   // ── accounts (D-021): the server keeps the sign-in in an HttpOnly cookie; the client keeps the account's chat session id ──

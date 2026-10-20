@@ -25,7 +25,7 @@ function browser() {
     if (set) cookie = /Max-Age=0/.test(set) ? '' : set.split(';')[0];
     return { status: res.status, data: await res.json() as any }; // eslint-disable-line @typescript-eslint/no-explicit-any
   };
-  return { call };
+  return { call, get cookie() { return cookie; } };
 }
 const PW = 'monsoon trains to goa';
 let n = 0;
@@ -134,6 +134,39 @@ describe('admin actions', () => {
     expect((await b.call('GET', '/api/admin/messages')).data.messages.find((m: { id: number }) => m.id === id).handledAt).not.toBeNull();
     expect((await b.call('PATCH', '/api/admin/bookings/TK-NOPE', { status: 'PAID' })).data.error.code).toBe('invalid_status');
     expect((await b.call('PATCH', '/api/admin/bookings/TK-NOPE', { status: 'CONFIRMED' })).status).toBe(404);
+  });
+
+  it('feedback: worst first, personal details masked, queued for training and exported as JSONL', async () => {
+    const { b } = await verifiedAdmin();
+    db.prepare("INSERT INTO sessions(session_id) VALUES ('fb-session')").run();
+    const t = Number(db.prepare("INSERT INTO threads(session_id, title) VALUES ('fb-session', 'Goa')").run().lastInsertRowid);
+    db.prepare("INSERT INTO messages(thread_id, role, content) VALUES (?, 'user', 'goa in may? mail me at asha@example.com or 98765 43210')").run(t);
+    const mid = Number(db.prepare("INSERT INTO messages(thread_id, role, content) VALUES (?, 'assistant', 'May is hot in Goa.')").run(t).lastInsertRowid);
+    db.prepare("INSERT INTO feedback(message_id, thread_id, rating, reason) VALUES (?, ?, 'down', 'Too vague')").run(mid, t);
+
+    const fb = (await b.call('GET', '/api/admin/feedback')).data.feedback.find((f: { messageId: number }) => f.messageId === mid);
+    expect(fb).toMatchObject({ rating: 'down', reason: 'Too vague', reply: 'May is hot in Goa.', training: false });
+    expect(fb.asked).toBe('goa in may? mail me at [email] or [number]');
+    expect((await b.call('PATCH', `/api/admin/feedback/${mid}`, { training: true })).status).toBe(200);
+
+    const res = await fetch(`${base}/api/admin/training-export`, { headers: { Cookie: b.cookie } });
+    expect(res.headers.get('content-disposition')).toMatch(/attachment; filename="takeoff-training-/);
+    const line = (await res.text()).trim().split('\n').map((l) => JSON.parse(l)).find((x) => x.message === mid);
+    expect(line).toMatchObject({ rating: 'down', reason: 'Too vague', messages: [{ role: 'user', content: 'goa in may? mail me at [email] or [number]' }, { role: 'assistant', content: 'May is hot in Goa.' }] });
+    const convo = (await b.call('GET', `/api/admin/threads/${t}`)).data;
+    expect(convo.messages.map((m: { content: string }) => m.content)).toEqual(['goa in may? mail me at [email] or [number]', 'May is hot in Goa.']);
+    expect(convo.messages[1].feedback).toEqual({ rating: 'down', reason: 'Too vague' });
+  });
+
+  it('emails a contact-form sender from the panel and marks the message replied', async () => {
+    const { b } = await verifiedAdmin();
+    const id = Number(db.prepare("INSERT INTO contact_messages(name, email, topic, message) VALUES ('Meera Iyer', 'meera@example.com', 'trip', 'Help with Kerala')").run().lastInsertRowid);
+    expect((await b.call('POST', '/api/admin/email', { kind: 'message', id, subject: 'Your Kerala trip', body: 'We can help.' })).status).toBe(200);
+    const sent = db.prepare("SELECT subject, text FROM outbox WHERE to_email = 'meera@example.com' ORDER BY id DESC").get() as { subject: string; text: string };
+    expect(sent).toMatchObject({ subject: 'Your Kerala trip' });
+    expect(sent.text).toMatch(/^Hi Meera,\n\nWe can help\./);
+    expect((db.prepare('SELECT handled_at FROM contact_messages WHERE id = ?').get(id) as { handled_at: string | null }).handled_at).not.toBeNull();
+    expect((await b.call('POST', '/api/admin/email', { kind: 'booking', id: 'TK-NOPE', subject: 'x', body: 'hello' })).data.error.code).toBe('recipient_not_found');
   });
 
   it('writes what admins see and change to the audit log', async () => {

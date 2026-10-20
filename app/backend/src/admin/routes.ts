@@ -8,6 +8,7 @@ import { matchStep, newSecret, otpauthUri, seal, unseal } from '../auth/totp.js'
 import { config } from '../config.js';
 import { db } from '../db.js';
 import { clientIp, HttpError, json, rateLimited, readBody, str } from '../http.js';
+import { sendMail, teamReplyMail } from '../auth/mailer.js';
 
 export const BOOKING_STATUSES = ['PENDING_SUPPLIER_CONFIRMATION', 'IN_PROGRESS', 'CONFIRMED', 'CANCELLED'] as const;
 const toIso = (t: string | null) => (t ? new Date(t.replace(' ', 'T') + 'Z').toISOString() : null);
@@ -17,6 +18,8 @@ function audit(req: IncomingMessage, admin: UserRow, action: string, target?: st
     .run(admin.id, action, target ?? null, detail ? JSON.stringify(detail) : null, clientIp(req));
 }
 
+/** Personal details hidden in what admins read: emails, phone numbers, long digit runs. */
+const mask = (t: string) => t.replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, '[email]').replace(/(\+?\d[\d\s-]{8,}\d)/g, '[number]');
 const n = (sql: string) => (db.prepare(sql).get() as { n: number }).n;
 /** Counts per day (UTC) for the last `days` days, oldest first; days with nothing are 0, not missing. */
 function daily(days: number) {
@@ -86,6 +89,8 @@ export async function handleAdmin(req: IncomingMessage, res: ServerResponse, pat
       bookingsOpen: n("SELECT COUNT(*) n FROM booking_requests WHERE status IN ('PENDING_SUPPLIER_CONFIRMATION', 'IN_PROGRESS')"),
       messagesOpen: n('SELECT COUNT(*) n FROM contact_messages WHERE handled_at IS NULL'),
       sharesActive: n('SELECT COUNT(*) n FROM shares'),
+      feedbackDown: n("SELECT COUNT(*) n FROM feedback WHERE rating = 'down' AND training_at IS NULL"),
+      flags7d: n("SELECT COUNT(*) n FROM events WHERE name = 'reply_flagged' AND created_at > datetime('now', '-7 days')"),
       daily: daily(14),
     });
     return true;
@@ -159,6 +164,92 @@ export async function handleAdmin(req: IncomingMessage, res: ServerResponse, pat
     db.prepare(`UPDATE users SET disabled_at = ${off ? "datetime('now')" : 'NULL'} WHERE id = ?`).run(target.id);
     if (off) db.prepare('DELETE FROM auth_sessions WHERE user_id = ?').run(target.id);
     audit(req, admin, off ? 'user_disabled' : 'user_enabled', String(target.id));
+    json(res, 200, { ok: true });
+    return true;
+  }
+
+  // ── feedback and the training queue (D-026) ──
+  if (route === 'GET /api/admin/feedback') {
+    const rows = db.prepare(`SELECT f.*, m.content AS reply, t.destination,
+        (SELECT u.content FROM messages u WHERE u.thread_id = f.thread_id AND u.role = 'user' AND u.id < f.message_id ORDER BY u.id DESC LIMIT 1) AS asked
+      FROM feedback f JOIN messages m ON m.id = f.message_id JOIN threads t ON t.id = f.thread_id
+      ORDER BY f.rating = 'up', f.updated_at DESC LIMIT 200`).all() as Record<string, string | number | null>[];
+    audit(req, admin, 'view_feedback', undefined, { count: rows.length });
+    json(res, 200, { feedback: rows.map((f) => ({ messageId: f.message_id, threadId: f.thread_id, rating: f.rating, reason: f.reason, destination: f.destination,
+      asked: f.asked ? mask(String(f.asked)) : null, reply: mask(String(f.reply)), training: !!f.training_at, at: toIso(f.updated_at as string) })) });
+    return true;
+  }
+  const queue = /^PATCH \/api\/admin\/feedback\/(\d+)$/.exec(route);
+  if (queue) {
+    const on = (await readBody(req)).training === true;
+    const r = db.prepare(`UPDATE feedback SET training_at = ${on ? "datetime('now')" : 'NULL'} WHERE message_id = ?`).run(Number(queue[1]));
+    if (!r.changes) throw new HttpError(404, 'feedback_not_found', 'No such rating.');
+    audit(req, admin, on ? 'training_added' : 'training_removed', queue[1]);
+    json(res, 200, { ok: true });
+    return true;
+  }
+  if (route === 'GET /api/admin/training-export') {
+    // one JSON line per queued reply: the conversation up to it (personal details masked), the rating and the reason
+    const rows = db.prepare('SELECT * FROM feedback WHERE training_at IS NOT NULL ORDER BY training_at').all() as { message_id: number; thread_id: number; rating: string; reason: string | null }[];
+    const lines = rows.map((f) => JSON.stringify({
+      thread: f.thread_id, message: f.message_id, rating: f.rating, reason: f.reason,
+      messages: (db.prepare("SELECT role, content FROM messages WHERE thread_id = ? AND id <= ? AND role IN ('user','assistant') AND content != '' ORDER BY id").all(f.thread_id, f.message_id) as { role: string; content: string }[])
+        .map((m) => ({ role: m.role, content: mask(m.content) })),
+    }));
+    audit(req, admin, 'training_exported', undefined, { count: rows.length });
+    res.writeHead(200, { 'Content-Type': 'application/x-ndjson; charset=utf-8', 'Content-Disposition': `attachment; filename="takeoff-training-${new Date().toISOString().slice(0, 10)}.jsonl"` });
+    res.end(lines.join('\n') + (lines.length ? '\n' : ''));
+    return true;
+  }
+
+  // ── flagged replies: where the checks corrected the model ──
+  if (route === 'GET /api/admin/flags') {
+    const rows = db.prepare("SELECT id, props, created_at FROM events WHERE name = 'reply_flagged' ORDER BY id DESC LIMIT 200").all() as { id: number; props: string; created_at: string }[];
+    audit(req, admin, 'view_flags', undefined, { count: rows.length });
+    json(res, 200, { flags: rows.map((r) => {
+      const p = JSON.parse(r.props) as { threadId: number; messageId: number; kind: string; model: string };
+      const shown = db.prepare('SELECT content FROM messages WHERE id = ?').get(p.messageId) as { content: string } | undefined;
+      return { id: r.id, threadId: p.threadId, messageId: p.messageId, kind: p.kind, model: mask(p.model), shown: shown ? mask(shown.content) : null, at: toIso(r.created_at) };
+    }) });
+    return true;
+  }
+
+  // ── one conversation, read-only, personal details masked ──
+  const convo = /^GET \/api\/admin\/threads\/(\d+)$/.exec(route);
+  if (convo) {
+    const t = db.prepare(`SELECT t.id, t.title, t.destination, t.created_at, u.name, u.email FROM threads t
+      LEFT JOIN sessions s ON s.session_id = t.session_id LEFT JOIN users u ON u.id = s.user_id WHERE t.id = ?`).get(Number(convo[1])) as Record<string, string | number | null> | undefined;
+    if (!t) throw new HttpError(404, 'thread_not_found', 'No such conversation.');
+    const rated = new Map((db.prepare('SELECT message_id, rating, reason FROM feedback WHERE thread_id = ?').all(t.id) as { message_id: number; rating: string; reason: string | null }[]).map((f) => [f.message_id, f]));
+    audit(req, admin, 'view_conversation', String(t.id));
+    json(res, 200, {
+      id: t.id, title: mask(String(t.title)), destination: t.destination, createdAt: toIso(t.created_at as string), account: !!t.email,
+      messages: (db.prepare("SELECT id, role, content, created_at FROM messages WHERE thread_id = ? AND role IN ('user','assistant') AND content != '' ORDER BY id").all(t.id) as { id: number; role: string; content: string; created_at: string }[])
+        .map((m) => ({ id: m.id, role: m.role, content: mask(m.content), at: toIso(m.created_at), feedback: rated.get(m.id) ? { rating: rated.get(m.id)!.rating, reason: rated.get(m.id)!.reason } : null })),
+    });
+    return true;
+  }
+
+  // ── email a customer: a contact message's sender or a booking's account holder ──
+  if (route === 'POST /api/admin/email') {
+    if (rateLimited(req, `admin-email:${admin.id}`, 10)) throw new HttpError(429, 'rate_limited', 'Too many emails. Please wait a minute.');
+    const body = await readBody(req);
+    const subject = str(body.subject).trim().slice(0, 150);
+    const text = str(body.body).trim().slice(0, 5000);
+    if (!subject || text.length < 2) throw new HttpError(400, 'invalid_email_body', 'Write a subject and a message.');
+    let to: { name: string; email: string } | undefined;
+    if (body.kind === 'message') {
+      to = db.prepare('SELECT name, email FROM contact_messages WHERE id = ?').get(Number(body.id)) as typeof to;
+    } else if (body.kind === 'booking') {
+      to = db.prepare(`SELECT u.name, u.email FROM booking_requests b JOIN threads t ON t.id = b.thread_id JOIN sessions s ON s.session_id = t.session_id
+        JOIN users u ON u.id = s.user_id WHERE b.booking_ref = ?`).get(str(body.id)) as typeof to;
+    }
+    if (!to) throw new HttpError(404, 'recipient_not_found', 'There is no email address for this.');
+    try { await sendMail(teamReplyMail(to.email, to.name.split(' ')[0], subject, text)); } catch (err) {
+      throw new HttpError(502, 'email_failed', `The email could not be sent: ${(err as Error).message}`);
+    }
+    if (body.kind === 'message') db.prepare("UPDATE contact_messages SET handled_at = COALESCE(handled_at, datetime('now')) WHERE id = ?").run(Number(body.id));
+    audit(req, admin, 'email_sent', `${body.kind}:${String(body.id)}`, { subject });
     json(res, 200, { ok: true });
     return true;
   }

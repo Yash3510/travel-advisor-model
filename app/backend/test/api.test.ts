@@ -3,6 +3,7 @@ import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { config } from '../src/config.js';
 import { createHandler } from '../src/routes.js';
+import { db } from '../src/db.js';
 import { MockBackend } from '../src/tools.js';
 import { createTakeoffApi, readSse, toDealCard, TakeoffApiError, type Deal } from '../../client/takeoff-api.js';
 import type { TripInsight } from '../src/domain/insights.js';
@@ -124,6 +125,10 @@ describe('POST /api/chat', () => {
     expect(offer.nights).toBe(5);
     expect(done.data.message).toContain(`₹${offer.price_per_night_inr.toLocaleString('en-IN')}`);
     expect(done.data.message).not.toContain('9,87,654');
+    // the correction is recorded for the admin's flagged list, with what the model wrote
+    const flag = db.prepare("SELECT props FROM events WHERE name = 'reply_flagged' ORDER BY id DESC LIMIT 1").get() as { props: string };
+    expect(JSON.parse(flag.props)).toMatchObject({ threadId: done.data.threadId, messageId: done.data.messageId, kind: 'price_removed' });
+    expect(JSON.parse(flag.props).model).toContain('87,654');
 
     const sent = stub.requests[1].messages;
     expect(sent.at(-1).tool_call_id).toBe(sent.at(-2).tool_calls[0].id);
