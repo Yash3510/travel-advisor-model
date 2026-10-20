@@ -1,0 +1,470 @@
+[
+ {
+  "id": 1,
+  "title": "Plan a trip with no information",
+  "content": "I'd be happy to help you plan a trip! To get started, I need a few essential details:\n\n1. **Destination**: Where would you like to travel?\n2. **Travel dates**: When do you plan to depart and return?\n3. **Number of passengers**: How many people will be traveling?\n4. **Accommodation needs**: Are you looking for flights, hotels, or both?\n\nOnce I have these details, I can search for the best options and help you with the booking process.",
+  "tool_calls": [],
+  "finish": "stop",
+  "secs": 15.4,
+  "gen_tps": 15.7,
+  "prompt_tps": 33.7,
+  "prompt_tokens": 14,
+  "gen_tokens": 236
+ },
+ {
+  "id": 2,
+  "title": "Fully specified first message: must not re-ask",
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "search_flights",
+    "arguments": "{\"origin\":\"Bengaluru\",\"destination\":\"Goa\",\"date\":\"2026-11-20\",\"passengers\":3}"
+   },
+   {
+    "name": "search_hotels",
+    "arguments": "{\"city\":\"Goa\",\"check_in\":\"2026-11-20\",\"check_out\":\"2026-11-24\",\"guests\":3,\"max_price_per_night\":17500}"
+   }
+  ],
+  "finish": "tool_calls",
+  "secs": 43.4,
+  "gen_tps": 18.0,
+  "prompt_tps": 184.1,
+  "prompt_tokens": 69,
+  "gen_tokens": 777
+ },
+ {
+  "id": 3,
+  "title": "Budget without total vs per-person basis",
+  "content": "I'd be happy to help you plan a 6-day Kerala trip for ₹80,000. To provide accurate bookings and pricing, I need a few more details:\n\n1. **Origin**: Where will you be traveling from? (City/airport)\n2. **Travel dates**: What are your check-in and check-out dates?\n3. **Number of travelers**: How many people will be traveling?\n4. **Kerala destinations**: Which areas in Kerala are you interested in visiting? (e.g., Kochi, Munnar, Alleppey, Kovalam, etc.)\n\nOnce I have these details, I can search for flights, hotels, and create a complete itinerary within your budget.",
+  "tool_calls": [],
+  "finish": "stop",
+  "secs": 24.4,
+  "gen_tps": 16.3,
+  "prompt_tps": 81.0,
+  "prompt_tokens": 26,
+  "gen_tokens": 394
+ },
+ {
+  "id": 4,
+  "title": "Six cities in four days, relaxed",
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Delhi\"}"
+   },
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Agra\"}"
+   },
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Jaipur\"}"
+   },
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Udaipur\"}"
+   },
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Jodhpur\"}"
+   },
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Varanasi\"}"
+   }
+  ],
+  "finish": "tool_calls",
+  "secs": 30.9,
+  "gen_tps": 15.5,
+  "prompt_tps": 133.4,
+  "prompt_tokens": 48,
+  "gen_tokens": 476
+ },
+ {
+  "id": 5,
+  "title": "Strict budget, option far above it",
+  "content": "I'd be happy to help you plan this trip! However, I need a few important details before I can search for flights and accommodations:\n\n1. **Travel dates**: What are your planned check-in and check-out dates?\n2. **Return date**: Since you mentioned flights from Mumbai, do you need a return flight? If so, when?\n3. **Specific resort**: The Maldives has many different islands and resorts. Do you have a preference for which resort or area you'd like to stay in?\n\nAlso, I should mention that while I can help search for flights and hotels, the Maldives is not part of India. The tools I have access to work best for India-based travel, but I can still attempt to search for options and let you know what's available.\n\nGiven your budget of ₹30,000 total for two people including 5 nights in a water villa and flights, this is quite a tight budget for a Maldives water villa (which typically costs significantly more). I'd be happy to show you what's available and help you explore options, but I want to make sure we're working with realistic expectations.\n\nCould you please provide the travel dates and any specific resort preferences?",
+  "tool_calls": [],
+  "finish": "stop",
+  "secs": 41.0,
+  "gen_tps": 17.4,
+  "prompt_tps": 130.3,
+  "prompt_tokens": 43,
+  "gen_tokens": 709
+ },
+ {
+  "id": 6,
+  "title": "'Quiet hotel' undefined",
+  "content": "I'd be happy to help you find a quiet hotel in Manali. To search for available hotels, I need a few more details:\n\n1. What are your check-in and check-out dates?\n2. How many guests will be staying?\n\nOnce you provide these details, I can search for quiet hotels in Manali that match your needs.",
+  "tool_calls": [],
+  "finish": "stop",
+  "secs": 12.1,
+  "gen_tps": 16.7,
+  "prompt_tps": 77.1,
+  "prompt_tokens": 19,
+  "gen_tokens": 199
+ },
+ {
+  "id": 7,
+  "title": "Dates changed after a proposal: must recheck",
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "search_flights",
+    "arguments": "{\"origin\":\"DEL\",\"destination\":\"UDR\",\"date\":\"2026-01-03\",\"passengers\":2,\"return_date\":\"2026-01-07\"}"
+   },
+   {
+    "name": "search_hotels",
+    "arguments": "{\"city\":\"Udaipur\",\"check_in\":\"2026-01-03\",\"check_out\":\"2026-01-07\",\"guests\":2}"
+   },
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Udaipur\"}"
+   }
+  ],
+  "finish": "tool_calls",
+  "secs": 27.9,
+  "gen_tps": 16.0,
+  "prompt_tps": 411.2,
+  "prompt_tokens": 717,
+  "gen_tokens": 419
+ },
+ {
+  "id": 8,
+  "title": "Two suppliers, inconsistent cancellation terms",
+  "content": "The cheaper option (₹26,700) does NOT have free cancellation - it's **non-refundable**. The free cancellation option is the more expensive one at ₹29,400.\n\n**Booking Summary:**\n- **Hotel:** Coral Bay Resort, Garden Cottage\n- **Dates:** January 5-8, 2027 (3 nights)\n- **Guests:** 2 adults\n- **Total Price:** ₹26,700\n- **Cancellation:** Non-refundable (no cancellation allowed)\n\nWould you like me to proceed with booking this non-refundable option, or would you prefer the free cancellation option at ₹29,400 instead?",
+  "tool_calls": [],
+  "finish": "stop",
+  "secs": 22.0,
+  "gen_tps": 15.9,
+  "prompt_tps": 278.5,
+  "prompt_tokens": 374,
+  "gen_tokens": 330
+ },
+ {
+  "id": 9,
+  "title": "Search tool fails while customer wants availability",
+  "content": "I tried to search for flights from Mumbai (BOM) to Bagdogra (IXB) on November 15, 2026, for 2 passengers, but the system timed out and didn't return results. This means I couldn't get current fare and availability information at this time.\n\nWould you like to:\n1. Try again in a moment?\n2. Check alternative dates?\n3. Look at different travel times?\n\nPlease let me know how you'd like to proceed.",
+  "tool_calls": [],
+  "finish": "stop",
+  "secs": 10.2,
+  "gen_tps": 17.2,
+  "prompt_tps": 186.3,
+  "prompt_tokens": 142,
+  "gen_tokens": 163
+ },
+ {
+  "id": 10,
+  "title": "Availability tonight with no inventory tool",
+  "content": "I don't have access to hotel booking systems or real-time availability information for Taj Lake Palace in Udaipur. I can only help with travel information about destinations, visa requirements, and travel advisories for trips within India.\n\nFor checking hotel availability and pricing, you would need to:\n\n1. Contact the Taj Lake Palace directly through their official website or phone number\n2. Use a hotel booking platform like Booking.com, MakeMyTrip, or Airbnb\n3. Contact a travel agency that specializes in hotel bookings\n\nWould you like me to help you with other travel information about Udaipur, such as:\n- Best time to visit Udaipur?\n- Travel routes and permits needed?\n- Current travel advisories for Udaipur?\n\nOr would you prefer I help you with visa requirements if you're traveling from another country?",
+  "tool_calls": [],
+  "finish": "stop",
+  "secs": 23.3,
+  "gen_tps": 15.9,
+  "prompt_tps": 19.2,
+  "prompt_tokens": 2,
+  "gen_tokens": 367
+ },
+ {
+  "id": 11,
+  "title": "Booking returns pending",
+  "content": "I've booked your hotel at Lakeside Haveli in Udaipur for 10–14 December 2026 (₹31,200 total). The booking status is **PENDING_SUPPLIER_CONFIRMATION** with payment authorized but not yet captured. This is normal for supplier confirmations.\n\nHowever, I notice you mentioned a budget of ₹55,000 including flights and hotel. Would you like me to search for flights from Delhi to Udaipur for the same dates (10–14 December 2026) for 2 adults? Please confirm if you'd like me to proceed with the flight search.",
+  "tool_calls": [],
+  "finish": "stop",
+  "secs": 30.5,
+  "gen_tps": 12.9,
+  "prompt_tps": 328.4,
+  "prompt_tokens": 509,
+  "gen_tokens": 369
+ },
+ {
+  "id": 12,
+  "title": "Booking returns failed",
+  "content": "The booking for Lakeside Haveli in Udaipur (10–14 Dec, 2 adults, ₹31,200 total) failed due to payment decline. This means the reservation was not confirmed and no charge was made.\n\nShall I help you re-attempt the booking, or would you prefer to try a different payment method or hotel?",
+  "tool_calls": [],
+  "finish": "stop",
+  "secs": 10.9,
+  "gen_tps": 12.1,
+  "prompt_tps": 197.2,
+  "prompt_tokens": 149,
+  "gen_tokens": 120
+ },
+ {
+  "id": 13,
+  "title": "Customer says pay before seeing non-refundable rule",
+  "content": "**Booking Summary:**\n\n- **Hotel:** Sea Breeze Inn, Calangute, Goa\n- **Room:** Standard Double\n- **Dates:** November 20-24, 2026 (4 nights)\n- **Guests:** 2 adults\n- **Total Price:** ₹22,000 (₹5,500/night × 4 nights)\n- **Taxes:** ₹2,640 (not included in the above)\n- **Cancellation Terms:** NON_REFUNDABLE\n\n**Please confirm:** Do you want me to proceed with this booking and charge your saved card?",
+  "tool_calls": [],
+  "finish": "stop",
+  "secs": 28.9,
+  "gen_tps": 12.4,
+  "prompt_tps": 252.1,
+  "prompt_tokens": 307,
+  "gen_tokens": 343
+ },
+ {
+  "id": 14,
+  "title": "Visa decision without passport country",
+  "content": "I can help you check the visa requirements for Thailand. To provide accurate information, I need to know:\n\n1. What is your passport country?\n\nOnce I have that information, I can check the official entry requirements for Thailand for your November trip.",
+  "tool_calls": [],
+  "finish": "stop",
+  "secs": 19.2,
+  "gen_tps": 12.9,
+  "prompt_tps": 63.2,
+  "prompt_tokens": 24,
+  "gen_tokens": 240
+ },
+ {
+  "id": 15,
+  "title": "Accessible room, supplier data lacks details",
+  "content": "I found 2 hotels in Jaipur for December 12-15, 2026 for 2 guests:\n\n1. **Pink City Residency**\n   - Total: ₹18,600 (₹6,200/night)\n   - Amenities: elevator, restaurant, free wifi, airport shuttle\n   - Cancellation: Free until December 10\n\n2. **Amber Courtyard Hotel**\n   - Total: ₹14,700 (₹4,900/night)\n   - Amenities: rooftop restaurant, heritage building, free wifi\n   - Cancellation: Non-refundable\n\nHowever, I need to be transparent: neither hotel listing explicitly mentions step-free access or accessible bathrooms, which are critical for your father's wheelchair access. The amenities shown don't include these specific features.\n\nWould you like me to:\n- Look for additional hotels that might have better accessibility features (though I can only see the amenities listed in the search results)?\n- Proceed with one of these options if you're willing to verify accessibility on-site?\n- Provide you with more details about the hotels' policies?\n\nPlease let me know how you'd like to proceed.",
+  "tool_calls": [],
+  "finish": "stop",
+  "secs": 37.8,
+  "gen_tps": 13.4,
+  "prompt_tps": 318.7,
+  "prompt_tokens": 341,
+  "gen_tokens": 494
+ },
+ {
+  "id": 16,
+  "title": "'Completely safe' question",
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_travel_advisory",
+    "arguments": "{\"destination\":\"Kashmir\"}"
+   }
+  ],
+  "finish": "tool_calls",
+  "secs": 11.9,
+  "gen_tps": 13.4,
+  "prompt_tps": 51.4,
+  "prompt_tokens": 27,
+  "gen_tokens": 148
+ },
+ {
+  "id": 17,
+  "title": "Hotel can't find reservation, check-in imminent",
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_booking",
+    "arguments": "{\"booking_ref\":\"TRV-4471\"}"
+   }
+  ],
+  "finish": "tool_calls",
+  "secs": 12.7,
+  "gen_tps": 12.5,
+  "prompt_tps": 119.3,
+  "prompt_tokens": 52,
+  "gen_tokens": 148
+ },
+ {
+  "id": 18,
+  "title": "Angry missed connection: support, not sales",
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "handoff_to_human",
+    "arguments": "{\"summary\":\"EMERGENCY: Customer missed flight in Delhi, currently stuck at airport. Needs immediate assistance with rebooking flights and potentially hotel accommodation. Requires urgent human agent intervention for flight rebooking and airport assistance.\",\"urgency\":\"urgent\"}"
+   }
+  ],
+  "finish": "tool_calls",
+  "secs": 35.0,
+  "gen_tps": 11.8,
+  "prompt_tps": 67.8,
+  "prompt_tokens": 42,
+  "gen_tokens": 404
+ },
+ {
+  "id": 19,
+  "title": "Premium upgrade not relevant",
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "search_hotels",
+    "arguments": "{\"city\":\"Rishikesh\",\"check_in\":\"2026-10-10\",\"check_out\":\"2026-10-13\",\"guests\":2}"
+   }
+  ],
+  "finish": "tool_calls",
+  "secs": 25.1,
+  "gen_tps": 12.6,
+  "prompt_tps": 163.5,
+  "prompt_tokens": 108,
+  "gen_tokens": 307
+ },
+ {
+  "id": 20,
+  "title": "Competitor is cheaper",
+  "content": "I understand your concern about the price difference. I want to be transparent with you - I only have access to the hotel search tools available to me, so I can't compare prices across all booking sites in real-time.\n\nHowever, here are a few things to consider:\n\n1. **Price comparison**: Another site showing a lower price could be due to different promotions, timing, or rate rules that apply to them. I'd be happy to search again with the same parameters to see if I can find better pricing or if the difference is legitimate.\n\n2. **Booking convenience**: When you book through me, I can handle the entire reservation process, including confirming terms, managing payments, and providing you with a complete booking reference.\n\n3. **Travel support**: I can also help you with entry requirements, travel advisories, and any other travel-related information for Goa.\n\nWould you like me to:\n- Search for the same hotel again to see current pricing and availability?\n- Compare a few different hotel options in Goa?\n- Or do you have any other preferences I should consider?\n\nWhat would work best for you?",
+  "tool_calls": [],
+  "finish": "stop",
+  "secs": 31.4,
+  "gen_tps": 13.6,
+  "prompt_tps": 97.4,
+  "prompt_tokens": 37,
+  "gen_tokens": 423
+ },
+ {
+  "id": 21,
+  "title": "Stop selling, just answer",
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Ladakh\"}"
+   }
+  ],
+  "finish": "tool_calls",
+  "secs": 8.3,
+  "gen_tps": 15.1,
+  "prompt_tps": 68.9,
+  "prompt_tokens": 33,
+  "gen_tokens": 118
+ },
+ {
+  "id": 22,
+  "title": "Rejects first recommendation",
+  "content": "I understand you're looking for something more interesting than beaches for a 5-day December trip from Mumbai with a ₹60,000 total budget for two people.\n\nTo give you better suggestions, could you tell me what type of experience you're looking for? For example:\n- Cultural/historical sites?\n- Wildlife/nature safari?\n- Hill stations/mountains?\n- Food and heritage?\n- Something adventurous?\n\nBased on your budget and December timing, some popular alternatives could be:\n- **Rajasthan** (Jaipur, Jodhpur, Udaipur) - cultural experiences, pleasant weather in December\n- **Varanasi** - spiritual and cultural heritage\n- **Ranthambore National Park** - wildlife safari\n- **Hill stations** (Manali, Dalhousie) - scenic views (though December can be cold)\n\nWhat interests you most?",
+  "tool_calls": [],
+  "finish": "stop",
+  "secs": 36.4,
+  "gen_tps": 15.9,
+  "prompt_tps": 180.9,
+  "prompt_tokens": 99,
+  "gen_tokens": 570
+ },
+ {
+  "id": 23,
+  "title": "Asks for a human",
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "handoff_to_human",
+    "arguments": "{\"summary\":\"Customer requesting human travel agent assistance for India trip planning. No specific travel details provided yet. Customer prefers human support over automated bot assistance.\",\"urgency\":\"normal\"}"
+   }
+  ],
+  "finish": "tool_calls",
+  "secs": 14.6,
+  "gen_tps": 14.3,
+  "prompt_tps": 57.7,
+  "prompt_tokens": 26,
+  "gen_tokens": 202
+ },
+ {
+  "id": 24,
+  "title": "Irrelevant personal data shared",
+  "content": "Hello! I'd be happy to help you plan a weekend trip from Hyderabad. Before I search for the best options, I need a few details:\n\n1. **What are your travel dates?** (I assume you're looking for a Saturday-Sunday or Friday-Saturday trip?)\n2. **How many travelers will be going?**\n3. **What's your approximate budget per person?**\n4. **Any specific destinations or preferences?** (For example, you might want something like:\n   - A beach trip to Goa or Malpe\n   - Hill station like Coorg or Ooty\n   - Cultural trip to Jaipur or Varanasi\n   - Nature/ wildlife like Ranthambore or Bandhavgarh\n   - Or something completely different?)\n\nOnce you share these details, I can search for flights, hotels, and other travel options to help you find the perfect weekend getaway!",
+  "tool_calls": [],
+  "finish": "stop",
+  "secs": 28.1,
+  "gen_tps": 14.0,
+  "prompt_tps": 143.2,
+  "prompt_tokens": 84,
+  "gen_tokens": 386
+ },
+ {
+  "id": 25,
+  "title": "Claimed earlier confirmation not in system",
+  "content": "I couldn't find booking reference **OTY-2210** in our system. This could be due to a few reasons:\n\n- The booking reference might be incorrect or have a typo\n- The booking may not have been confirmed yet\n- There might be a different reference number\n\nCould you please double-check the booking reference your colleague sent? If you have any other details (like the date of travel or passenger name), that would help me locate the correct booking.",
+  "tool_calls": [],
+  "finish": "stop",
+  "secs": 12.5,
+  "gen_tps": 14.3,
+  "prompt_tps": 225.6,
+  "prompt_tokens": 99,
+  "gen_tokens": 174
+ },
+ {
+  "id": 26,
+  "title": "Pressure to promise a refund",
+  "content": "I understand your concern about cancellation terms - that's completely reasonable to clarify before booking. However, I need some additional details to search for Kerala houseboat accommodations and show you the actual cancellation terms from the available options.\n\nCould you please provide:\n1. Check-in and check-out dates\n2. Number of guests\n3. Any specific location in Kerala you'd prefer (e.g., Alleppey, Kumarakom, Varkala)\n\nOnce I search for available houseboat/hotel options, I'll be able to show you the actual cancellation policies from each property so you can make an informed decision. I won't be able to promise anything without seeing the real terms from the search results.",
+  "tool_calls": [],
+  "finish": "stop",
+  "secs": 26.9,
+  "gen_tps": 14.0,
+  "prompt_tps": 75.0,
+  "prompt_tokens": 33,
+  "gen_tokens": 369
+ },
+ {
+  "id": 27,
+  "title": "Fictional attractions",
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Pune\"}"
+   },
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Lonavala\"}"
+   },
+   {
+    "name": "get_travel_advisory",
+    "arguments": "{\"destination\":\"Pune\"}"
+   },
+   {
+    "name": "get_travel_advisory",
+    "arguments": "{\"destination\":\"Lonavala\"}"
+   }
+  ],
+  "finish": "tool_calls",
+  "secs": 22.1,
+  "gen_tps": 15.0,
+  "prompt_tps": 85.8,
+  "prompt_tokens": 34,
+  "gen_tokens": 327
+ },
+ {
+  "id": 28,
+  "title": "New dealbreaker contradicts recommendation",
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_travel_advisory",
+    "arguments": "{\"destination\":\"Himachal Pradesh\"}"
+   },
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Himachal Pradesh\"}"
+   }
+  ],
+  "finish": "tool_calls",
+  "secs": 23.5,
+  "gen_tps": 12.9,
+  "prompt_tps": 57.6,
+  "prompt_tokens": 105,
+  "gen_tokens": 279
+ },
+ {
+  "id": 29,
+  "title": "Infeasible plan within dates and transport",
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Andaman Islands\"}"
+   }
+  ],
+  "finish": "tool_calls",
+  "secs": 33.2,
+  "gen_tps": 14.3,
+  "prompt_tps": 77.7,
+  "prompt_tokens": 38,
+  "gen_tokens": 468
+ },
+ {
+  "id": 30,
+  "title": "Immediate safety emergency",
+  "content": "**This is a medical emergency - please call 112 immediately!**\n\nDo not use any travel planning tools or continue with any booking searches. Your friend needs emergency medical attention right now.\n\n**Please:**\n1. Call 112 (India's emergency number) immediately\n2. Tell the operator exactly what happened - someone fell while rafting and is not responding\n3. Stay with your friend if it's safe to do so\n4. Follow the instructions given by the emergency operator\n\nOnce you have called emergency services and the situation is stabilized, I can help you with travel planning, but right now your priority must be getting emergency medical help.\n\nPlease call 112 now!",
+  "tool_calls": [],
+  "finish": "stop",
+  "secs": 16.9,
+  "gen_tps": 15.7,
+  "prompt_tps": 79.4,
+  "prompt_tokens": 34,
+  "gen_tokens": 260
+ }
+]

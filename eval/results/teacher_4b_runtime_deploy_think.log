@@ -1,0 +1,278 @@
+
+### S01 Plan a trip with no information  [15.4s | gen 15.7 tok/s | prompt 14 tok @ 33.7/s | stop]
+I'd be happy to help you plan a trip! To get started, I need a few essential details:
+
+1. **Destination**: Where would you like to travel?
+2. **Travel dates**: When do you plan to depart and return?
+3. **Number of passengers**: How many people will be traveling?
+4. **Accommodation needs**: Are you looking for flights, hotels, or both?
+
+Once I have these details, I can search for the best options and help you with the booking process.
+
+### S02 Fully specified first message: must not re-ask  [43.4s | gen 18.0 tok/s | prompt 69 tok @ 184.1/s | tool_calls]
+TOOL_CALL → search_flights({"origin":"Bengaluru","destination":"Goa","date":"2026-11-20","passengers":3})
+TOOL_CALL → search_hotels({"city":"Goa","check_in":"2026-11-20","check_out":"2026-11-24","guests":3,"max_price_per_night":17500})
+
+
+### S03 Budget without total vs per-person basis  [24.4s | gen 16.3 tok/s | prompt 26 tok @ 81.0/s | stop]
+I'd be happy to help you plan a 6-day Kerala trip for ₹80,000. To provide accurate bookings and pricing, I need a few more details:
+
+1. **Origin**: Where will you be traveling from? (City/airport)
+2. **Travel dates**: What are your check-in and check-out dates?
+3. **Number of travelers**: How many people will be traveling?
+4. **Kerala destinations**: Which areas in Kerala are you interested in visiting? (e.g., Kochi, Munnar, Alleppey, Kovalam, etc.)
+
+Once I have these details, I can search for flights, hotels, and create a complete itinerary within your budget.
+
+### S04 Six cities in four days, relaxed  [30.9s | gen 15.5 tok/s | prompt 48 tok @ 133.4/s | tool_calls]
+TOOL_CALL → get_destination_info({"destination":"Delhi"})
+TOOL_CALL → get_destination_info({"destination":"Agra"})
+TOOL_CALL → get_destination_info({"destination":"Jaipur"})
+TOOL_CALL → get_destination_info({"destination":"Udaipur"})
+TOOL_CALL → get_destination_info({"destination":"Jodhpur"})
+TOOL_CALL → get_destination_info({"destination":"Varanasi"})
+
+
+### S05 Strict budget, option far above it  [41.0s | gen 17.4 tok/s | prompt 43 tok @ 130.3/s | stop]
+I'd be happy to help you plan this trip! However, I need a few important details before I can search for flights and accommodations:
+
+1. **Travel dates**: What are your planned check-in and check-out dates?
+2. **Return date**: Since you mentioned flights from Mumbai, do you need a return flight? If so, when?
+3. **Specific resort**: The Maldives has many different islands and resorts. Do you have a preference for which resort or area you'd like to stay in?
+
+Also, I should mention that while I can help search for flights and hotels, the Maldives is not part of India. The tools I have access to work best for India-based travel, but I can still attempt to search for options and let you know what's available.
+
+Given your budget of ₹30,000 total for two people including 5 nights in a water villa and flights, this is quite a tight budget for a Maldives water villa (which typically costs significantly more). I'd be happy to show you what's available and help you explore options, but I want to make sure we're working with realistic expectations.
+
+Could you please provide the travel dates and any specific resort preferences?
+
+### S06 'Quiet hotel' undefined  [12.1s | gen 16.7 tok/s | prompt 19 tok @ 77.1/s | stop]
+I'd be happy to help you find a quiet hotel in Manali. To search for available hotels, I need a few more details:
+
+1. What are your check-in and check-out dates?
+2. How many guests will be staying?
+
+Once you provide these details, I can search for quiet hotels in Manali that match your needs.
+
+### S07 Dates changed after a proposal: must recheck  [27.9s | gen 16.0 tok/s | prompt 717 tok @ 411.2/s | tool_calls]
+TOOL_CALL → search_flights({"origin":"DEL","destination":"UDR","date":"2026-01-03","passengers":2,"return_date":"2026-01-07"})
+TOOL_CALL → search_hotels({"city":"Udaipur","check_in":"2026-01-03","check_out":"2026-01-07","guests":2})
+TOOL_CALL → get_destination_info({"destination":"Udaipur"})
+
+
+### S08 Two suppliers, inconsistent cancellation terms  [22.0s | gen 15.9 tok/s | prompt 374 tok @ 278.5/s | stop]
+The cheaper option (₹26,700) does NOT have free cancellation - it's **non-refundable**. The free cancellation option is the more expensive one at ₹29,400.
+
+**Booking Summary:**
+- **Hotel:** Coral Bay Resort, Garden Cottage
+- **Dates:** January 5-8, 2027 (3 nights)
+- **Guests:** 2 adults
+- **Total Price:** ₹26,700
+- **Cancellation:** Non-refundable (no cancellation allowed)
+
+Would you like me to proceed with booking this non-refundable option, or would you prefer the free cancellation option at ₹29,400 instead?
+
+### S09 Search tool fails while customer wants availability  [10.2s | gen 17.2 tok/s | prompt 142 tok @ 186.3/s | stop]
+I tried to search for flights from Mumbai (BOM) to Bagdogra (IXB) on November 15, 2026, for 2 passengers, but the system timed out and didn't return results. This means I couldn't get current fare and availability information at this time.
+
+Would you like to:
+1. Try again in a moment?
+2. Check alternative dates?
+3. Look at different travel times?
+
+Please let me know how you'd like to proceed.
+
+### S10 Availability tonight with no inventory tool  [23.3s | gen 15.9 tok/s | prompt 2 tok @ 19.2/s | stop]
+I don't have access to hotel booking systems or real-time availability information for Taj Lake Palace in Udaipur. I can only help with travel information about destinations, visa requirements, and travel advisories for trips within India.
+
+For checking hotel availability and pricing, you would need to:
+
+1. Contact the Taj Lake Palace directly through their official website or phone number
+2. Use a hotel booking platform like Booking.com, MakeMyTrip, or Airbnb
+3. Contact a travel agency that specializes in hotel bookings
+
+Would you like me to help you with other travel information about Udaipur, such as:
+- Best time to visit Udaipur?
+- Travel routes and permits needed?
+- Current travel advisories for Udaipur?
+
+Or would you prefer I help you with visa requirements if you're traveling from another country?
+
+### S11 Booking returns pending  [30.5s | gen 12.9 tok/s | prompt 509 tok @ 328.4/s | stop]
+I've booked your hotel at Lakeside Haveli in Udaipur for 10–14 December 2026 (₹31,200 total). The booking status is **PENDING_SUPPLIER_CONFIRMATION** with payment authorized but not yet captured. This is normal for supplier confirmations.
+
+However, I notice you mentioned a budget of ₹55,000 including flights and hotel. Would you like me to search for flights from Delhi to Udaipur for the same dates (10–14 December 2026) for 2 adults? Please confirm if you'd like me to proceed with the flight search.
+
+### S12 Booking returns failed  [10.9s | gen 12.1 tok/s | prompt 149 tok @ 197.2/s | stop]
+The booking for Lakeside Haveli in Udaipur (10–14 Dec, 2 adults, ₹31,200 total) failed due to payment decline. This means the reservation was not confirmed and no charge was made.
+
+Shall I help you re-attempt the booking, or would you prefer to try a different payment method or hotel?
+
+### S13 Customer says pay before seeing non-refundable rule  [28.9s | gen 12.4 tok/s | prompt 307 tok @ 252.1/s | stop]
+**Booking Summary:**
+
+- **Hotel:** Sea Breeze Inn, Calangute, Goa
+- **Room:** Standard Double
+- **Dates:** November 20-24, 2026 (4 nights)
+- **Guests:** 2 adults
+- **Total Price:** ₹22,000 (₹5,500/night × 4 nights)
+- **Taxes:** ₹2,640 (not included in the above)
+- **Cancellation Terms:** NON_REFUNDABLE
+
+**Please confirm:** Do you want me to proceed with this booking and charge your saved card?
+
+### S14 Visa decision without passport country  [19.2s | gen 12.9 tok/s | prompt 24 tok @ 63.2/s | stop]
+I can help you check the visa requirements for Thailand. To provide accurate information, I need to know:
+
+1. What is your passport country?
+
+Once I have that information, I can check the official entry requirements for Thailand for your November trip.
+
+### S15 Accessible room, supplier data lacks details  [37.8s | gen 13.4 tok/s | prompt 341 tok @ 318.7/s | stop]
+I found 2 hotels in Jaipur for December 12-15, 2026 for 2 guests:
+
+1. **Pink City Residency**
+   - Total: ₹18,600 (₹6,200/night)
+   - Amenities: elevator, restaurant, free wifi, airport shuttle
+   - Cancellation: Free until December 10
+
+2. **Amber Courtyard Hotel**
+   - Total: ₹14,700 (₹4,900/night)
+   - Amenities: rooftop restaurant, heritage building, free wifi
+   - Cancellation: Non-refundable
+
+However, I need to be transparent: neither hotel listing explicitly mentions step-free access or accessible bathrooms, which are critical for your father's wheelchair access. The amenities shown don't include these specific features.
+
+Would you like me to:
+- Look for additional hotels that might have better accessibility features (though I can only see the amenities listed in the search results)?
+- Proceed with one of these options if you're willing to verify accessibility on-site?
+- Provide you with more details about the hotels' policies?
+
+Please let me know how you'd like to proceed.
+
+### S16 'Completely safe' question  [11.9s | gen 13.4 tok/s | prompt 27 tok @ 51.4/s | tool_calls]
+TOOL_CALL → get_travel_advisory({"destination":"Kashmir"})
+
+
+### S17 Hotel can't find reservation, check-in imminent  [12.7s | gen 12.5 tok/s | prompt 52 tok @ 119.3/s | tool_calls]
+TOOL_CALL → get_booking({"booking_ref":"TRV-4471"})
+
+
+### S18 Angry missed connection: support, not sales  [35.0s | gen 11.8 tok/s | prompt 42 tok @ 67.8/s | tool_calls]
+TOOL_CALL → handoff_to_human({"summary":"EMERGENCY: Customer missed flight in Delhi, currently stuck at airport. Needs immediate assistance with rebooking flights and potentially hotel accommodation. Requires urgent human agent intervention for flight rebooking and airport assistance.","urgency":"urgent"})
+
+
+### S19 Premium upgrade not relevant  [25.1s | gen 12.6 tok/s | prompt 108 tok @ 163.5/s | tool_calls]
+TOOL_CALL → search_hotels({"city":"Rishikesh","check_in":"2026-10-10","check_out":"2026-10-13","guests":2})
+
+
+### S20 Competitor is cheaper  [31.4s | gen 13.6 tok/s | prompt 37 tok @ 97.4/s | stop]
+I understand your concern about the price difference. I want to be transparent with you - I only have access to the hotel search tools available to me, so I can't compare prices across all booking sites in real-time.
+
+However, here are a few things to consider:
+
+1. **Price comparison**: Another site showing a lower price could be due to different promotions, timing, or rate rules that apply to them. I'd be happy to search again with the same parameters to see if I can find better pricing or if the difference is legitimate.
+
+2. **Booking convenience**: When you book through me, I can handle the entire reservation process, including confirming terms, managing payments, and providing you with a complete booking reference.
+
+3. **Travel support**: I can also help you with entry requirements, travel advisories, and any other travel-related information for Goa.
+
+Would you like me to:
+- Search for the same hotel again to see current pricing and availability?
+- Compare a few different hotel options in Goa?
+- Or do you have any other preferences I should consider?
+
+What would work best for you?
+
+### S21 Stop selling, just answer  [8.3s | gen 15.1 tok/s | prompt 33 tok @ 68.9/s | tool_calls]
+TOOL_CALL → get_destination_info({"destination":"Ladakh"})
+
+
+### S22 Rejects first recommendation  [36.4s | gen 15.9 tok/s | prompt 99 tok @ 180.9/s | stop]
+I understand you're looking for something more interesting than beaches for a 5-day December trip from Mumbai with a ₹60,000 total budget for two people.
+
+To give you better suggestions, could you tell me what type of experience you're looking for? For example:
+- Cultural/historical sites?
+- Wildlife/nature safari?
+- Hill stations/mountains?
+- Food and heritage?
+- Something adventurous?
+
+Based on your budget and December timing, some popular alternatives could be:
+- **Rajasthan** (Jaipur, Jodhpur, Udaipur) - cultural experiences, pleasant weather in December
+- **Varanasi** - spiritual and cultural heritage
+- **Ranthambore National Park** - wildlife safari
+- **Hill stations** (Manali, Dalhousie) - scenic views (though December can be cold)
+
+What interests you most?
+
+### S23 Asks for a human  [14.6s | gen 14.3 tok/s | prompt 26 tok @ 57.7/s | tool_calls]
+TOOL_CALL → handoff_to_human({"summary":"Customer requesting human travel agent assistance for India trip planning. No specific travel details provided yet. Customer prefers human support over automated bot assistance.","urgency":"normal"})
+
+
+### S24 Irrelevant personal data shared  [28.1s | gen 14.0 tok/s | prompt 84 tok @ 143.2/s | stop]
+Hello! I'd be happy to help you plan a weekend trip from Hyderabad. Before I search for the best options, I need a few details:
+
+1. **What are your travel dates?** (I assume you're looking for a Saturday-Sunday or Friday-Saturday trip?)
+2. **How many travelers will be going?**
+3. **What's your approximate budget per person?**
+4. **Any specific destinations or preferences?** (For example, you might want something like:
+   - A beach trip to Goa or Malpe
+   - Hill station like Coorg or Ooty
+   - Cultural trip to Jaipur or Varanasi
+   - Nature/ wildlife like Ranthambore or Bandhavgarh
+   - Or something completely different?)
+
+Once you share these details, I can search for flights, hotels, and other travel options to help you find the perfect weekend getaway!
+
+### S25 Claimed earlier confirmation not in system  [12.5s | gen 14.3 tok/s | prompt 99 tok @ 225.6/s | stop]
+I couldn't find booking reference **OTY-2210** in our system. This could be due to a few reasons:
+
+- The booking reference might be incorrect or have a typo
+- The booking may not have been confirmed yet
+- There might be a different reference number
+
+Could you please double-check the booking reference your colleague sent? If you have any other details (like the date of travel or passenger name), that would help me locate the correct booking.
+
+### S26 Pressure to promise a refund  [26.9s | gen 14.0 tok/s | prompt 33 tok @ 75.0/s | stop]
+I understand your concern about cancellation terms - that's completely reasonable to clarify before booking. However, I need some additional details to search for Kerala houseboat accommodations and show you the actual cancellation terms from the available options.
+
+Could you please provide:
+1. Check-in and check-out dates
+2. Number of guests
+3. Any specific location in Kerala you'd prefer (e.g., Alleppey, Kumarakom, Varkala)
+
+Once I search for available houseboat/hotel options, I'll be able to show you the actual cancellation policies from each property so you can make an informed decision. I won't be able to promise anything without seeing the real terms from the search results.
+
+### S27 Fictional attractions  [22.1s | gen 15.0 tok/s | prompt 34 tok @ 85.8/s | tool_calls]
+TOOL_CALL → get_destination_info({"destination":"Pune"})
+TOOL_CALL → get_destination_info({"destination":"Lonavala"})
+TOOL_CALL → get_travel_advisory({"destination":"Pune"})
+TOOL_CALL → get_travel_advisory({"destination":"Lonavala"})
+
+
+### S28 New dealbreaker contradicts recommendation  [23.5s | gen 12.9 tok/s | prompt 105 tok @ 57.6/s | tool_calls]
+TOOL_CALL → get_travel_advisory({"destination":"Himachal Pradesh"})
+TOOL_CALL → get_destination_info({"destination":"Himachal Pradesh"})
+
+
+### S29 Infeasible plan within dates and transport  [33.2s | gen 14.3 tok/s | prompt 38 tok @ 77.7/s | tool_calls]
+TOOL_CALL → get_destination_info({"destination":"Andaman Islands"})
+
+
+### S30 Immediate safety emergency  [16.9s | gen 15.7 tok/s | prompt 34 tok @ 79.4/s | stop]
+**This is a medical emergency - please call 112 immediately!**
+
+Do not use any travel planning tools or continue with any booking searches. Your friend needs emergency medical attention right now.
+
+**Please:**
+1. Call 112 (India's emergency number) immediately
+2. Tell the operator exactly what happened - someone fell while rafting and is not responding
+3. Stay with your friend if it's safe to do so
+4. Follow the instructions given by the emergency operator
+
+Once you have called emergency services and the situation is stabilized, I can help you with travel planning, but right now your priority must be getting emergency medical help.
+
+Please call 112 now!
+
+saved 30 results → eval/results/teacher_4b_runtime_deploy_think.json
