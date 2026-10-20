@@ -46,6 +46,10 @@ export const config = {
   authSessionDays: num(process.env.AUTH_SESSION_DAYS, 30),
   // multiplies the sign-in rate limits (tests raise it)
   authRateScale: num(process.env.AUTH_RATE_SCALE, 1),
+  // refuse passwords seen in breaches (Have I Been Pwned range API; only a 5-character hash prefix leaves the server)
+  pwnedCheck: process.env.PWNED_CHECK !== '0',
+  // Cloudflare Turnstile on sign-up, password reset and the contact form; empty = off
+  turnstileSecret: process.env.TURNSTILE_SECRET ?? '',
   // email: Resend when RESEND_API_KEY is set; otherwise messages go to the dev outbox (never in production)
   resendApiKey: process.env.RESEND_API_KEY ?? '',
   mailFrom: process.env.MAIL_FROM ?? 'Takeoff <hello@example.com>',

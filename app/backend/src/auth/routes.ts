@@ -5,8 +5,9 @@ import { HttpError, json, readBody, rateLimited, str } from '../http.js';
 import { log } from '../log.js';
 import { accounts, publicUser, type UserRow } from './accounts.js';
 import { verifyGoogleIdToken } from './google.js';
-import { resetMail, sendMail, verifyMail } from './mailer.js';
-import { hashPassword, passwordProblem, verifyPassword } from './passwords.js';
+import { emailChangeMail, emailChangeNotice, resetMail, sendMail, verifyMail } from './mailer.js';
+import { checkHuman } from './turnstile.js';
+import { hashPassword, newPasswordProblem, verifyPassword } from './passwords.js';
 
 const COOKIE = 'takeoff_auth';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -31,8 +32,8 @@ function setCookie(res: ServerResponse, token: string | null) {
 }
 
 /** Sign the browser in and give it the account's chat session (bringing this browser's trips along). */
-function signIn(res: ServerResponse, user: UserRow, browserSession: string) {
-  setCookie(res, accounts.startSession(user.id));
+function signIn(req: IncomingMessage, res: ServerResponse, user: UserRow, browserSession: string) {
+  setCookie(res, accounts.startSession(user.id, String(req.headers['user-agent'] ?? '')));
   const sessionId = accounts.adopt(user.id, browserSession || undefined);
   json(res, 200, { user: publicUser(accounts.byId(user.id)!), sessionId });
 }
@@ -55,6 +56,17 @@ export async function handleAuth(req: IncomingMessage, res: ServerResponse, path
   const need = (m: string) => { if (method !== m) { res.setHeader('Allow', m); throw new HttpError(405, 'method_not_allowed', `Use ${m}.`); } };
   const limit = (bucket: string, perMin: number) => { if (rateLimited(req, bucket, perMin * config.authRateScale)) throw new HttpError(429, 'rate_limited', 'Too many attempts. Please wait a minute and try again.'); };
   const signedIn = () => { const u = currentUser(req); if (!u) throw new HttpError(401, 'not_signed_in', 'Please sign in.'); return u; };
+  res.setHeader('Cache-Control', 'no-store'); // account answers are personal
+
+  // DELETE /api/account/sessions/:id signs one browser out
+  const oneSession = /^\/api\/account\/sessions\/([0-9a-f]{16})$/.exec(pathname);
+  if (oneSession) {
+    need('DELETE');
+    const user = signedIn();
+    if (!accounts.endSessionById(user.id, oneSession[1])) throw new HttpError(404, 'not_found', 'That device is already signed out.');
+    json(res, 200, { sessions: accounts.listSessions(user.id, cookieToken(req)) });
+    return true;
+  }
 
   switch (pathname) {
     case '/api/auth/config': {
@@ -72,18 +84,19 @@ export async function handleAuth(req: IncomingMessage, res: ServerResponse, path
       need('POST');
       limit('signup', 5);
       const b = await readBody(req);
+      await checkHuman(req, b.turnstileToken);
       const name = oneLine(b.name, 100);
       const email = oneLine(b.email, 200).toLowerCase();
       const password = str(b.password);
       if (!name) throw new HttpError(400, 'invalid_name', 'Please tell us your name.');
       if (!EMAIL_RE.test(email)) throw new HttpError(400, 'invalid_email', 'Please enter a valid email address.');
-      const problem = passwordProblem(password, email);
-      if (problem) throw new HttpError(400, 'weak_password', problem);
       if (accounts.byEmail(email)) throw new HttpError(409, 'email_taken', 'An account with this email already exists. Log in instead.');
+      const problem = await newPasswordProblem(password, email);
+      if (problem) throw new HttpError(400, 'weak_password', problem);
       const user = accounts.create({ email, name, passwordHash: await hashPassword(password) });
       await sendVerification(user);
       log('info', 'account created', { userId: user.id });
-      signIn(res, user, str(b.sessionId));
+      signIn(req, res, user, str(b.sessionId));
       return true;
     }
     case '/api/auth/login': {
@@ -92,11 +105,14 @@ export async function handleAuth(req: IncomingMessage, res: ServerResponse, path
       const email = oneLine(b.email, 200).toLowerCase();
       limit('login', 10);
       limit(`login:${email}`, 10);
+      const wait = accounts.lockedFor(email);
+      if (wait) throw new HttpError(429, 'account_locked', `Too many tries for this email. Try again in ${Math.ceil(wait / 60)} minute${wait > 60 ? 's' : ''}, or reset your password.`);
       const user = accounts.byEmail(email);
       // the same work and the same answer whether or not the account exists
       const ok = await verifyPassword(str(b.password), user?.password_hash);
-      if (!user || !ok) throw new HttpError(401, 'invalid_login', 'That email and password don\'t match.');
-      signIn(res, user, str(b.sessionId));
+      if (!user || !ok) { accounts.recordFailure(email); throw new HttpError(401, 'invalid_login', 'That email and password don\'t match.'); }
+      accounts.clearFailures(email);
+      signIn(req, res, user, str(b.sessionId));
       return true;
     }
     case '/api/auth/google': {
@@ -115,7 +131,7 @@ export async function handleAuth(req: IncomingMessage, res: ServerResponse, path
         if (existing) { accounts.linkGoogle(existing.id, id.sub); accounts.markVerified(existing.id); user = accounts.byId(existing.id)!; }
         else user = accounts.create({ email: id.email, name: id.name, googleSub: id.sub, verified: true });
       }
-      signIn(res, user, str(b.sessionId));
+      signIn(req, res, user, str(b.sessionId));
       return true;
     }
     case '/api/auth/logout': {
@@ -146,7 +162,9 @@ export async function handleAuth(req: IncomingMessage, res: ServerResponse, path
     case '/api/auth/forgot': {
       need('POST');
       limit('forgot', 5);
-      const user = accounts.byEmail(oneLine((await readBody(req)).email, 200));
+      const fb = await readBody(req);
+      await checkHuman(req, fb.turnstileToken);
+      const user = accounts.byEmail(oneLine(fb.email, 200));
       if (user) {
         const token = accounts.emailToken(user.id, 'reset', 3_600_000);
         await sendMail(resetMail(user.email, user.name, `${config.appUrl}/reset-password?token=${token}`))
@@ -164,14 +182,15 @@ export async function handleAuth(req: IncomingMessage, res: ServerResponse, path
       const valid = accounts.peekEmailToken(str(b.token), 'reset');
       if (!valid) throw new HttpError(400, 'invalid_token', 'This link has expired or was already used.');
       // check the new password before using up the link, so a weak one doesn't cost the customer their link
-      const problem = passwordProblem(password, valid.email);
+      const problem = await newPasswordProblem(password, valid.email);
       if (problem) throw new HttpError(400, 'weak_password', problem);
       const pending = accounts.useEmailToken(str(b.token), 'reset');
       if (!pending) throw new HttpError(400, 'invalid_token', 'This link has expired or was already used.');
       accounts.setPassword(pending.id, await hashPassword(password));
       accounts.markVerified(pending.id); // they proved they read that inbox
+      accounts.clearFailures(pending.email);
       accounts.endOtherSessions(pending.id);
-      signIn(res, pending, str(b.sessionId));
+      signIn(req, res, pending, str(b.sessionId));
       return true;
     }
     case '/api/account': {
@@ -203,11 +222,56 @@ export async function handleAuth(req: IncomingMessage, res: ServerResponse, path
       const user = signedIn();
       const b = await readBody(req);
       if (user.password_hash && !(await verifyPassword(str(b.currentPassword), user.password_hash))) throw new HttpError(403, 'wrong_password', 'Your current password is not right.');
-      const problem = passwordProblem(str(b.newPassword), user.email);
+      const problem = await newPasswordProblem(str(b.newPassword), user.email);
       if (problem) throw new HttpError(400, 'weak_password', problem);
       accounts.setPassword(user.id, await hashPassword(str(b.newPassword)));
       accounts.endOtherSessions(user.id, cookieToken(req)); // other browsers sign in again
       json(res, 200, { user: publicUser(accounts.byId(user.id)!) });
+      return true;
+    }
+    case '/api/account/email': {
+      need('POST');
+      limit('email-change', 5);
+      const user = signedIn();
+      const b = await readBody(req);
+      const newEmail = oneLine(b.newEmail, 200).toLowerCase();
+      if (!EMAIL_RE.test(newEmail)) throw new HttpError(400, 'invalid_email', 'Please enter a valid email address.');
+      if (newEmail === user.email) throw new HttpError(400, 'invalid_email', 'That is already your email address.');
+      if (user.password_hash && !(await verifyPassword(str(b.password), user.password_hash))) throw new HttpError(403, 'wrong_password', 'Your password is not right.');
+      if (accounts.byEmail(newEmail)) throw new HttpError(409, 'email_taken', 'Another account already uses that email.');
+      const token = accounts.emailChange(user.id, newEmail);
+      try {
+        await sendMail(emailChangeMail(newEmail, user.name, `${config.appUrl}/confirm-email?token=${token}`));
+      } catch (err) {
+        log('error', 'email-change confirmation failed', { error: (err as Error).message });
+        throw new HttpError(502, 'email_failed', "We couldn't send an email to that address. Please check it and try again.");
+      }
+      await sendMail(emailChangeNotice(user.email, user.name, newEmail, `${config.appUrl}/forgot-password`))
+        .catch((err) => log('error', 'email-change notice failed', { error: (err as Error).message }));
+      json(res, 200, { ok: true, pendingEmail: newEmail });
+      return true;
+    }
+    case '/api/auth/confirm-email': {
+      need('POST');
+      limit('verify', 10);
+      const out = accounts.confirmEmailChange(str((await readBody(req)).token));
+      if (out === 'taken') throw new HttpError(409, 'email_taken', 'Another account started using that email in the meantime.');
+      if (!out) throw new HttpError(400, 'invalid_token', 'This link has expired or was already used.');
+      log('info', 'email changed', { userId: out.id });
+      json(res, 200, { ok: true });
+      return true;
+    }
+    case '/api/account/sessions': {
+      need('GET');
+      const user = signedIn();
+      json(res, 200, { sessions: accounts.listSessions(user.id, cookieToken(req)) });
+      return true;
+    }
+    case '/api/account/sessions/sign-out-others': {
+      need('POST');
+      const user = signedIn();
+      accounts.endOtherSessions(user.id, cookieToken(req));
+      json(res, 200, { sessions: accounts.listSessions(user.id, cookieToken(req)) });
       return true;
     }
     case '/api/account/export': {

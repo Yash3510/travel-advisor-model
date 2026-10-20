@@ -131,6 +131,27 @@ CREATE TABLE IF NOT EXISTS email_tokens (
   expires_at TEXT NOT NULL,
   used_at TEXT
 );
+-- A pending change of email address: confirmed by a link sent to the new address.
+CREATE TABLE IF NOT EXISTS email_changes (
+  token_hash TEXT PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  new_email TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  used_at TEXT
+);
+-- Failed log-ins per email (known or not, so locking reveals nothing); cleared by a successful log-in or a reset.
+CREATE TABLE IF NOT EXISTS login_failures (
+  email TEXT PRIMARY KEY COLLATE NOCASE,
+  count INTEGER NOT NULL,
+  locked_until TEXT,
+  last_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+-- Fixed-window request counters (per IP and bucket), kept across restarts.
+CREATE TABLE IF NOT EXISTS rate_limits (
+  key TEXT PRIMARY KEY,
+  window_start INTEGER NOT NULL,
+  count INTEGER NOT NULL
+);
 -- Development only: emails that would have been sent (no RESEND_API_KEY).
 CREATE TABLE IF NOT EXISTS outbox (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -143,6 +164,10 @@ CREATE INDEX IF NOT EXISTS idx_messages_thread ON messages(thread_id);
 CREATE INDEX IF NOT EXISTS idx_threads_session ON threads(session_id);
 CREATE INDEX IF NOT EXISTS idx_offers_thread ON offers(thread_id);
 `);
+// signed-in browsers: what they are and when they were last used (D-022)
+for (const col of ['user_agent TEXT', 'last_seen_at TEXT']) {
+  if (!(db.prepare('PRAGMA table_info(auth_sessions)').all() as { name: string }[]).some((c) => c.name === col.split(' ')[0])) db.exec(`ALTER TABLE auth_sessions ADD COLUMN ${col}`);
+}
 // sessions merged into an account (D-021)
 if (!(db.prepare('PRAGMA table_info(sessions)').all() as { name: string }[]).some((c) => c.name === 'user_id')) {
   db.exec('ALTER TABLE sessions ADD COLUMN user_id INTEGER REFERENCES users(id)');

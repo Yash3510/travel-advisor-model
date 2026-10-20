@@ -203,3 +203,106 @@ describe('Google sign-in', () => {
     }
   });
 });
+
+describe('account security (D-022)', () => {
+  it('changes the email only after the new address confirms, and tells the old one', async () => {
+    const b = browser();
+    const old = email();
+    await b.call('POST', '/api/auth/signup', { name: 'A', email: old, password: PW });
+    const taken = email();
+    await browser().call('POST', '/api/auth/signup', { name: 'B', email: taken, password: PW });
+    expect((await b.call('POST', '/api/account/email', { newEmail: email(), password: 'wrong one here' })).status).toBe(403);
+    expect((await b.call('POST', '/api/account/email', { newEmail: taken, password: PW })).data.error.code).toBe('email_taken');
+
+    const next = email();
+    expect((await b.call('POST', '/api/account/email', { newEmail: next, password: PW })).data).toEqual({ ok: true, pendingEmail: next });
+    expect(lastDevMail(old)!.subject).toBe('Your Takeoff email is being changed');
+    expect((await b.call('GET', '/api/auth/me')).data.user.email).toBe(old); // not until confirmed
+    const token = /token=([\w-]+)/.exec(lastDevMail(next)!.text)![1];
+    expect((await browser().call('POST', '/api/auth/confirm-email', { token })).status).toBe(200);
+    expect((await b.call('GET', '/api/auth/me')).data.user).toMatchObject({ email: next, emailVerified: true });
+    expect((await browser().call('POST', '/api/auth/login', { email: next, password: PW })).status).toBe(200);
+    expect((await browser().call('POST', '/api/auth/confirm-email', { token })).status).toBe(400); // single use
+  });
+
+  it('lists signed-in devices and signs out one, or all the others', async () => {
+    const e = email();
+    const laptop = browser();
+    await laptop.call('POST', '/api/auth/signup', { name: 'A', email: e, password: PW });
+    const phone = browser();
+    const tablet = browser();
+    await phone.call('POST', '/api/auth/login', { email: e, password: PW });
+    await tablet.call('POST', '/api/auth/login', { email: e, password: PW });
+    const list = (await laptop.call('GET', '/api/account/sessions')).data.sessions;
+    expect(list).toHaveLength(3);
+    expect(list.filter((s: any) => s.current)).toHaveLength(1);
+    const phoneId = (await phone.call('GET', '/api/account/sessions')).data.sessions.find((s: any) => s.current).id;
+    expect((await laptop.call('DELETE', `/api/account/sessions/${phoneId}`)).data.sessions).toHaveLength(2);
+    expect((await phone.call('GET', '/api/auth/me')).data.user).toBeNull();
+    await laptop.call('POST', '/api/account/sessions/sign-out-others');
+    expect((await tablet.call('GET', '/api/auth/me')).data.user).toBeNull();
+    expect((await laptop.call('GET', '/api/account/sessions')).data.sessions).toHaveLength(1);
+  });
+
+  it('locks an email after five wrong passwords, known or not, until a reset', async () => {
+    const e = email();
+    await browser().call('POST', '/api/auth/signup', { name: 'A', email: e, password: PW });
+    for (let i = 0; i < 5; i++) expect((await browser().call('POST', '/api/auth/login', { email: e, password: `wrong guess ${i}` })).status).toBe(401);
+    const locked = await browser().call('POST', '/api/auth/login', { email: e, password: PW });
+    expect(locked.status).toBe(429);
+    expect(locked.data.error.code).toBe('account_locked');
+    const ghost = email();
+    for (let i = 0; i < 5; i++) await browser().call('POST', '/api/auth/login', { email: ghost, password: `x${i} guesses` });
+    expect((await browser().call('POST', '/api/auth/login', { email: ghost, password: PW })).data.error.code).toBe('account_locked');
+    // a password reset proves the owner and unlocks
+    await browser().call('POST', '/api/auth/forgot', { email: e });
+    const token = /token=([\w-]+)/.exec(lastDevMail(e)!.text)![1];
+    expect((await browser().call('POST', '/api/auth/reset', { token, password: 'unlocked new phrase' })).status).toBe(200);
+    expect((await browser().call('POST', '/api/auth/login', { email: e, password: 'unlocked new phrase' })).status).toBe(200);
+  });
+
+  it('refuses breached passwords, and allows when the breach service is down', async () => {
+    const { createHash } = await import('node:crypto');
+    const sha1 = createHash('sha1').update('rainy goa monsoon').digest('hex').toUpperCase();
+    config.pwnedCheck = true;
+    const real = globalThis.fetch;
+    let down = false;
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      if (!String(url).includes('pwnedpasswords.com')) return real(url, init);
+      if (down) throw new Error('offline');
+      expect(String(url)).toMatch(new RegExp(`/range/${sha1.slice(0, 5)}$`)); // only the prefix leaves
+      return new Response(`0000000000000000000000000000000000A:0\r\n${sha1.slice(5)}:42\r\n`);
+    });
+    try {
+      const r = await browser().call('POST', '/api/auth/signup', { name: 'A', email: email(), password: 'rainy goa monsoon' });
+      expect(r.data.error).toMatchObject({ code: 'weak_password', message: expect.stringContaining('data breach') });
+      down = true;
+      expect((await browser().call('POST', '/api/auth/signup', { name: 'A', email: email(), password: 'rainy goa monsoon' })).status).toBe(200);
+    } finally { vi.unstubAllGlobals(); config.pwnedCheck = false; }
+  });
+
+  it('asks for the bot check on sign-up, reset and contact once Turnstile is set', async () => {
+    config.turnstileSecret = 'secret';
+    const real = globalThis.fetch;
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      if (!String(url).includes('challenges.cloudflare.com')) return real(url, init);
+      return new Response(JSON.stringify({ success: new URLSearchParams(String(init!.body)).get('response') === 'good' }));
+    });
+    try {
+      expect((await browser().call('POST', '/api/auth/signup', { name: 'A', email: email(), password: PW })).data.error.code).toBe('bot_check');
+      expect((await browser().call('POST', '/api/auth/forgot', { email: email(), turnstileToken: 'bad' })).data.error.code).toBe('bot_check');
+      expect((await browser().call('POST', '/api/contact', { name: 'A', email: 'a@b.co', topic: 'trip', message: 'hello there' })).data.error.code).toBe('bot_check');
+      expect((await browser().call('POST', '/api/auth/signup', { name: 'A', email: email(), password: PW, turnstileToken: 'good' })).status).toBe(200);
+    } finally { vi.unstubAllGlobals(); config.turnstileSecret = ''; }
+  });
+
+  it('keeps rate-limit counters in the database and sends no referrer', async () => {
+    const { db } = await import('../src/db.js');
+    const before = (db.prepare("SELECT COALESCE(SUM(count), 0) AS n FROM rate_limits WHERE key LIKE 'forgot:%'").get() as { n: number }).n;
+    const r = await fetch(base + '/api/auth/forgot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email() }) });
+    expect(r.headers.get('referrer-policy')).toBe('no-referrer');
+    expect(r.headers.get('cache-control')).toBe('no-store');
+    const after = (db.prepare("SELECT COALESCE(SUM(count), 0) AS n FROM rate_limits WHERE key LIKE 'forgot:%'").get() as { n: number }).n;
+    expect(after).toBe(before + 1);
+  });
+});

@@ -719,6 +719,7 @@ export function errorText(err: unknown): string {
     case 'message_too_long': return `Please keep messages under ${MAX_MESSAGE_CHARS} characters.`;
     case 'model_unavailable': return 'The travel assistant is unavailable right now. Please try again in a minute.';
     case 'cannot_rewind': return 'That message can no longer be changed.';
+    case 'account_locked': case 'bot_check': case 'email_failed':
     case 'invalid_login': case 'weak_password': case 'invalid_email': case 'invalid_name': case 'email_taken': case 'invalid_token': case 'wrong_password': case 'not_confirmed':
       return (err as TakeoffApiError).message;
     case 'not_signed_in': return 'Please sign in again.';
@@ -819,6 +820,9 @@ async function failure(res: Response): Promise<TakeoffApiError> {
  * `storage`: where the session id lives (default localStorage, so threads survive a reload).
  */
 /** The signed-in user, as the server shows it (D-021). */
+/** A browser signed in to the account (`id` signs it out). */
+export interface SignedInDevice { id: string; current: boolean; userAgent: string; createdAt: string; lastSeenAt: string }
+
 export interface Account { id: number; name: string; email: string; emailVerified: boolean; hasPassword: boolean; google: boolean; createdAt: string }
 
 /**
@@ -974,7 +978,7 @@ export function createTakeoffApi(opts: { baseUrl?: string; storage?: KeyValueSto
   }
 
   /** The contact form: stored for the team to answer by email. Rejects with bad_request or rate_limited. */
-  async function contact(m: { name: string; email: string; topic: ContactTopic; message: string }): Promise<void> {
+  async function contact(m: { name: string; email: string; topic: ContactTopic; message: string; turnstileToken?: string }): Promise<void> {
     await post('/api/contact', m);
   }
 
@@ -993,7 +997,7 @@ export function createTakeoffApi(opts: { baseUrl?: string; storage?: KeyValueSto
     return r.user;
   }
   /** Create an account and sign in; trips planned in this browser move into it. Rejects with weak_password, invalid_email, email_taken… */
-  async function signup(a: { name: string; email: string; password: string }): Promise<Account> {
+  async function signup(a: { name: string; email: string; password: string; turnstileToken?: string }): Promise<Account> {
     return signedIn(await post('/api/auth/signup', { ...a, sessionId: browserSession() }));
   }
   async function login(a: { email: string; password: string }): Promise<Account> {
@@ -1011,7 +1015,7 @@ export function createTakeoffApi(opts: { baseUrl?: string; storage?: KeyValueSto
   async function verifyEmail(token: string): Promise<void> { await post('/api/auth/verify', { token }); }
   async function resendVerification(): Promise<void> { await post('/api/auth/resend-verification', {}); }
   /** Always resolves the same way, whether or not the email has an account. */
-  async function forgotPassword(email: string): Promise<void> { await post('/api/auth/forgot', { email }); }
+  async function forgotPassword(email: string, turnstileToken?: string): Promise<void> { await post('/api/auth/forgot', { email, turnstileToken }); }
   /** Choose a new password from an emailed link; signs in. */
   async function resetPassword(token: string, password: string): Promise<Account> {
     return signedIn(await post('/api/auth/reset', { token, password, sessionId: browserSession() }));
@@ -1023,6 +1027,16 @@ export function createTakeoffApi(opts: { baseUrl?: string; storage?: KeyValueSto
   async function changePassword(a: { currentPassword?: string; newPassword: string }): Promise<Account> {
     return (await post<{ user: Account }>('/api/account/password', a)).user;
   }
+  /** Start changing the email: a link goes to the new address (and a notice to the old one). */
+  async function changeEmail(a: { newEmail: string; password?: string }): Promise<string> {
+    return (await post<{ pendingEmail: string }>('/api/account/email', a)).pendingEmail;
+  }
+  async function confirmEmailChange(token: string): Promise<void> { await post('/api/auth/confirm-email', { token }); }
+  async function devices(): Promise<SignedInDevice[]> { return (await call<{ sessions: SignedInDevice[] }>('/api/account/sessions')).sessions; }
+  async function signOutDevice(id: string): Promise<SignedInDevice[]> {
+    return (await call<{ sessions: SignedInDevice[] }>(`/api/account/sessions/${encodeURIComponent(id)}`, { method: 'DELETE' })).sessions;
+  }
+  async function signOutOtherDevices(): Promise<SignedInDevice[]> { return (await post<{ sessions: SignedInDevice[] }>('/api/account/sessions/sign-out-others', {})).sessions; }
   /** Everything stored about the account, as JSON. */
   async function exportData(): Promise<unknown> { return call('/api/account/export'); }
   /** Confirm with the password, or `confirm: 'DELETE'` for Google-only accounts. */
@@ -1034,6 +1048,7 @@ export function createTakeoffApi(opts: { baseUrl?: string; storage?: KeyValueSto
   return {
     session, resetSession, chat, confirm, threads, messages, profile, updateProfile, resetProfile, trip, itinerary, rewind, renameThread, deleteThread, track, contact,
     authConfig, me, signup, login, google, logout, verifyEmail, resendVerification, forgotPassword, resetPassword, updateAccount, changePassword, exportData, deleteAccount,
+    changeEmail, confirmEmailChange, devices, signOutDevice, signOutOtherDevices,
   };
 }
 

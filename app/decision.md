@@ -146,3 +146,11 @@ Decisions log — newest at bottom. Never delete an entry; strike through if rev
 - **Email:** verification (24 h) and reset (1 h) links are single use and stored hashed. Resend sends them when `RESEND_API_KEY` is set; without it, development stores them in an `outbox` table and production refuses to pretend. Verification is not required to plan; reset marks the email verified.
 - **Rights:** `GET /api/account/export` returns the account, preferences and every trip with its messages and plan; `DELETE /api/account` removes them (feedback events are kept without the session).
 - **Not done here:** sign-in for the booking supplier, admin roles, 2FA. Deploy the frontend and API on one origin (rewrite `/api`) so the cookie stays first-party.
+
+## D-022 — Account security: email change, devices, lockout, breached passwords, bot check
+- **Email change** needs the password and a link opened from the new inbox; the old address gets a notice with a reset link, so a hijack doesn't go unnoticed. If the address is taken before the link is opened, nothing changes.
+- **Devices:** each sign-in records its user agent and last use (written at most every five minutes). The account page lists them and signs out one or all others.
+- **Guessing:** five failures lock an email for 15 minutes and ten for an hour, whether or not it has an account (so a lock reveals nothing); a successful login or a password reset clears it. This sits on top of the per-IP and per-email rate limits, which now live in SQLite so a restart doesn't reset them.
+- **Breached passwords:** new passwords (sign-up, reset, change) are checked with Have I Been Pwned's range API: only the first five hex characters of the SHA-1 leave the server, responses are padded. If the service is unreachable the password is allowed (logged): availability over a soft check.
+- **Bots:** Cloudflare Turnstile on sign-up, forgot-password and contact when `TURNSTILE_SECRET` is set; off otherwise so local work needs no keys.
+- **Links in URLs:** the API sends `Referrer-Policy: no-referrer`; the web app also removes tokens from the address bar once read.

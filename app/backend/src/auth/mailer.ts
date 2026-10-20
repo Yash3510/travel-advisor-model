@@ -53,6 +53,17 @@ export const verifyMail = (to: string, name: string, link: string): Mail => ({
   text: `Hi ${name},\n\nConfirm your email address to finish setting up your Takeoff account:\n${link}\n\nThe link works for 24 hours.\n\n${sign}`,
   html: branded({ preview: 'One click to confirm your email.', heading: 'Confirm your email', body: `Hi ${esc(name)}, confirm your email address to finish setting up your Takeoff account. It keeps your trips safe and lets you reset your password.`, button: 'Confirm email', link, note: 'The link works for 24 hours.' }),
 });
+export const emailChangeMail = (to: string, name: string, link: string): Mail => ({
+  to, subject: 'Confirm your new email for Takeoff',
+  text: `Hi ${name},\n\nConfirm this address to make it the email for your Takeoff account:\n${link}\n\nThe link works for 24 hours.\n\n${sign}`,
+  html: branded({ preview: 'Confirm your new email address.', heading: 'Confirm your new email', body: `Hi ${esc(name)}, confirm this address to make it the email you sign in with on Takeoff.`, button: 'Confirm new email', link, note: 'The link works for 24 hours.' }),
+});
+/** To the old address, so a change nobody asked for doesn't go unnoticed. */
+export const emailChangeNotice = (to: string, name: string, newEmail: string, link: string): Mail => ({
+  to, subject: 'Your Takeoff email is being changed',
+  text: `Hi ${name},\n\nSomeone asked to change the email for your Takeoff account to ${newEmail}. If that was you, there's nothing to do.\nIf it wasn't, reset your password now: ${link}\n\nTakeoff`,
+  html: branded({ preview: `A change to ${newEmail} was requested.`, heading: 'Your email is being changed', body: `Hi ${esc(name)}, someone asked to change the email for your Takeoff account to <b>${esc(newEmail)}</b>. If that was you, there's nothing to do. If it wasn't, reset your password now.`, button: 'Reset my password', link, note: 'The change only happens once the new address is confirmed.' }),
+});
 export const resetMail = (to: string, name: string, link: string): Mail => ({
   to, subject: 'Reset your Takeoff password',
   text: `Hi ${name},\n\nUse this link to choose a new password:\n${link}\n\nThe link works for 1 hour and can be used once.\n\n${sign}`,

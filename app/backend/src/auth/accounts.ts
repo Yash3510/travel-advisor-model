@@ -35,24 +35,71 @@ export const accounts = {
   markVerified: (id: number) => db.prepare("UPDATE users SET email_verified_at = COALESCE(email_verified_at, datetime('now')) WHERE id = ?").run(id),
   linkGoogle: (id: number, sub: string) => db.prepare('UPDATE users SET google_sub = ? WHERE id = ?').run(sub, id),
 
+  // ── failed log-ins (D-022): 5 failures lock an email for 15 minutes, 10 for an hour ──
+  /** Seconds until this email may try again, or 0. */
+  lockedFor(email: string): number {
+    const row = db.prepare("SELECT CAST(strftime('%s', locked_until) - strftime('%s', 'now') AS INTEGER) AS s FROM login_failures WHERE email = ? AND locked_until > datetime('now')").get(email.trim()) as { s: number } | undefined;
+    return row ? Math.max(1, row.s) : 0;
+  },
+  recordFailure(email: string) {
+    db.prepare(`INSERT INTO login_failures(email, count) VALUES (?, 1)
+      ON CONFLICT(email) DO UPDATE SET count = CASE WHEN last_at < datetime('now', '-1 day') THEN 1 ELSE count + 1 END, last_at = datetime('now')`).run(email.trim());
+    db.prepare(`UPDATE login_failures SET locked_until = datetime('now', CASE WHEN count >= 10 THEN '+60 minutes' ELSE '+15 minutes' END)
+      WHERE email = ? AND count >= 5 AND count % 5 = 0`).run(email.trim());
+  },
+  clearFailures: (email: string) => db.prepare('DELETE FROM login_failures WHERE email = ?').run(email.trim()),
+
   // ── signed-in browsers ──
   /** A new sign-in: returns the cookie's token (only its hash is stored). */
-  startSession(userId: number): string {
+  startSession(userId: number, userAgent = ''): string {
     const token = newToken();
     db.prepare("DELETE FROM auth_sessions WHERE expires_at < datetime('now')").run();
-    db.prepare('INSERT INTO auth_sessions(token_hash, user_id, expires_at) VALUES (?, ?, ?)')
-      .run(sha256(token), userId, sqlTime(Date.now() + config.authSessionDays * 86_400_000));
+    db.prepare("INSERT INTO auth_sessions(token_hash, user_id, expires_at, user_agent, last_seen_at) VALUES (?, ?, ?, ?, datetime('now'))")
+      .run(sha256(token), userId, sqlTime(Date.now() + config.authSessionDays * 86_400_000), userAgent.slice(0, 300));
     return token;
   },
   userForToken(token: string | undefined): UserRow | undefined {
     if (!token) return undefined;
-    const row = db.prepare("SELECT user_id FROM auth_sessions WHERE token_hash = ? AND expires_at > datetime('now')").get(sha256(token)) as { user_id: number } | undefined;
-    return row && accounts.byId(row.user_id);
+    const hash = sha256(token);
+    const row = db.prepare("SELECT user_id FROM auth_sessions WHERE token_hash = ? AND expires_at > datetime('now')").get(hash) as { user_id: number } | undefined;
+    if (!row) return undefined;
+    // "last used", at most one write per browser every five minutes
+    db.prepare("UPDATE auth_sessions SET last_seen_at = datetime('now') WHERE token_hash = ? AND (last_seen_at IS NULL OR last_seen_at < datetime('now', '-5 minutes'))").run(hash);
+    return accounts.byId(row.user_id);
   },
+  /** Where the account is signed in, newest use first; `id` is a short handle for signing one out. */
+  listSessions(userId: number, currentToken?: string) {
+    const current = currentToken ? sha256(currentToken) : '';
+    return (db.prepare("SELECT token_hash, user_agent, created_at, last_seen_at FROM auth_sessions WHERE user_id = ? AND expires_at > datetime('now') ORDER BY COALESCE(last_seen_at, created_at) DESC")
+      .all(userId) as { token_hash: string; user_agent: string | null; created_at: string; last_seen_at: string | null }[])
+      .map((r) => ({ id: r.token_hash.slice(0, 16), current: r.token_hash === current, userAgent: r.user_agent ?? '', createdAt: toIso(r.created_at), lastSeenAt: toIso(r.last_seen_at ?? r.created_at) }));
+  },
+  endSessionById: (userId: number, id: string) =>
+    db.prepare('DELETE FROM auth_sessions WHERE user_id = ? AND substr(token_hash, 1, 16) = ?').run(userId, id).changes > 0,
   endSession: (token: string) => db.prepare('DELETE FROM auth_sessions WHERE token_hash = ?').run(sha256(token)),
   /** Sign out everywhere, except the browser holding `keep`. */
   endOtherSessions: (userId: number, keep?: string) =>
     db.prepare('DELETE FROM auth_sessions WHERE user_id = ? AND token_hash != ?').run(userId, keep ? sha256(keep) : ''),
+
+  // ── changing the email address: confirmed from the new inbox (D-022) ──
+  emailChange(userId: number, newEmail: string): string {
+    const token = newToken();
+    db.prepare('DELETE FROM email_changes WHERE user_id = ? AND used_at IS NULL').run(userId);
+    db.prepare('INSERT INTO email_changes(token_hash, user_id, new_email, expires_at) VALUES (?, ?, ?, ?)').run(sha256(token), userId, newEmail, sqlTime(Date.now() + 24 * 3_600_000));
+    return token;
+  },
+  /** Apply a confirmed change; 'taken' if someone else registered that address meanwhile. */
+  confirmEmailChange(token: string): UserRow | 'taken' | undefined {
+    return db.transaction(() => {
+      const row = db.prepare("SELECT user_id, new_email FROM email_changes WHERE token_hash = ? AND used_at IS NULL AND expires_at > datetime('now')").get(sha256(token)) as { user_id: number; new_email: string } | undefined;
+      if (!row) return undefined;
+      db.prepare("UPDATE email_changes SET used_at = datetime('now') WHERE token_hash = ?").run(sha256(token));
+      const other = accounts.byEmail(row.new_email);
+      if (other && other.id !== row.user_id) return 'taken' as const;
+      db.prepare("UPDATE users SET email = ?, email_verified_at = datetime('now') WHERE id = ?").run(row.new_email, row.user_id);
+      return accounts.byId(row.user_id);
+    })();
+  },
 
   // ── one-time email links ──
   emailToken(userId: number, purpose: 'verify' | 'reset', ttlMs: number): string {

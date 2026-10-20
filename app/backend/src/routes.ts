@@ -6,6 +6,7 @@ import { config } from './config.js';
 import { HttpError, json, readBody, rateLimited, str, type Body } from './http.js';
 import { accounts } from './auth/accounts.js';
 import { currentUser, handleAuth } from './auth/routes.js';
+import { checkHuman } from './auth/turnstile.js';
 import { CONFIRM_TURN, store, type MessageRow, type Offer, type StoredMessage } from './db.js';
 import { detectRegion, dealsForRegion } from './catalog.js';
 import { ingestPolicy, gateAssistantOutput, gatePrices, emergencyText, statusText, newBookingRef, toPlainText, redact, PII_NOTICE } from './harness.js';
@@ -55,6 +56,7 @@ export function sse(res: ServerResponse, event: string, data: unknown): void {
 
 function setCommonHeaders(req: IncomingMessage, res: ServerResponse): void {
   res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'no-referrer');
   res.setHeader('Vary', 'Origin');
   const origin = req.headers.origin;
   if (config.allowedOrigins.includes('*')) res.setHeader('Access-Control-Allow-Origin', '*');
@@ -274,6 +276,7 @@ async function route(req: IncomingMessage, res: ServerResponse, ctx: RequestCont
         allow('POST');
         if (rateLimited(req, 'contact', 5)) throw new HttpError(429, 'rate_limited', 'Too many messages. Please wait a minute and try again.');
         const body = await readBody(req);
+        await checkHuman(req, body.turnstileToken);
         const name = oneLine(body.name, 100);
         const email = oneLine(body.email, 200);
         const topic = str(body.topic);
