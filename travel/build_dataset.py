@@ -60,6 +60,9 @@ def turn_score(segment, rng):
     return score + rng.random()
 
 
+EXCLUDED_GAP = {"gap_v3_concierge"}
+
+
 def main():
     rng = random.Random(1234)
     model_path = ROOT / "models/trained-v2-merged"
@@ -76,7 +79,8 @@ def main():
         ranked = sorted(fmt.reply_segments(conv), key=lambda t: turn_score(t[1], rng), reverse=True)
         convs.append((conv, {n for n, _ in ranked[:SGD_TURNS_PER_CONV]}))
 
-    gap_files = sorted((ROOT / "data/gap").glob("gap_*.jsonl"))
+    # gap_v3_concierge names real hotels and prices the model can't know: never train on it
+    gap_files = sorted(p for p in (ROOT / "data/gap").glob("gap_*.jsonl") if p.stem not in EXCLUDED_GAP)
     # gap_v2_<category> is a regeneration that replaces that category in other files; any other file adds examples
     replaced = {p.stem[len("gap_v2_"):]: p for p in gap_files if p.stem.startswith("gap_v2_")}
     review_rejects = json.loads((ROOT / "reports/review_rejects.json").read_text(encoding="utf-8"))

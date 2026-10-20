@@ -178,8 +178,11 @@ def relevant_text(page, limit=7000):
 
 
 _STALE = re.compile(r"₹|\bRs\.?\s?\d|\bINR\b|\$\d|updated|\bas of\b", re.I)
-_CLIMATE = re.compile(r"\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b|monsoon|winter|summer|spring|autumn|season|"
-                      r"weather|temperature|snow|rain|best time|°c|freez|humid", re.I)
+# whole words only ("rain" not "grain"); months case-sensitive so the verb "may" is not a month; dated sentences are history
+_CLIMATE = re.compile(r"\b(January|February|March|April|June|July|August|September|October|November|December|"
+                      r"(Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sept?|Oct|Nov|Dec)\.?(?=[\s,–-])|(?i:monsoons?|winters?|summers?|spring|autumn|"
+                      r"seasons?|weather|temperatures?|snow\w*|rain\w*|best time|freez\w*|humid\w*))\b|°C")
+_DATED = re.compile(r"\b(1[89]|20)\d\d\b")
 _CLOSURE = re.compile(r"\b(closed?|closes|closure|shut|snow-?bound|impassable|inaccessible|open only|opens? (in|from|between))\b", re.I)
 _PERMIT = re.compile(r"permit|\bILP\b|\bPAP\b|\bRAP\b|restricted area|protected area|inner line", re.I)
 _MODES = [("air", re.compile(r"plane|air|fly|flight", re.I)), ("rail", re.compile(r"train|rail|station", re.I)),
@@ -217,7 +220,7 @@ def snippets(page):
                     m = mode or next((m for m, rx in _MODES if rx.search(sent)), None)
                     if m:
                         out["getting_there"][m].append(sent)
-                elif _CLIMATE.search(sent):
+                elif _CLIMATE.search(sent) and not _DATED.search(sent):
                     out["climate"].append(sent)
                 if _CLOSURE.search(sent):
                     out["closures"].append(sent)

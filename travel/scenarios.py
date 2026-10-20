@@ -245,11 +245,11 @@ def build_v3(seed=0):
     rng = random.Random(seed)
     entries = {k: v for k, v in kb.load().items() if k not in V3_EXCLUDE}
     names = lambda keys: [entries[k]["destination"] for k in keys]
-    seasonal = names(k for k, v in entries.items() if v.get("best_months"))
-    reachable = names(k for k, v in entries.items() if any((v.get("get_in") or {}).values()))
+    seasonal = names(k for k, v in entries.items() if v.get("climate"))
+    reachable = names(k for k, v in entries.items() if any((v.get("getting_there") or {}).values()))
     no_rail = names(k for k, v in entries.items() if re.search(r"no (rail|train)|nearest (railway |train )?station|railhead",
-                                                                  str((v.get("get_in") or {}).get("rail") or ""), re.I))
-    closures = names(k for k, v in entries.items() if v.get("seasonal_closures"))
+                                                                  " ".join((v.get("getting_there") or {}).get("rail") or []), re.I))
+    closures = names(k for k, v in entries.items() if v.get("closures"))
     permits = names(k for k, v in entries.items() if v.get("permits"))
     islands = names(k for k in entries if k in ("lakshadweep",))
     pools = {"seasonal": seasonal, "reachable": reachable, "no_rail": no_rail or reachable, "closures": closures or seasonal,
