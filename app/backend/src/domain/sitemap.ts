@@ -2,7 +2,7 @@
 import { guideList } from './guide.js';
 import { sampleList } from './samples.js';
 
-const PAGES = ['/', '/how-it-works', '/destinations', '/trips', '/about', '/faq', '/contact', '/privacy', '/terms'];
+const PAGES = ['/', '/how-it-works', '/destinations', '/trips', '/about', '/faq', '/contact', '/privacy', '/terms', '/cookies'];
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
 export function sitemap(origin: string): string {

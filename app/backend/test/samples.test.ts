@@ -27,7 +27,7 @@ describe('sitemap', () => {
     const xml = sitemap('https://takeoff.example');
     expect(xml).toContain('<loc>https://takeoff.example/destinations/goa</loc>');
     expect(xml).toContain('<loc>https://takeoff.example/trips/3-days-in-jaipur</loc>');
-    expect(xml.match(/<url>/g)!.length).toBe(9 + 117 + sampleList().length);
+    expect(xml.match(/<url>/g)!.length).toBe(10 + 117 + sampleList().length);
     expect(xml).not.toMatch(/\/(chat|account|trip\/|saved-trips|login)/);
   });
 });
