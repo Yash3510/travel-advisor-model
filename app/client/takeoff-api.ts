@@ -122,6 +122,8 @@ export interface TripInsight {
 export interface ChatReply {
   message: string; threadId: number; offers: Offer[]; pendingBooking?: PendingBooking;
   planning?: PlanningInfo; itinerary?: ItineraryDraft; insights?: TripInsight[];
+  /** the stored reply's id, for feedback (D-026) */ messageId?: number;
+  /** true when the model was unreachable and the reply came from the guide and code (D-026) */ degraded?: boolean;
   [key: string]: unknown;
 }
 export interface Destination { regionName: string; regionCode: string }
@@ -132,7 +134,7 @@ export type ContactTopic = (typeof CONTACT_TOPICS)[number];
 /** Additive `status` event: what the server is doing right now ("Searching hotels"). */
 export interface ChatStatus { step: string; label: string }
 export interface Thread { id: number; title: string; destination: string | null; isActive: boolean; createdAt: string; updatedAt: string }
-export interface ThreadMessage { role: 'user' | 'assistant'; content: string; createdAt: string }
+export interface ThreadMessage { id: number; role: 'user' | 'assistant'; content: string; createdAt: string; /** your rating of a reply (D-026) */ feedback?: 'up' | 'down' }
 export interface BookingResult { status: string; bookingRef: string; message: string; offer: Record<string, unknown> }
 
 /**
@@ -474,6 +476,10 @@ export function createTakeoffApi(opts: { baseUrl?: string; storage?: KeyValueSto
     return { ...t, itinerary: parseItinerary(t.itinerary) ?? null };
   }
 
+  /** Rate a reply: up, down (with an optional reason), or null to clear (D-026). */
+  async function rate(threadId: number, messageId: number, rating: 'up' | 'down' | null, reason?: string) {
+    return post<{ ok: true }>(`/api/threads/${threadId}/messages/${messageId}/feedback`, { sessionId: await session(), rating, ...(reason ? { reason } : {}) });
+  }
   const guideList = async () => (await call<{ destinations: GuideListItem[] }>('/api/guide')).destinations;
   const guidePage = (slug: string) => call<GuidePage>(`/api/guide/${encodeURIComponent(slug)}`);
   const sampleList = async () => (await call<{ samples: SampleCard[] }>('/api/samples')).samples;
@@ -566,7 +572,7 @@ export function createTakeoffApi(opts: { baseUrl?: string; storage?: KeyValueSto
     session, resetSession, chat, confirm, threads, messages, profile, updateProfile, resetProfile, trip, itinerary, rewind, renameThread, deleteThread, track, contact,
     authConfig, me, signup, login, google, logout, verifyEmail, resendVerification, forgotPassword, resetPassword, updateAccount, changePassword, exportData, deleteAccount,
     changeEmail, confirmEmailChange, devices, signOutDevice, signOutOtherDevices,
-    shareStatus, share, stopSharing, sharedTrip, guideList, guidePage, sampleList, sampleTrip, admin,
+    shareStatus, share, stopSharing, sharedTrip, guideList, guidePage, sampleList, sampleTrip, admin, rate,
   };
 }
 

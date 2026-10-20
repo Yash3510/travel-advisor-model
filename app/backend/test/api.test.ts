@@ -192,12 +192,44 @@ describe('POST /api/chat', () => {
     expect(JSON.stringify(stub.requests)).not.toContain('4111');
   });
 
-  it('reports a model outage without saving half a turn', async () => {
+  it('saves thumbs up/down per reply, shows it on reload, and only for this session (D-026)', async () => {
+    const sid = await session();
+    stub.queue = [{ content: 'Goa is lovely in December.' }];
+    const d = (await chat(sid, 'is goa good in december?')).at(-1)!;
+    const { threadId, messageId } = d.data;
+    expect(messageId).toEqual(expect.any(Number));
+    const rate = (body: unknown, mid = messageId) => fetch(`${base}/api/threads/${threadId}/messages/${mid}/feedback`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    expect((await rate({ sessionId: sid, rating: 'down', reason: 'Too vague' })).status).toBe(200);
+    const msgs = (await (await fetch(`${base}/api/threads/${threadId}/messages?sessionId=${sid}`)).json()).messages;
+    expect(msgs.find((m: { id: number }) => m.id === messageId).feedback).toBe('down');
+    expect((await rate({ sessionId: await session(), rating: 'up' })).status).toBe(404); // someone else's thread
+    expect((await rate({ sessionId: sid, rating: 'meh' })).status).toBe(400);
+    const userMsg = msgs.find((m: { role: string }) => m.role === 'user').id;
+    expect((await rate({ sessionId: sid, rating: 'up' }, userMsg)).status).toBe(404); // only replies are rated
+    expect((await rate({ sessionId: sid, rating: null })).status).toBe(200);
+    const after = (await (await fetch(`${base}/api/threads/${threadId}/messages?sessionId=${sid}`)).json()).messages;
+    expect(after.find((m: { id: number }) => m.id === messageId).feedback).toBeUndefined();
+  });
+
+  it('answers in basic mode when the model is down: honest, and saved like any reply (D-026)', async () => {
     const sid = await session();
     stub.queue = ['fail'];
-    const ev = await chat(sid, 'what is the weather like in Japan?');
-    expect(ev).toEqual([{ event: 'error', data: expect.objectContaining({ code: 'model_unavailable' }) }]);
-    expect((await (await fetch(`${base}/api/threads?sessionId=${sid}`)).json()).threads).toEqual([]);
+    const d = (await chat(sid, 'what is the weather like in Japan?')).at(-1)!;
+    expect(d.event).toBe('done');
+    expect(d.data.degraded).toBe(true);
+    expect(d.data.message).toMatch(/offline for a moment/);
+    expect(d.data.message).toMatch(/day-by-day plan/);
+    expect((await (await fetch(`${base}/api/threads?sessionId=${sid}`)).json()).threads).toHaveLength(1);
+  });
+
+  it('in basic mode, quotes the destination guide for a place it knows, with the source', async () => {
+    const sid = await session();
+    stub.queue = ['fail'];
+    const d = (await chat(sid, 'is Munnar nice, how do I get there?')).at(-1)!;
+    expect(d.data.degraded).toBe(true);
+    expect(d.data.message).toContain('The season between October and March (post-monsoon) is considered the best to visit Munnar.');
+    expect(d.data.message).toMatch(/Source: Wikivoyage/);
+    expect(d.data.message).not.toMatch(/₹|\bINR\b/);
   });
 
   it('keeps slow replies alive with SSE comments', async () => {
@@ -437,8 +469,7 @@ describe('drop-in client (client/takeoff-api.ts)', () => {
 
   it('reports backend errors with their codes', async () => {
     const api = createTakeoffApi({ baseUrl: base, storage: memory() });
-    stub.queue = ['fail'];
-    await expect(api.chat('is Goa safe?')).rejects.toMatchObject({ code: 'model_unavailable' });
+    await expect(api.chat('x'.repeat(4001))).rejects.toMatchObject({ code: 'message_too_long' });
     await expect(api.chat('x'.repeat(4001))).rejects.toBeInstanceOf(TakeoffApiError);
   });
 

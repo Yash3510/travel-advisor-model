@@ -33,6 +33,7 @@ import { guideList, guidePage } from './domain/guide.js';
 import { sample, sampleList } from './domain/samples.js';
 import { sitemap } from './domain/sitemap.js';
 import { checkIntro, fallbackIntro, introRequest, renderItinerary } from './services/presentation.js';
+import { offlineReply } from './services/offlineReply.js';
 import { buildSystemPrompt } from './prompts.js';
 import { chatCompletion, runTurn, trimHistory, type PendingBooking, type ToolBackend, type Turn } from './modelClient.js';
 import { toolSchemas, type Backend } from './tools.js';
@@ -150,12 +151,29 @@ async function route(req: IncomingMessage, res: ServerResponse, ctx: RequestCont
       allow('GET');
       const thread = ownThread(Number(messagesPath[1]), url.searchParams.get('sessionId') ?? '');
       if (!thread) throw new HttpError(404, 'thread_not_found', 'Thread not found.');
+      const rated = store.feedbackFor(thread.id);
       json(res, 200, {
         // what the customer saw: tool calls and tool results stay server-side
         messages: store.getMessages(thread.id)
           .filter((m) => (m.role === 'user' || m.role === 'assistant') && m.content)
-          .map((m) => ({ role: m.role, content: m.content, createdAt: toIso(m.created_at) })),
+          .map((m) => ({ id: m.id, role: m.role, content: m.content, createdAt: toIso(m.created_at), ...(rated.has(m.id) ? { feedback: rated.get(m.id) } : {}) })),
       });
+      return;
+    }
+
+    // thumbs up/down on a reply (D-026), with an optional reason for a thumbs down
+    const feedbackPath = /^\/api\/threads\/(\d+)\/messages\/(\d+)\/feedback$/.exec(pathname);
+    if (feedbackPath) {
+      allow('POST');
+      if (rateLimited(req, 'feedback', 60)) throw new HttpError(429, 'rate_limited', 'Please wait a minute and try again.');
+      const body = await readBody(req);
+      const thread = ownThread(Number(feedbackPath[1]), str(body.sessionId));
+      if (!thread) throw new HttpError(404, 'thread_not_found', 'Thread not found.');
+      const rating = body.rating === 'up' || body.rating === 'down' ? body.rating : body.rating === null ? null : undefined;
+      if (rating === undefined) throw new HttpError(400, 'invalid_rating', 'Rating must be up, down or null.');
+      const reason = rating === 'down' && typeof body.reason === 'string' ? body.reason.trim().slice(0, 500) || undefined : undefined;
+      if (!store.setFeedback(thread.id, Number(feedbackPath[2]), rating, reason)) throw new HttpError(404, 'message_not_found', 'Message not found.');
+      json(res, 200, { ok: true });
       return;
     }
 
@@ -570,6 +588,8 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext, 
     const toStore: StoredMessage[] = [{ role: 'user', content: policy.redacted }];
 
     let reply: string;
+    let degraded = false;
+    let replyId: number | undefined;
     let offers: Offer[] = [];
     let pendingBooking: PendingBooking | undefined;
     let region: { name: string; code: string } | null = null;
@@ -639,8 +659,10 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext, 
         });
       } catch (err) {
         if (clientGone.signal.aborted) { log('info', 'client left before the reply', { threadId: thread?.id ?? null }); return; }
-        log('error', 'model call failed', { threadId: thread?.id ?? null, error: (err as Error).message });
-        return fail('model_unavailable', 'Our travel assistant is unavailable right now. Please try again in a minute.');
+        log('error', 'model call failed, answering in basic mode', { threadId: thread?.id ?? null, error: (err as Error).message });
+        // basic mode (D-026): guide facts and what still works, instead of an error
+        degraded = true;
+        turn = { reply: offlineReply(policy.redacted, planned.trip), added: [], offers: [], toolTrace: [] };
       }
       if (clientGone.signal.aborted) return;
       if (config.logTools && turn.toolTrace.length) log('info', 'tool calls', { threadId: thread?.id ?? null, toolTrace: turn.toolTrace });
@@ -678,7 +700,7 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext, 
       if (!thread) store.appendMessage(id, { role: 'assistant', content: GREETING });
       const [userTurn, ...rest] = toStore;
       store.saveTurn(id, store.appendMessage(id, userTurn), tripBefore, versionBefore);
-      for (const m of rest) store.appendMessage(id, m);
+      for (const m of rest) { const mid = store.appendMessage(id, m); if (m.role === 'assistant' && m.content) replyId = mid; }
       if (region) store.updateThread(id, { destination: region.name, region_code: region.code, stage: 'planning' });
       if (planned) { store.saveTrip(id, planned.trip); store.saveProfile(sessionId, planned.profile); }
       if (itinerary) store.saveItinerary(id, itinerary);
@@ -700,6 +722,8 @@ async function handleChat(body: Body, res: ServerResponse, ctx: RequestContext, 
       ...(planned ? { planning: planningInfo(planned.route) } : {}),
       // additive: the structured plan is the source of truth; the message is its rendering
       ...(itinerary ? { itinerary, insights: tripInsights } : {}),
+      ...(degraded ? { degraded: true } : {}),
+      ...(replyId ? { messageId: replyId } : {}),
     });
     res.end();
   } finally {

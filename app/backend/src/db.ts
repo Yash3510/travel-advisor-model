@@ -184,6 +184,16 @@ addColumns('users', ["role TEXT NOT NULL DEFAULT 'user'", 'disabled_at TEXT', 't
 addColumns('auth_sessions', ['mfa_at TEXT']);
 addColumns('booking_requests', ['admin_note TEXT', 'updated_at TEXT']);
 addColumns('contact_messages', ['handled_at TEXT']);
+// reply feedback (D-026): one rating per assistant message; `training_at` when an admin queues it for the next model
+db.exec(`CREATE TABLE IF NOT EXISTS feedback (
+  message_id INTEGER PRIMARY KEY,
+  thread_id INTEGER NOT NULL REFERENCES threads(id),
+  rating TEXT NOT NULL CHECK(rating IN ('up','down')),
+  reason TEXT,
+  training_at TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+)`);
 db.exec(`CREATE TABLE IF NOT EXISTS admin_audit (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   admin_id INTEGER NOT NULL,
@@ -243,7 +253,7 @@ export const store = {
   deleteThread(id: number, sessionId: string): boolean {
     return db.transaction(() => {
       if (!db.prepare('SELECT 1 FROM threads WHERE id = ? AND session_id = ?').get(id, sessionId)) return false;
-      for (const table of ['messages', 'offers', 'booking_requests', 'trips', 'itineraries', 'turns', 'shares']) {
+      for (const table of ['feedback', 'messages', 'offers', 'booking_requests', 'trips', 'itineraries', 'turns', 'shares']) {
         db.prepare(`DELETE FROM ${table} WHERE thread_id = ?`).run(id);
       }
       db.prepare('DELETE FROM threads WHERE id = ?').run(id);
@@ -294,6 +304,18 @@ export const store = {
       touch.run(threadId);
       return { text: last.content };
     })();
+  },
+  /** Rate an assistant message in this thread (null clears it); false when the message isn't one. */
+  setFeedback(threadId: number, messageId: number, rating: 'up' | 'down' | null, reason?: string): boolean {
+    const ok = db.prepare("SELECT 1 FROM messages WHERE id = ? AND thread_id = ? AND role = 'assistant'").get(messageId, threadId);
+    if (!ok) return false;
+    if (rating === null) db.prepare('DELETE FROM feedback WHERE message_id = ?').run(messageId);
+    else db.prepare(`INSERT INTO feedback(message_id, thread_id, rating, reason) VALUES (?, ?, ?, ?)
+      ON CONFLICT(message_id) DO UPDATE SET rating = excluded.rating, reason = excluded.reason, updated_at = datetime('now')`).run(messageId, threadId, rating, reason ?? null);
+    return true;
+  },
+  feedbackFor(threadId: number): Map<number, 'up' | 'down'> {
+    return new Map((db.prepare('SELECT message_id, rating FROM feedback WHERE thread_id = ?').all(threadId) as { message_id: number; rating: 'up' | 'down' }[]).map((r) => [r.message_id, r.rating]));
   },
   getMessages(threadId: number): MessageRow[] {
     return db.prepare('SELECT * FROM messages WHERE thread_id = ? ORDER BY id').all(threadId) as MessageRow[];
