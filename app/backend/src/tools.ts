@@ -3,6 +3,7 @@
 
 import { randomUUID } from 'node:crypto';
 import { regionForAlias } from './catalog.js';
+import { guideEntry } from './domain/guide.js';
 import type { Offer } from './db.js';
 
 export interface Backend {
@@ -56,8 +57,11 @@ export class MockBackend implements Backend {
       case 'get_entry_requirements': return { source: 'mock_requirements', checked_at: this.today(), result: 'Visa on arrival or e-visa generally; confirm passport validity of 6 months.', also_required: ['Return flight tickets', 'Hotel booking proof'], note: 'Illustrative. Verify with the destination government site.' };
       case 'get_travel_advisory': return { source: 'mock_advisory', checked_at: this.today(), destination: String(args.destination ?? ''), advisory: 'Generally safe. Standard precautions.' };
       case 'handoff_to_human': return { status: 'TRANSFERRED', queue: args.urgency === 'urgent' ? 'urgent' : 'normal', expected_wait_minutes: args.urgency === 'urgent' ? 2 : 10 };
-      // The travel guide (kb/destinations.json, built from Wikivoyage by the model repo) is not bundled yet.
-      case 'get_destination_info': return { found: false, destination: String(args.destination ?? ''), message: 'No travel-guide entry for this place. It may not exist, or it may be too small to be covered.' };
+      case 'get_destination_info': {
+        const destination = String(args.destination ?? '');
+        const entry = guideEntry(destination);
+        return entry ? { found: true, ...entry } : { found: false, destination, message: 'No travel-guide entry for this place. It may not exist, or it may be too small to be covered.' };
+      }
       default:
         return { error: 'unknown_tool', message: `Tool ${name} is not available in this deployment.` };
     }

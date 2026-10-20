@@ -12,6 +12,9 @@ from travel import kb
 
 sys.stdout.reconfigure(encoding="utf-8")
 
+APP_GUIDE = kb.ROOT / "app" / "backend" / "data" / "guide.json"
+
+
 def fetch_all():
     stats = collections.Counter()
     for key, title in kb.DESTINATIONS.items():
@@ -39,7 +42,9 @@ def build_all():
               f"sea={len(g['sea'])} permits={len(s['permits'])} closures={len(s['closures'])}", flush=True)
     kb.KB_PATH.parent.mkdir(parents=True, exist_ok=True)
     kb.KB_PATH.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
-    print(f"wrote {len(out)} destinations -> {kb.KB_PATH}")
+    # the app's backend reads one file: entries plus the same alias rules as kb.lookup
+    APP_GUIDE.write_text(json.dumps({"aliases": kb.ALIASES, "fallback": kb.FALLBACK, "entries": out}, ensure_ascii=False), encoding="utf-8")
+    print(f"wrote {len(out)} destinations -> {kb.KB_PATH} and {APP_GUIDE}")
 
 
 if __name__ == "__main__":
