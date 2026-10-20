@@ -638,7 +638,7 @@ describe('feedback and contact (additive)', () => {
     expect(pub.itinerary.destination).toBe('Goa');
     expect(pub.trip.durationDays).toBe(3);
     expect(pub.title).toBe('3-day Goa trip');
-    expect(JSON.stringify(pub)).not.toContain('relaxed pace'); // no messages
+    expect(JSON.stringify(pub)).not.toContain('just me'); // no messages (plan reasons like "suits a relaxed pace" are part of the plan)
     await fetch(`${base}/api/threads/${threadId}/share?sessionId=${sid}`, { method: 'DELETE' });
     expect((await fetch(`${base}/api/share/${token}`)).status).toBe(404);
   });
