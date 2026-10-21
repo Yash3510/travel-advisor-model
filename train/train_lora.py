@@ -36,6 +36,36 @@ def load(path, max_len=MAX_LEN):
                               for r in rows])
 
 
+class SlicedLossTrainer(Trainer):
+    """Same loss as the model's own, without the full logits tensor.
+
+    The model normally turns every position into scores over the whole 248k-token vocabulary (about 1 GB per 1,000
+    tokens in fp32) before the loss even looks at the labels. Here the loss is computed only where there is a label (the
+    assistant's tokens), a slice at a time, with each slice recomputed in the backward pass instead of kept. Long
+    conversations then fit on a 6 GB GPU and on the Mac.
+    """
+
+    SLICE = 512
+
+    def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
+        labels = inputs.pop("labels")
+        base = model.get_base_model() if hasattr(model, "get_base_model") else model
+        hidden = base.model(input_ids=inputs["input_ids"], attention_mask=inputs.get("attention_mask")).last_hidden_state
+        # position t predicts token t+1, as in the model's own loss
+        h, y = hidden[:, :-1, :], labels[:, 1:]
+        keep = y != -100
+        h, y = h[keep], y[keep]
+        head = base.lm_head
+        total = h.new_zeros((), dtype=torch.float32)
+        for i in range(0, y.numel(), self.SLICE):
+            def piece(hs, ys):
+                return torch.nn.functional.cross_entropy(head(hs).float(), ys, reduction="sum")
+            total = total + torch.utils.checkpoint.checkpoint(piece, h[i:i + self.SLICE], y[i:i + self.SLICE], use_reentrant=False)
+        n = num_items_in_batch if num_items_in_batch is not None else y.numel()
+        loss = total / max(int(n), 1)
+        return (loss, None) if return_outputs else loss
+
+
 class FreeCache(TrainerCallback):
     """Release cached accelerator memory after each step."""
 
@@ -106,7 +136,7 @@ def main():
     collator = DataCollatorForSeq2Seq(text_tok, padding=True, label_pad_token_id=-100, pad_to_multiple_of=arg("--pad", 128, int))
 
     accum_steps = arg("--grad-accum", max(1, 16 // bs), int)
-    optim_type = "adamw_8bit" if use_cuda else "adamw_torch"
+    optim_type = "adamw_torch"
 
     warmup_steps = int(max_steps * 0.03) if max_steps > 0 else 10
     args = TrainingArguments(
@@ -135,7 +165,7 @@ def main():
         remove_unused_columns=False,
     )
 
-    trainer = Trainer(
+    trainer = SlicedLossTrainer(
         model=model,
         args=args,
         train_dataset=train,
