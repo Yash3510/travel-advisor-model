@@ -53,6 +53,47 @@ V4_REQUIRED = {"v4_unknown_attraction": ("no_unknown_ack", UNKNOWN_ACK), "v4_inf
 PII_PASTED = re.compile(r"\d[\d \-]{9,}\d|\b[A-Z]\d{7}\b|\b[A-Z]{5}\d{4}[A-Z]\b")   # card/Aadhaar digits, passport, PAN
 DOCTOR = re.compile(r"doctor|physician|gyn(a)?ecolog|obstetric|medical (advice|clearance)", re.I)
 NO_BOOKING = {"v5_supplier_correction", "v5_book_now_summary"}     # these conversations end on the correction or summary
+# v6 checks use broader wording than v4's (the v1-v5 data keeps its frozen checks): the v6 pilot's good replies said
+# "extremely rushed", "no such service ... nearest railway station" and "wasn't found in my travel guide"
+V6_INFEASIBLE = re.compile(INFEASIBLE_ACK.pattern + r"|rushed|no time to|almost no time|impractical|not (a )?realistic|"
+                           r"no (such |direct )?(service|connection|station)|nearest (railway |train )?station|railhead|"
+                           r"(doesn'?t|does not|can'?t|cannot) (reach|go|connect)", re.I)
+V6_UNKNOWN = re.compile(UNKNOWN_ACK.pattern + r"|(wasn'?t|was not|isn'?t|is not|not) (found|listed)|does(n'?t| not) (list|show|have)|"
+                        r"not in (the|my|our) (travel )?(guide|database)|no (entry|record|information) (for|on|about)", re.I)
+V4_REQUIRED.update({"v6_too_many_places": ("no_infeasible_ack", V6_INFEASIBLE), "v6_no_rail_trip": ("no_infeasible_ack", V6_INFEASIBLE),
+                    "v6_attraction_pair": ("no_unknown_ack", V6_UNKNOWN)})
+EDITOR_LEAK = re.compile(r"rewritten (reply|message|version)|previous (message|reply|draft)|unsupported details|editor note|"
+                         r"(in|from) my last (message|reply)|apologi[sz]e for (the|my) (error|mistake)|"
+                         r"here(?: is|'s) (the|my) (rewritten|revised|updated)", re.I)
+# v6: a pending or failed booking described as confirmed ("the supplier has confirmed availability"), unless negated just before
+CONFIRMED_CLAIM = re.compile(r"\b(has|have|had) (been )?confirmed\b|\bconfirmed (the |your )?(availability|booking|reservation|room|seat|stay)\b|"
+                             r"\b(is|are|now) (confirmed|booked)\b|\bbooking (is )?(complete|done)\b|\byou'?re (all set|booked)\b|"
+                             r"\bsuccessfully (booked|reserved)\b", re.I)
+SAFE_CLAIM = re.compile(r"\b(completely|perfectly|totally|absolutely|100%) safe\b", re.I)
+STRENUOUS = re.compile(r"trek|hike|hiking|rafting|paraglid|summit|high pass|steep|camp night|jeep safari", re.I)
+EASED = re.compile(r"avoid|skip|drop|instead|replace|swap|\bnot\b|\bno\b|n't|\btoo\b|risk|strenuous|cancel|remove|without|"
+                   r"gentle|easy|easier|short|light|doctor", re.I)
+BUDGET_GAP = re.compile(r"budget.{0,160}(won'?t|will not|can'?t|cannot|does ?n'?t|not enough|short|exceed|over|above|beyond|stretch|"
+                        r"unrealistic|out of reach|more than)|(won'?t|can'?t|cannot|not enough|exceed|beyond|out of reach).{0,160}budget", re.I | re.S)
+ADVICE = re.compile(r"not worth|isn'?t worth|is not worth|wouldn'?t (recommend|upgrade|bother|pay)|I'?d (skip|stick|stay|keep|save)|stick (with|to)|"
+                    r"stay with|skip the (upgrade|suite)|unnecessary|don'?t need|no need|better (to|value)|"
+                    r"recommend (staying|keeping|sticking|the (standard|cheaper|₹))|save (the|your|that) (money|₹|difference)", re.I)
+SEARCHES = ("search_hotels", "search_flights")
+ALTERNATIVE = re.compile(r"instead|gentle|gentler|easy|easier|relaxed|leisurely|light|scenic|comfortable|low[- ]altitude|"
+                         r"lower altitude|shorter|short walk|rest", re.I)
+
+
+def _place_names():
+    names = {v["destination"] for v in kb.load().values()} | {k.title() for k in kb.load()}
+    return {n for n in names if len(n) > 3}
+
+
+PLACES = _place_names()
+
+
+def names_another_place(text, rejected):
+    """Does the reply suggest a destination from the travel guide other than the one the customer turned down?"""
+    return any(p.lower() != (rejected or "").lower() and re.search(rf"\b{re.escape(p)}\b", text) for p in PLACES)
 
 
 def _calls(msg):
@@ -209,6 +250,8 @@ def check(conv):
         focus = conv.get("meta", {}).get("focus", "")
         if first is None or focus.lower() not in str(first["function"]["arguments"]).lower():
             flag("focus_not_looked_up")
+    if category.startswith("v6_"):
+        _check_v6(conv, msgs, category, flag)
     if category == "v5_health_replan":             # the reply to the reveal replans and mentions a doctor
         k = [i for i, m in enumerate(msgs) if m["role"] == "user"]
         reply = next((m for m in msgs[k[1] + 1:] if m["role"] == "assistant"), None) if len(k) > 1 else None
@@ -230,6 +273,57 @@ def check(conv):
         if first is None or not PII_WARN.search(first.get("content") or ""):
             flag("pii_not_warned")
     return found
+
+
+def _check_v6(conv, msgs, category, flag):
+    """The behaviour each v6 category teaches, in the teacher's reply after the scripted turns."""
+    meta = conv.get("meta", {})
+    users = [i for i, m in enumerate(msgs) if m["role"] == "user"]
+    k = meta.get("scripted_turns", 0)
+    start = users[k] if k < len(users) else 0      # the customer turn the teacher answers first
+    replies = [m for m in msgs[start + 1:] if m["role"] == "assistant"]
+    first_text = next((m.get("content") or "" for m in replies if (m.get("content") or "").strip()), "")
+    if any(EDITOR_LEAK.search(m.get("content") or "") for m in replies):
+        flag("editor_leak")                        # the teacher's rewrite step talking about itself
+    if category == "v6_status_wording":
+        for m in CONFIRMED_CLAIM.finditer(first_text):
+            if not re.search(r"\b(not|no|yet)\b|n't", first_text[max(0, m.start() - 25):m.start()], re.I):
+                flag("status_called_confirmed")
+    elif category == "v6_health_after_plan":
+        reply = replies[0] if replies else None
+        if reply is None or _calls(reply) or not DOCTOR.search(reply.get("content") or ""):
+            flag("no_replan")
+        text = (reply or {}).get("content") or ""
+        if SAFE_CLAIM.search(text):
+            flag("safety_promise")
+        if any(STRENUOUS.search(s) and not EASED.search(s) for s in re.split(r"(?<=[.!?\n])\s*", text)):
+            flag("kept_strenuous")
+        if not ALTERNATIVE.search(text):           # a doctor mention alone is not a revised plan
+            flag("no_alternative_plan")
+    elif category == "v6_rejected_suggestion":
+        place = (meta.get("rejected") or "").lower()
+        if place and any(place in ((m.get("content") or "") + json.dumps([c["function"] for c in _calls(m)])).lower() for m in replies):
+            flag("repeated_rejected")
+        if not names_another_place(first_text, meta.get("rejected")):
+            flag("no_alternative")                 # questions alone don't answer "something else?"
+    elif category == "v6_budget_gap":
+        if not BUDGET_GAP.search(" ".join(m.get("content") or "" for m in replies)):
+            flag("no_budget_gap")
+    elif category == "v6_upgrade_advice":
+        if not ADVICE.search(first_text):
+            flag("no_advice")
+    elif category == "v6_full_spec_search":
+        if not any(c["function"]["name"] in SEARCHES for c in (_calls(replies[0]) if replies else [])):
+            flag("asked_instead_of_search")
+    elif category == "v6_vague_ask":
+        reply = replies[0] if replies else None
+        if reply is None or any(c["function"]["name"] in SEARCHES for c in _calls(reply)) or "?" not in (reply.get("content") or ""):
+            flag("searched_without_details")
+    elif category == "v6_attraction_pair":
+        looked = " ".join(str(c["function"]["arguments"]) for m in msgs for c in _calls(m)
+                          if c["function"]["name"] == "get_destination_info").lower()
+        if any(name.lower() not in looked for name in meta.get("focus") or []):
+            flag("focus_not_looked_up")
 
 
 def _claims(content):

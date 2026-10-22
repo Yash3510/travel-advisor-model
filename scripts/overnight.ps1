@@ -1,10 +1,11 @@
 # Overnight run on the RTX 4050 laptop, hands-off: teacher conversations for the previous model's weak spots -> drop
 # failures and generate them once more -> dataset -> train (Recipe A, all rows at 4096) -> Q8_0 and bf16 GGUFs ->
 # 30-scenario evals and gate samples. Runs detached, so it keeps going if Claude stops; it holds the PC awake while it runs.
-# Used for v4 and v5 (the version picks the brief catalog, data file, output folders and names).
-# usage: Start-Process powershell -WindowStyle Hidden -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File scripts\overnight.ps1 -Version v5'
-# progress: outputs\<version>_logs\overnight.log; ends with outputs\<version>_logs\DONE or FAILED.
-param([string]$Version = 'v5')
+# Used for v4-v6 (the version picks the brief catalog, data file, output folders and names). -Stage data stops after the
+# teacher data (marker DATA_DONE) so it can be reviewed before training; -Stage train does the rest.
+# usage: Start-Process powershell -WindowStyle Hidden -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File scripts\overnight.ps1 -Version v6 -Stage data'
+# progress: outputs\<version>_logs\overnight.log; ends with outputs\<version>_logs\DONE (or DATA_DONE) or FAILED.
+param([string]$Version = 'v6', [ValidateSet('all', 'data', 'train')][string]$Stage = 'all')
 $ErrorActionPreference = 'Continue'
 $repo = Split-Path -Parent $PSScriptRoot
 Set-Location $repo
@@ -46,15 +47,18 @@ function serve($model, $port, $extra) {
     fail "llama-server did not start for $model"
 }
 
-say "$Version overnight started"
-# 1. teacher data: every brief in this version's catalog, then drop the failures and generate those once more
-serve 'models/teacher-Qwen3.5-4B-GGUF/Qwen3.5-4B-Q6_K.gguf' 8081 @('-c', '49152', '-np', '3')
-foreach ($round in 1, 2) {
-    run "gen$round" "run --quiet python -I -m travel.simulate http://127.0.0.1:8081 $gap --catalog $Version --workers 3" | Out-Null
-    run "clean$round" "run --quiet python -I scripts/keep_clean.py $gap" | Out-Null
-    say ("round {0}: {1}" -f $round, (Get-Content "$logs\clean$round.out" -Raw).Trim())
+say "$Version overnight started (stage $Stage)"
+if ($Stage -ne 'train') {
+    # 1. teacher data: every brief in this version's catalog, then drop the failures and generate those once more
+    serve 'models/teacher-Qwen3.5-4B-GGUF/Qwen3.5-4B-Q6_K.gguf' 8081 @('-c', '49152', '-np', '3')
+    foreach ($round in 1, 2) {
+        run "gen$round" "run --quiet python -I -m travel.simulate http://127.0.0.1:8081 $gap --catalog $Version --workers 3" | Out-Null
+        run "clean$round" "run --quiet python -I scripts/keep_clean.py $gap" | Out-Null
+        say ("round {0}: {1}" -f $round, (Get-Content "$logs\clean$round.out" -Raw).Trim())
+    }
+    stop_servers
+    if ($Stage -eq 'data') { say 'DATA_DONE'; Set-Content -Path "$logs\DATA_DONE" -Value (Get-Date); exit 0 }
 }
-stop_servers
 
 # 2. dataset (earlier gap data unchanged, plus this version's file)
 if ((run 'dataset' 'run --quiet python -I -m travel.build_dataset') -ne 0) { fail 'build_dataset' }
@@ -82,6 +86,10 @@ foreach ($v in @(@('Q8_0', "$($Version)_cuda_deploy", 'q8'), @('bf16', "$($Versi
     if ((run "eval_$($v[2])" "run --quiet python -I -m travel.evaluate http://127.0.0.1:8091 eval/results/$($v[1]).json --system-file prompts/runtime_system_prompt.txt --deploy-sampling") -ne 0) { fail "eval $($v[0])" }
     run "gate_$($v[2])" "run --quiet python -I scripts/gate_samples.py http://127.0.0.1:8091 outputs/$($Version)_logs/gate_$($v[2]).json 5" | Out-Null
     run "book_$($v[2])" "run --quiet python -I scripts/gate_samples.py http://127.0.0.1:8091 outputs/$($Version)_logs/book_$($v[2]).json 20 8,13" | Out-Null
+    if ($v[2] -eq 'q8') {                          # 3 samples of every eval and held-out scenario, for blind scoring
+        run 'samples_q8_eval' "run --quiet python -I scripts/gate_samples.py http://127.0.0.1:8091 outputs/$($Version)_logs/samples_q8_eval.json 3 eval" | Out-Null
+        run 'samples_q8_holdout' "run --quiet python -I scripts/gate_samples.py http://127.0.0.1:8091 outputs/$($Version)_logs/samples_q8_holdout.json 3 holdout" | Out-Null
+    }
 }
 stop_servers
 say 'DONE'

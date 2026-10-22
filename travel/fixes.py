@@ -23,24 +23,43 @@ PII_NOTE = ("[Editor note, not from the customer] The customer pasted card, CVV,
 HEALTH_NOTE = ("[Editor note, not from the customer] The customer has just told you about a health condition. Do not call a tool "
                "yet. Revise the plan for it first: drop strenuous or risky activities, offer gentler alternatives, and suggest "
                "they check with their doctor before travelling. Do not diagnose. Reply with that message only.")
+SEARCH_NOTE = ("[Editor note, not from the customer] The customer has already given everything a search needs: where from, where "
+               "to, dates and how many travellers. Do not ask anything. Search flights and hotels now with exactly those details "
+               "(travellers = adults + children).")
+ADVICE_NOTE = ("[Editor note, not from the customer] The customer only wants your opinion. Answer it in your first sentence: given "
+               "how they will use the room and their tight budget, say plainly whether the upgrade is worth it, then one short "
+               "line on what would be worth spending on instead. No questions, no tool calls. Reply with that message only.")
+SUGGEST_NOTE = ("[Editor note, not from the customer] The customer turned down that kind of place and asked for something else. "
+                "Suggest two concrete destinations of a different kind, one short line each on why they suit this couple, "
+                "then ask at most one question. Do not suggest the place they rejected. Reply with that message only.")
 WARN_FIRST = {"v5_pii_first"}                      # first reply must warn about pasted card/ID data
-REPLAN_AFTER_REVEAL = {"v5_health_replan"}         # the reply to the health reveal must replan, not call a tool
+SUGGEST_FIRST = {"v6_rejected_suggestion"}         # "something else?" gets concrete alternatives, not only questions
+SEARCH_FIRST = {"v6_full_spec_search"}             # a fully specified request is searched, not re-asked
+OPINION_FIRST = {"v6_upgrade_advice"}              # an opinion question is answered directly
+REPLAN_AFTER_REVEAL = {"v5_health_replan", "v6_health_after_plan"}   # the reply to the health reveal must replan, not call a tool
 
 
 def focus_first(sc, msgs, reply, corrections):
     """Look up the attraction the customer named (sc["focus"]) before anything else: the student copies whichever lookup
     comes first. A guide lookup of the city is pointed at the attraction; a first reply without one becomes that lookup."""
     focus = sc.get("focus")
-    if not focus or any(focus.lower() in str(c["function"]["arguments"]).lower()
-                        for m in msgs + [reply] for c in m.get("tool_calls") or []):
+    names = [focus] if isinstance(focus, str) else list(focus or [])
+    looked = lambda name: any(name.lower() in str(c["function"]["arguments"]).lower()
+                              for m in msgs + [reply] for c in m.get("tool_calls") or [])
+    missing = [n for n in names if not looked(n)]
+    if not missing:
         return
-    lookup = {"name": "get_destination_info", "arguments": json.dumps({"destination": focus}, ensure_ascii=False)}
-    first = next((c for c in reply.get("tool_calls") or [] if c["function"]["name"] == "get_destination_info"), None)
-    if first is not None:
-        first["function"] = lookup
+    lookup = lambda name: {"name": "get_destination_info", "arguments": json.dumps({"destination": name}, ensure_ascii=False)}
+    guide = [c for c in reply.get("tool_calls") or [] if c["function"]["name"] == "get_destination_info"]
+    if guide:
+        for c, name in zip(guide, missing):
+            c["function"] = lookup(name)
+        for k, name in enumerate(missing[len(guide):]):
+            reply["tool_calls"].append({"id": f"call_{len(msgs)}_x{k}", "type": "function", "function": lookup(name)})
         corrections.append("guide lookup pointed at the attraction")
     elif not any(m["role"] == "assistant" for m in msgs):
-        reply.update(content="", tool_calls=[{"id": f"call_{len(msgs)}_0", "type": "function", "function": lookup}])
+        reply.update(content="", tool_calls=[{"id": f"call_{len(msgs)}_{k}", "type": "function", "function": lookup(name)}
+                                             for k, name in enumerate(missing)])
         corrections.append("first reply replaced by a lookup of the attraction")
 
 

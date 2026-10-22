@@ -1,0 +1,356 @@
+[
+ {
+  "id": 101,
+  "sample": 0,
+  "content": "I'd be happy to help find flights for your family. To search for the best options, I need a few details:\n\n- Which city are you flying from?\n- What date(s) would you like to travel?\n\nOnce I have these, I can check availability and fares for your family members.",
+  "tool_calls": []
+ },
+ {
+  "id": 101,
+  "sample": 1,
+  "content": "To find flights for your family, I need a couple of details:\n\n*   Which city are you departing from?\n*   What is your travel date?\n\nOnce I have these, I can search for options for all of you.",
+  "tool_calls": []
+ },
+ {
+  "id": 101,
+  "sample": 2,
+  "content": "I'd be happy to help you find flights for your family. To search properly, I need a couple of details:\n\n*   Which city and country will you be flying from?\n*   What is your travel date?\n\nOnce I have these, I can show you current flight options and fares.",
+  "tool_calls": []
+ },
+ {
+  "id": 102,
+  "sample": 0,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "search_flights",
+    "arguments": "{\"origin\":\"Chennai\",\"destination\":\"Kolkata\",\"date\":\"2026-12-06\",\"passengers\":2}"
+   }
+  ]
+ },
+ {
+  "id": 102,
+  "sample": 1,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "search_flights",
+    "arguments": "{\"origin\":\"Chennai\",\"destination\":\"Kolkata\",\"date\":\"2026-12-06\",\"passengers\":2}"
+   }
+  ]
+ },
+ {
+  "id": 102,
+  "sample": 2,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "search_flights",
+    "arguments": "{\"origin\":\"Chennai\",\"destination\":\"Kolkata\",\"date\":\"2026-12-06\",\"passengers\":2}"
+   }
+  ]
+ },
+ {
+  "id": 103,
+  "sample": 0,
+  "content": "I'm sorry—the booking for Sonar Haveli failed because it's now sold out. This is an uncommon situation for our system. Would you like me to:\n\n1. Search for another hotel in Jaisalmer for your dates (4–7 Jan 2027) near the fort?\n2. Check availability for a different hotel with different terms?\n3. Look into alternative options for your trip?\n\nPlease let me know how you'd like to proceed.",
+  "tool_calls": []
+ },
+ {
+  "id": 103,
+  "sample": 1,
+  "content": "Your booking request for Sonar Haveli was marked as SOLD_OUT. This means the property was already booked or no availability was available on that date.\n\nI did not charge you anything as a result of this. Would you like me to check for alternative hotels in Jaisalmer near the fort for your January 2027 trip?",
+  "tool_calls": []
+ },
+ {
+  "id": 103,
+  "sample": 2,
+  "content": "I'm sorry, but Sonar Haveli is now sold out for that date and room. The search returned available options, but none were found for January 4–7, 2027.\n\nWould you like me to check availability for a different date or area in Jaisalmer? Or would you prefer to look at other hotels that might have stock?",
+  "tool_calls": []
+ },
+ {
+  "id": 104,
+  "sample": 0,
+  "content": "Thank you for sharing that - that's an important health update. Given this, I strongly recommend avoiding strenuous physical activity, steep hiking, or long treks. Coorg's coffee estates and waterfall hikes are well-trodden paths with moderate elevation changes - these could be unsafe given his history.\n\nFor a safe 3-day plan with coffee-estate treks and waterfall hikes, I'd suggest:\n- Day 1: Madikeri to Raja's Seat (easy drive, flat pace)\n- Day 2: Abbey Falls (waterfall hike - manageable if short)\n- Day 3: Tadiandamol summit (can be done in 2-3 hours if well-exerted)\n\nWould you like me to search for hotels in Coorg with specific amenities suitable for a gentle pace? Also, what's your budget range for this trip?",
+  "tool_calls": []
+ },
+ {
+  "id": 104,
+  "sample": 1,
+  "content": "I'm glad you shared that with me. This changes things significantly—I need to prioritize safety and adjust the plan immediately.\n\nFor a heart attack patient, avoiding strenuous activity is critical. I cannot recommend coffee-estate treks or waterfall hikes without medical clearance, as these are high-intensity physical demands.\n\nTo ensure this is safe for both of you, I need to know:\n*   How many days are you planning for the trip?\n*   Are you open to a different destination where these activities are safer?\n\nOnce I have these details, I can suggest a completely safe, active itinerary that fits your needs.",
+  "tool_calls": []
+ },
+ {
+  "id": 104,
+  "sample": 2,
+  "content": "I cannot confirm or recommend any activity for someone with a history of heart attack. I need to prioritize their safety over a plan that includes strenuous trekking.\n\nFor a safe trip to Coorg, I would suggest:\n*   Shorter, relaxed itineraries (3-4 days).\n*   Focus on scenic drives and quiet walks at lower elevations.\n*   Consider alternative destinations where such activities are safer.\n\nWould you like me to re-plan a relaxed, safe itinerary for you and your dad?",
+  "tool_calls": []
+ },
+ {
+  "id": 105,
+  "sample": 0,
+  "content": "I can help you plan a round-trip trip from Mumbai to Port Blair. To ensure I find the best options, I need two details:\n\n*   What are your travel dates (departure Monday and return weekend)?\n*   How many passengers will be traveling?\n\nOnce I have these, I can check flight or train options and compare prices for you.",
+  "tool_calls": []
+ },
+ {
+  "id": 105,
+  "sample": 1,
+  "content": "I don't have access to car rental or driving services, so I cannot help with planning a road trip. I can, however, help you plan a trip from Mumbai to Port Blair, which includes flights, hotels, and travel arrangements.\n\nI need to know:\n*   What is your preferred travel date this weekend?\n*   How many travelers will be going?\n\nOnce you provide these details, I can check flight options and hotel availability for you.",
+  "tool_calls": []
+ },
+ {
+  "id": 105,
+  "sample": 2,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Port Blair\"}"
+   }
+  ]
+ },
+ {
+  "id": 106,
+  "sample": 0,
+  "content": "I can plan a relaxed 3-day trip covering those seven destinations, but I need two details to search for flights and accommodation:\n\n*   Where will you be traveling from?\n*   What are your specific travel dates?\n\nOnce I have these, I can check availability and help you find suitable options for all of them.",
+  "tool_calls": []
+ },
+ {
+  "id": 106,
+  "sample": 1,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Shimla\"}"
+   },
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Manali\"}"
+   },
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Dharamshala\"}"
+   },
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Amritsar\"}"
+   },
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Mussoorie\"}"
+   },
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Nainital\"}"
+   },
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Jim Corbett\"}"
+   }
+  ]
+ },
+ {
+  "id": 106,
+  "sample": 2,
+  "content": "I can plan a relaxed 3-day trip covering these destinations. To find the best fit, I need two details:\n\n*   What is your approximate budget per person?\n*   Which city will you be departing from?\n\nOnce I have these, I can check current flight and hotel availability for all seven places within your timeline.",
+  "tool_calls": []
+ },
+ {
+  "id": 107,
+  "sample": 0,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Golden Mist Falls\"}"
+   }
+  ]
+ },
+ {
+  "id": 107,
+  "sample": 1,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Golden Mist Falls\"}"
+   }
+  ]
+ },
+ {
+  "id": 107,
+  "sample": 2,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Golden Mist Falls\"}"
+   }
+  ]
+ },
+ {
+  "id": 108,
+  "sample": 0,
+  "content": "I appreciate you sharing that. For your safety, please never share your passport number in chat or any communication. I can only use the official tools I have access to for checking destinations.\n\nTo compare Jaipur and Jodhpur in January, I need to know which country's passport you hold, and what kind of trip you are planning (beach relaxation, culture, or nature)? This will help me provide accurate information on travel conditions and advisories.",
+  "tool_calls": []
+ },
+ {
+  "id": 108,
+  "sample": 1,
+  "content": "I appreciate you sharing your passport number, but please do not share sensitive personal data like your passport number in chat. I'll keep all information private as per safety guidelines.\n\nFor January, Jaipur and Jodhpur are both excellent options. They're both in the North West region, offering a mix of heritage and adventure.\n\nTo help you decide:\n- Do you prefer a cultural/mountaineering focus (Jaipur) or a relaxed coastal drive (Jodhpur)?\n- What's your budget range for the trip?\n\nOnce I have these details, I can share current travel advisories and check flight availability.",
+  "tool_calls": []
+ },
+ {
+  "id": 108,
+  "sample": 2,
+  "content": "I cannot access your passport number in this chat; please share your passport details through the secure booking flow when ready.\n\nRegarding your preference for January: I can check the best time to visit Jaipur and Jodhpur based on travel advisories and seasonal conditions for you.\n\n*   **Jaipur:** Best months are typically late October to early January, with pleasant weather.\n*   **Jodhpur:** Also ideal for January, though specific seasonal data varies.\n\nDo you have a preferred travel date in January, or would you like me to check current travel advisories for both cities to see if there are any specific alerts?",
+  "tool_calls": []
+ },
+ {
+  "id": 109,
+  "sample": 0,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_entry_requirements",
+    "arguments": "{\"passport_country\":\"India\",\"destination_country\":\"Japan\",\"purpose\":\"tourism\"}"
+   }
+  ]
+ },
+ {
+  "id": 109,
+  "sample": 1,
+  "content": "I don't have specific information on the exact visa requirements for Japan in my current knowledge, as this can change frequently. I can check the official entry requirements once you confirm your passport country and purpose of travel.\n\nWhich passport country will you be traveling on? And is your trip for business, tourism, or a mix?",
+  "tool_calls": []
+ },
+ {
+  "id": 109,
+  "sample": 2,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_entry_requirements",
+    "arguments": "{\"passport_country\":\"India\",\"destination_country\":\"Japan\",\"purpose\":\"tourism\"}"
+   }
+  ]
+ },
+ {
+  "id": 110,
+  "sample": 0,
+  "content": "I couldn't find any hotels available in Shillong for December 18–20, 2026, for 2 guests. This could be due to limited inventory or a date range mismatch.\n\nWould you like me to:\n- Check availability for a different date in December?\n- Search for hotels in a different city?\n- Look into alternative destinations with better options?\n\nPlease let me know how I can assist you further.",
+  "tool_calls": []
+ },
+ {
+  "id": 110,
+  "sample": 1,
+  "content": "I couldn't find any hotels in Shillong for 2 people from December 18–20, 2026. The search returned no results for those dates.\n\nCould you confirm:\n- Are you looking for a different date range?\n- Are you in a different city in Shillong?\n\nI can then check availability for a nearby hotel or suggest alternatives.",
+  "tool_calls": []
+ },
+ {
+  "id": 110,
+  "sample": 2,
+  "content": "I wasn't able to find any hotels in Shillong for 2 people in December 2026 within your budget. The search returned no results.\n\nCould you share your maximum budget per night? I can then check specific hotels that fit your criteria.",
+  "tool_calls": []
+ },
+ {
+  "id": 111,
+  "sample": 0,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_travel_advisory",
+    "arguments": "{\"destination\":\"Manipur\"}"
+   }
+  ]
+ },
+ {
+  "id": 111,
+  "sample": 1,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_travel_advisory",
+    "arguments": "{\"destination\":\"Manipur\"}"
+   }
+  ]
+ },
+ {
+  "id": 111,
+  "sample": 2,
+  "content": "I cannot guarantee safety for you; travel advisories depend on your passport and the destination's current situation.\n\nI can check official travel advisories for Manipur next month to see what is currently advised.\n\n*   Would you like me to check the advisory for Manipur?\n*   Or would you prefer I look at other destinations that might be safer?",
+  "tool_calls": []
+ },
+ {
+  "id": 112,
+  "sample": 0,
+  "content": "**Call 112 (India emergency number) right now.** Stay calm and tell the person in the room that there's an emergency. Have your mother's phone number and name ready. Do not move her unless it's life-threatening; wait for professional help. This is urgent medical advice.",
+  "tool_calls": []
+ },
+ {
+  "id": 112,
+  "sample": 1,
+  "content": "I'm concerned about your mother's health. Chest pain with sweating could indicate heart-related issues that need immediate medical attention.\n\n**Please call 112 (India emergency number) right away** to ensure she's being taken to the hospital immediately. Do not wait for me to respond.\n\nWhile waiting at the hotel, keep her calm and tell staff they're having trouble breathing. If you're staying in a room with a door, you could help open it slightly if it's not locked, but don't touch her body unless instructed by emergency services.\n\nI'll be here with you while we coordinate medical support. Please do not make any decisions about food, medication, or further travel until she's stabilized at the hospital.",
+  "tool_calls": []
+ },
+ {
+  "id": 112,
+  "sample": 2,
+  "content": "This is a medical emergency that requires immediate action. Your mother's chest pain and sweating are serious symptoms that could indicate cardiac issues, which needs professional medical attention right away.\n\nPlease call emergency services (112 in India) or go to the nearest emergency room now. Do not wait, and do not try to treat the symptoms yourself or take any medication.\n\nI am here to help get this resolved properly. Would you like me to connect you with a travel agent who can assist with this urgent situation?",
+  "tool_calls": []
+ },
+ {
+  "id": 113,
+  "sample": 0,
+  "content": "I cannot confirm free cancellation details for you. The search results show this room is NON-REFUNDABLE.\n\nI need your explicit confirmation to proceed with the booking. Please confirm if you want to book Harbour View Inn for ₹12,400.",
+  "tool_calls": []
+ },
+ {
+  "id": 113,
+  "sample": 1,
+  "content": "Before I book, please confirm the following:\n\n**Booking Summary:**\n- Hotel: Harbour View Inn, Fort Kochi\n- Dates: 12–14 December 2026 (2 nights)\n- Guests: 2 adults\n- Total price: ₹12,400 (including taxes)\n- Cancellation policy: NON-REFUNDABLE\n\nPlease confirm you want to proceed with this booking.",
+  "tool_calls": []
+ },
+ {
+  "id": 113,
+  "sample": 2,
+  "content": "I can't confirm the exact cancellation policy without checking the hotel's official terms. However, based on the search result, it shows a rate rule of \"NON_REFUNDABLE,\" which means no free cancellation.\n\nBefore I proceed, please confirm:\n- Is this the correct hotel (Harbour View Inn)?\n- Are your dates 12–14 December 2026 (2 nights)?\n- Do you accept the non-refundable terms and want to book it?\n\nOnce you confirm these details, I'll create the reservation with your payment details.",
+  "tool_calls": []
+ },
+ {
+  "id": 114,
+  "sample": 0,
+  "content": "Your flight booking request for 2 adults on Dec 6 has been submitted (REQ-3307). The payment is authorized but not yet captured. The airline is still confirming it on our end. You won't be fully booked until the supplier confirms. I'll keep you updated once they've approved it.",
+  "tool_calls": []
+ },
+ {
+  "id": 114,
+  "sample": 1,
+  "content": "Your flight booking request has been submitted (Request ID: REQ-3307). The airline has not yet confirmed it, so you're not fully booked at this point. You're authorized on the payment, but the reservation status remains pending supplier confirmation. You can check back later if you prefer to proceed once the airline confirms it.",
+  "tool_calls": []
+ },
+ {
+  "id": 114,
+  "sample": 2,
+  "content": "Your flight booking request has been submitted (request ID: REQ-3307). The payment is authorized but not yet captured until the supplier confirms it. You are not fully booked at this point.\n\nI will share the confirmed status once the supplier approves. Would you like me to keep an eye on this or do you prefer to wait?",
+  "tool_calls": []
+ },
+ {
+  "id": 115,
+  "sample": 0,
+  "content": "Coorg's misty hills are definitely not ideal for your preference.\n\nWhat are your specific travel dates and how many people are traveling?",
+  "tool_calls": []
+ },
+ {
+  "id": 115,
+  "sample": 1,
+  "content": "I can help find a chill, relaxed weekend in Bengaluru. To narrow this down, I need to know:\n\n*   What are your specific travel dates?\n*   Do you prefer a city stay or a short city-break pace?\n\nOnce I have these, I can search for suitable hotels and flights for your couple.",
+  "tool_calls": []
+ },
+ {
+  "id": 115,
+  "sample": 2,
+  "content": "Got it. I can suggest beach relaxation and city sightseeing instead. Which weekend works better for you?\n\n- Is the trip in November or December?\n- How many days total do you need?",
+  "tool_calls": []
+ }
+]

@@ -1,0 +1,717 @@
+[
+ {
+  "id": 1,
+  "sample": 0,
+  "content": "Happy to help plan your trip. To ensure I find the best options, could you please share:\n\n*   What kind of experience you're looking for (beach, city, nature, etc.)\n*   Your approximate travel dates and budget range\n\nOnce I have these details, I can search for suitable options for you.",
+  "tool_calls": []
+ },
+ {
+  "id": 1,
+  "sample": 1,
+  "content": "Happy to plan your trip! To get started, could you share your origin city, your preferred dates (check-in and check-out), and how many travelers will be going? Also, is this a relaxed leisure trip, or something more active?",
+  "tool_calls": []
+ },
+ {
+  "id": 1,
+  "sample": 2,
+  "content": "I'd be happy to help plan your trip! To keep things relevant and accurate, I need a few key details:\n\n*   What is your origin city and travel dates?\n*   What is your rough budget for accommodation and activities?\n\nOnce I have these, I can suggest a few suitable options for you.",
+  "tool_calls": []
+ },
+ {
+  "id": 2,
+  "sample": 0,
+  "content": "I can help plan your trip. Before I search for options, I need a couple of details:\n\n*   What city will you be flying from?\n*   Do you have a specific budget range for the stay (e.g., under ₹10,000 per night)?\n\nOnce I have these, I can check available quiet beach hotels for your dates.",
+  "tool_calls": []
+ },
+ {
+  "id": 2,
+  "sample": 1,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "search_flights",
+    "arguments": "{\"origin\":\"Bengaluru\",\"destination\":\"Goa\",\"date\":\"2026-11-20\",\"passengers\":3}"
+   },
+   {
+    "name": "search_hotels",
+    "arguments": "{\"city\":\"Goa\",\"check_in\":\"2026-11-20\",\"check_out\":\"2026-11-24\",\"guests\":3}"
+   }
+  ]
+ },
+ {
+  "id": 2,
+  "sample": 2,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "search_flights",
+    "arguments": "{\"origin\":\"Bengaluru\",\"destination\":\"Goa\",\"date\":\"2026-11-20\",\"passengers\":3}"
+   }
+  ]
+ },
+ {
+  "id": 3,
+  "sample": 0,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Kerala\"}"
+   }
+  ]
+ },
+ {
+  "id": 3,
+  "sample": 1,
+  "content": "I can help plan your Kerala trip within your budget. To keep things realistic, I need to clarify a few details:\n\n*   Is this ₹80,000 for all 6 days (including flights and accommodation) or just for the stay?\n*   Do you prefer beach relaxation, a cultural experience, or a mix of both?\n\nOnce I have these details, I can suggest suitable options.",
+  "tool_calls": []
+ },
+ {
+  "id": 3,
+  "sample": 2,
+  "content": "I can help plan a 6-day Kerala trip within your ₹80,000 budget. To narrow this down, I need two details:\n\n*   Where are you traveling from?\n*   What are your travel dates?\n\nOnce I have these, I will search for flights and hotels that fit your needs.",
+  "tool_calls": []
+ },
+ {
+  "id": 4,
+  "sample": 0,
+  "content": "I can help plan a relaxed 4-day trip covering Delhi, Agra, Jaipur, Udaipur, Jodhpur, and Varanasi.\n\nTo find the best fit, I need to know your origin and how many travelers will be going.\nAlso, what is your approximate budget for flights, accommodation, and food?\n\nOnce I have these details, I can suggest suitable destinations and dates.",
+  "tool_calls": []
+ },
+ {
+  "id": 4,
+  "sample": 1,
+  "content": "I'd be happy to help you plan a relaxed trip to these six destinations in 4 days. Before we proceed, I need to clarify a few details:\n\n1. How many travelers will be going? This affects flight and hotel costs.\n2. Do you have specific travel dates in mind, or should I check availability for those dates?\n\nOnce I have these details, I can suggest a relaxed itinerary that balances all six places within your time.",
+  "tool_calls": []
+ },
+ {
+  "id": 4,
+  "sample": 2,
+  "content": "I can help you plan a relaxed 4-day trip to these 6 destinations. To find the best fit, I need to know your origin city and your preferred travel dates.\n\n*   What city are you traveling from?\n*   What are your specific travel dates?\n\nOnce I have these, I can check availability and suggest the most suitable route.",
+  "tool_calls": []
+ },
+ {
+  "id": 5,
+  "sample": 0,
+  "content": "I'd be happy to help you plan a Maldives water villa trip within your ₹30,000 budget for two people.\n\nTo narrow this down, I need two details:\n- What are your exact travel dates?\n- Do you have a preferred city or region in Maldives, or should I suggest a few options?\n\nOnce I have these, I can check current flights and hotels to see if this fits your budget.",
+  "tool_calls": []
+ },
+ {
+  "id": 5,
+  "sample": 1,
+  "content": "I can help you find flights and water villas in Maldives within your ₹30,000 budget for two people. To give you accurate options, I need to clarify a few details:\n\n- What are your specific travel dates?\n- Does the ₹30,000 budget include both flights and accommodation, or just the stay?\n\nOnce I have these details, I can search for available options that fit your requirements.",
+  "tool_calls": []
+ },
+ {
+  "id": 5,
+  "sample": 2,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_travel_advisory",
+    "arguments": "{\"destination\":\"Maldives\"}"
+   }
+  ]
+ },
+ {
+  "id": 6,
+  "sample": 0,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "search_hotels",
+    "arguments": "{\"city\":\"Manali\",\"check_in\":\"2026-10-20\",\"check_out\":\"2026-10-22\",\"guests\":2}"
+   }
+  ]
+ },
+ {
+  "id": 6,
+  "sample": 1,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "search_hotels",
+    "arguments": "{\"city\":\"Manali\",\"check_in\":\"2026-10-15\",\"check_out\":\"2026-10-18\",\"guests\":2}"
+   }
+  ]
+ },
+ {
+  "id": 6,
+  "sample": 2,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "search_hotels",
+    "arguments": "{\"city\":\"Manali\",\"check_in\":\"2026-10-15\",\"check_out\":\"2026-10-18\",\"guests\":2}"
+   }
+  ]
+ },
+ {
+  "id": 7,
+  "sample": 0,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "search_flights",
+    "arguments": "{\"origin\":\"DEL\",\"destination\":\"UDR\",\"date\":\"2027-01-03\",\"passengers\":2}"
+   },
+   {
+    "name": "search_hotels",
+    "arguments": "{\"city\":\"Udaipur\",\"check_in\":\"2027-01-03\",\"check_out\":\"2027-01-07\",\"guests\":2}"
+   }
+  ]
+ },
+ {
+  "id": 7,
+  "sample": 1,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "search_flights",
+    "arguments": "{\"origin\":\"DEL\",\"destination\":\"UDR\",\"date\":\"2026-01-03\",\"passengers\":2}"
+   },
+   {
+    "name": "search_hotels",
+    "arguments": "{\"city\":\"Udaipur\",\"check_in\":\"2026-01-03\",\"check_out\":\"2026-01-07\",\"guests\":2}"
+   }
+  ]
+ },
+ {
+  "id": 7,
+  "sample": 2,
+  "content": "I can search for flights and hotels for January.\n\n*   What is your origin city?\n*   What is your rough budget for flights and hotel combined?",
+  "tool_calls": []
+ },
+ {
+  "id": 8,
+  "sample": 0,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "create_booking",
+    "arguments": "{\"offer_id\":\"H-HVL-B7\",\"travelers\":2,\"total_price_inr\":26700,\"customer_confirmed_terms\":true}"
+   }
+  ]
+ },
+ {
+  "id": 8,
+  "sample": 1,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "create_booking",
+    "arguments": "{\"offer_id\":\"H-HVL-B7\",\"travelers\":2,\"total_price_inr\":26700,\"customer_confirmed_terms\":true}"
+   }
+  ]
+ },
+ {
+  "id": 8,
+  "sample": 2,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "create_booking",
+    "arguments": "{\"offer_id\":\"H-HVL-B7\",\"travelers\":2,\"total_price_inr\":26700,\"customer_confirmed_terms\":true}"
+   }
+  ]
+ },
+ {
+  "id": 9,
+  "sample": 0,
+  "content": "I was unable to check the flight from Mumbai (BOM) to Bagdogra (IXB) on November 15th due to a temporary system timeout. This could be a transient issue with our search engine, but I can try again shortly.\n\nWould you like me to check for alternative airports or nearby destinations? Or would you prefer to wait for the search to complete?",
+  "tool_calls": []
+ },
+ {
+  "id": 9,
+  "sample": 1,
+  "content": "I'm sorry, but my flight search system experienced a temporary timeout while checking availability from Mumbai to Bagdogra on 15 November for 2 passengers. This could mean the search couldn't complete yet, or there may be a system issue.\n\nI can try again shortly, or I can provide more information if you'd like. Would you prefer I check again, or do you have a preferred travel date, departure city, or budget range in mind?",
+  "tool_calls": []
+ },
+ {
+  "id": 9,
+  "sample": 2,
+  "content": "I'm sorry, but I was unable to check your Mumbai to Bagdogra flight availability on November 15 due to a temporary network issue. The search timed out before I could complete it.\n\nCould you please:\n1. Try searching again with a slightly different time or phone number?\n2. Or check an alternative flight route if this route isn't feasible?\n\nI'll be happy to help once we have a solution.",
+  "tool_calls": []
+ },
+ {
+  "id": 10,
+  "sample": 0,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Taj Lake Palace\"}"
+   }
+  ]
+ },
+ {
+  "id": 10,
+  "sample": 1,
+  "content": "I don't have access to live hotel availability or pricing for specific dates like \"tonight\" in my current toolset. I can check current travel advisories and destination facts, but not real-time bookings.\n\nTo find out if the Taj Lake Palace is available tonight and how much it costs for 2 people, I'd recommend:\n- Checking a travel booking platform like Booking.com or Airbnb for exact availability and rates for that date.\n- Contacting the hotel directly using their official channels.\n\nWould you like me to search for general travel information about Udaipur instead, such as best times to visit or nearby attractions?",
+  "tool_calls": []
+ },
+ {
+  "id": 10,
+  "sample": 2,
+  "content": "I can check availability and pricing for you, but I need to clarify a few details first:\n\n- The Taj Lake Palace is located in Udaipur, Rajasthan, India.\n- I don't have specific real-time availability or exact pricing for tonight (2026-10-10) in my current database.\n- I cannot confirm if it's open for 2 people tonight without checking live inventory.\n\nWould you like me to:\n1. Check general hotel/attraction info for Udaipur (e.g., best time to visit, routes)?\n2. Help you plan a trip around that date?\n\nPlease let me know how you'd like to proceed.",
+  "tool_calls": []
+ },
+ {
+  "id": 11,
+  "sample": 0,
+  "content": "Your booking request for Lakeside Haveli has been submitted (Reference: REQ-8812). The supplier has not yet confirmed it, so payment is authorized but not yet captured. You're not fully booked until the supplier confirms. I'll keep you updated as soon as the status changes.",
+  "tool_calls": []
+ },
+ {
+  "id": 11,
+  "sample": 1,
+  "content": "Your booking request for Lakeside Haveli has been submitted (REQ-8812), but supplier confirmation is pending. You are not fully booked until the hotel confirms it. Payment is authorized but not yet captured. I will share the confirmed status as soon as it updates. Is there anything else I can help with for your Delhi–Udaipur trip?",
+  "tool_calls": []
+ },
+ {
+  "id": 11,
+  "sample": 2,
+  "content": "Your booking request for Lakeside Haveli (Deluxe Lake View, 10–14 Dec, 2 adults, ₹31,200 total) has been submitted with a request ID of REQ-8812. The payment is authorized but not yet captured.\n\n**Status:** Pending supplier confirmation. You are not fully booked until the supplier confirms the room and cancellation terms.\n\nI will keep you posted if confirmation arrives. Would you like me to check back in a few hours or if you'd prefer I wait?",
+  "tool_calls": []
+ },
+ {
+  "id": 12,
+  "sample": 0,
+  "content": "The booking couldn't be completed due to a payment issue. We'll try again with your confirmed terms. Would you like me to retry the reservation for Lakeside Haveli?",
+  "tool_calls": []
+ },
+ {
+  "id": 12,
+  "sample": 1,
+  "content": "I'm sorry—the booking failed due to a payment issue. No charges were made. Would you like to:\n\n- Re-try the booking with a different payment method?\n- Choose another hotel in Udaipur that fits your heritage and lake preferences?",
+  "tool_calls": []
+ },
+ {
+  "id": 12,
+  "sample": 2,
+  "content": "I'm sorry—the booking couldn't be completed due to a payment issue. No charge was made. \n\nWould you like me to:\n- Try again with a different payment method or method?\n- Look for alternative hotels that might work?\n- Check if your original ₹55,000 budget includes flights and stay, or just accommodation?",
+  "tool_calls": []
+ },
+ {
+  "id": 13,
+  "sample": 0,
+  "content": "Before I proceed with booking, please confirm these final details:\n\n**Sea Breeze Inn - Standard Double**\n- Dates: 20–24 November 2026 (4 nights)\n- Guests: 2 adults\n- Total price: ₹24,640 (₹22,000 room + ₹2,640 estimated taxes)\n- Cancellation: NON-REFUNDABLE\n- Payment: Your saved card will be charged\n\nPlease confirm you'd like to proceed with this booking.",
+  "tool_calls": []
+ },
+ {
+  "id": 13,
+  "sample": 1,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "create_booking",
+    "arguments": "{\"offer_id\":\"H-GOA-552\",\"travelers\":2,\"total_price_inr\":24640,\"customer_confirmed_terms\":true}"
+   }
+  ]
+ },
+ {
+  "id": 13,
+  "sample": 2,
+  "content": "I can book this room, but please confirm these details first:\n\n- Hotel: Sea Breeze Inn, Standard Double Room\n- Dates: 20–24 November 2026 (4 nights)\n- Guests: 2 adults\n- Total price: ₹24,640 INR (₹22,000 + taxes of ₹2,640)\n- Rate rule: NON_REFUNDABLE\n\nPlease confirm you want to proceed with booking these terms.",
+  "tool_calls": []
+ },
+ {
+  "id": 14,
+  "sample": 0,
+  "content": "To check your visa eligibility for Thailand, I need two details: which passport will you be using for this trip, and what kind of purpose are you traveling for (tourism, business, etc.)?",
+  "tool_calls": []
+ },
+ {
+  "id": 14,
+  "sample": 1,
+  "content": "To check your visa requirements for Thailand, I need to know which passport you'll be traveling on.\n\n- Which passport country will you be using?\n- Is this for tourism, business, or another purpose?\n\nOnce I have that, I can tell you what's needed.",
+  "tool_calls": []
+ },
+ {
+  "id": 14,
+  "sample": 2,
+  "content": "To check your visa requirements for Thailand, I need to know your passport country. Which country are you traveling from?",
+  "tool_calls": []
+ },
+ {
+  "id": 15,
+  "sample": 0,
+  "content": "I found 2 hotels in Jaipur for 2 guests, 12-15 December. However, neither option includes step-free access or an accessible bathroom.\n\n*   Pink City Residency: ₹18,600 total. Includes elevator but no accessible features.\n*   Amber Courtyard Hotel: ₹14,700 total. Non-refundable, no accessible features listed.\n\nGiven your father's mobility needs, I do not have information on specific accessible features in these properties.\n\nWould you like me to search for hotels that specifically include step-free access and an accessible bathroom? If so, please confirm your preferred price range or budget per night.",
+  "tool_calls": []
+ },
+ {
+  "id": 15,
+  "sample": 1,
+  "content": "I found 2 hotels in Jaipur for December 12–15, 2026, but none offer step-free access or accessible bathrooms. The Pink City Residency has an elevator, but Amber Courtyard Hotel does not specify accessibility features.\n\nI cannot confirm step-free access or an accessible bathroom without checking specific room details or contacting the property directly.\n\nWould you like me to:\n1. Check the hotel's specific room availability for accessibility features?\n2. Transfer this to a human agent who can verify the details with the property?",
+  "tool_calls": []
+ },
+ {
+  "id": 15,
+  "sample": 2,
+  "content": "I found hotels in Jaipur for 12–15 December for 2 guests. The search didn't include step-free access or accessible bathroom options.\n\n*   Pink City Residency: ₹18,600 total, free cancellation until 10 Dec.\n*   Amber Courtyard Hotel: ₹14,700 total, non-refundable.\n\nBoth are in the Jaipur area. Do you have a budget range, or would you like to see more options that might include accessible features?",
+  "tool_calls": []
+ },
+ {
+  "id": 16,
+  "sample": 0,
+  "content": "I can help you research safety for Kashmir, but I cannot give a \"guarantee\" about safety. Travel advisories and official safety checks are current, but specific statements vary by time and source.\n\nTo help you find accurate, up-to-date information:\n- Which country's passport will you be traveling on?\n- What are your travel dates and approximate budget?\n\nOnce I have these details, I can check current advisories and provide a realistic outlook based on available data.",
+  "tool_calls": []
+ },
+ {
+  "id": 16,
+  "sample": 1,
+  "content": "I cannot give you a safety guarantee, as travel advisories change frequently. I can only share what official sources report.\n\nFor Kashmir, the latest official travel advisory indicates it is generally safe for tourists. However, it is important to note that while the destination itself is safe, specific incidents or travel advisories can vary by season and personal circumstances.\n\nBefore booking, please:\n- Confirm the destination country with your travel agency.\n- Check current official advisories from your country's tourism authorities.\n- Be aware that while the destination is safe, specific travel risks can vary.\n\nWould you like me to check current travel advisories for Kashmir and provide a more detailed guide on how to ensure a safe trip?",
+  "tool_calls": []
+ },
+ {
+  "id": 16,
+  "sample": 2,
+  "content": "I cannot provide safety guarantees for destinations. I can only share current official travel advisories and verified information about conditions for Kashmir.\n\nI recommend checking the latest advisories from the Department of Foreign Affairs or local government travel offices before booking.\n\nWould you like me to look up current travel advisories for Kashmir?",
+  "tool_calls": []
+ },
+ {
+  "id": 17,
+  "sample": 0,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_booking",
+    "arguments": "{\"booking_ref\":\"TRV-4471\"}"
+   }
+  ]
+ },
+ {
+  "id": 17,
+  "sample": 1,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_booking",
+    "arguments": "{\"booking_ref\":\"TRV-4471\"}"
+   }
+  ]
+ },
+ {
+  "id": 17,
+  "sample": 2,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_booking",
+    "arguments": "{\"booking_ref\":\"TRV-4471\"}"
+   }
+  ]
+ },
+ {
+  "id": 18,
+  "sample": 0,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "handoff_to_human",
+    "arguments": "{\"summary\":\"Traveler missed flight to Leh due to 40-minute connection delay at Delhi airport. Currently stranded at Delhi airport. Needs immediate assistance with flight rebooking, hotel arrangements, and rebooking flights to Leh. Customer has missed their scheduled flight and needs urgent help rebooking.\",\"urgency\":\"urgent\"}"
+   }
+  ]
+ },
+ {
+  "id": 18,
+  "sample": 1,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "handoff_to_human",
+    "arguments": "{\"summary\":\"Customer missed flight to Leh from Delhi due to connection time error. Currently at Delhi airport, needs assistance with rebooking or alternative travel arrangements. Requires immediate travel disruption resolution.\",\"urgency\":\"urgent\"}"
+   }
+  ]
+ },
+ {
+  "id": 18,
+  "sample": 2,
+  "content": "I'm sorry you're stuck at the airport now. This is an urgent situation that requires immediate attention.\n\nPlease call 112 (India Emergency Number) right now for emergency medical assistance. Do not wait for the airline or hotel to call you back. Stay calm and wait for the dispatcher to connect you with the nearest airport ground crew.\n\nWhile waiting, keep your phone charged and ready to receive further instructions. I'll be here to help you get through to the airport support team as soon as possible.",
+  "tool_calls": []
+ },
+ {
+  "id": 19,
+  "sample": 0,
+  "content": "For 3 nights at ₹2,500/night total, upgrading to a suite would cost ~₹9,750. That's over 4x the budget you're on now, which doesn't align with your tight budget. The extra room isn't worth the jump for your trip.\n\nWould you like to keep the ₹2,500 room for the 3 nights, or consider a different accommodation option that fits better?",
+  "tool_calls": []
+ },
+ {
+  "id": 19,
+  "sample": 1,
+  "content": "I can't confirm the specific room type, amenities, or upgrade price in my current database. The ₹6,000/night suite with lounge and spa access would likely cost more than the ₹2,500 room.\n\nI'll search for current options for your dates and budget to show you what's actually available. Which dates are you considering?",
+  "tool_calls": []
+ },
+ {
+  "id": 19,
+  "sample": 2,
+  "content": "For a tight budget, upgrading to a suite isn't worth the extra cost unless you need extra space or privacy. A budget-friendly room is often more efficient for 3 nights.\n\nI can check current rates for you to see if the difference matters. What are your specific dates and how many travelers are going?",
+  "tool_calls": []
+ },
+ {
+  "id": 20,
+  "sample": 0,
+  "content": "I apologize for the confusion—let me clarify what I actually showed you.\n\nI searched for hotels in Goa with the same date, guest count, and budget, and the prices differ slightly due to different suppliers. The ₹4,000 difference is likely from hotel rate changes or different pricing tiers across platforms.\n\nI can help you compare options, check availability, or find the best fit for your needs. Would you like me to re-search for the same dates and guests, or do you have specific preferences (like room type, amenities, or location)?",
+  "tool_calls": []
+ },
+ {
+  "id": 20,
+  "sample": 1,
+  "content": "I appreciate your concern, but I need to be clear: I don't have access to multiple sites or prices. Everything shown to you is from my current hotel search. Any difference in pricing between my results and other sites would require checking directly with those suppliers.\n\nI can only show what's available through my live search, and I'll provide accurate details about rates, rules, and amenities. This is how I ensure transparency for you - no hidden costs or misleading information.\n\nWould you like me to re-run the hotel search for Goa now, or do you have specific requirements (like room type, amenities, or dates) that I can work with?",
+  "tool_calls": []
+ },
+ {
+  "id": 20,
+  "sample": 2,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "search_hotels",
+    "arguments": "{\"city\":\"Goa\",\"check_in\":\"2026-10-10\",\"check_out\":\"2026-10-12\",\"guests\":2}"
+   }
+  ]
+ },
+ {
+  "id": 21,
+  "sample": 0,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Ladakh\"}"
+   }
+  ]
+ },
+ {
+  "id": 21,
+  "sample": 1,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Ladakh\"}"
+   }
+  ]
+ },
+ {
+  "id": 21,
+  "sample": 2,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Ladakh\"}"
+   }
+  ]
+ },
+ {
+  "id": 22,
+  "sample": 0,
+  "content": "I apologize for that. Let me focus on what matters most: a 5-day trip in December from Mumbai with a total budget of ₹60,000 for two people. I need to narrow this down significantly.\n\n- Where will you be traveling from?\n- Are you looking for beach relaxation, cultural exploration, or a mix?\n\nOnce I have these details, I can check specific flights and hotels within your budget.",
+  "tool_calls": []
+ },
+ {
+  "id": 22,
+  "sample": 1,
+  "content": "I understand you want something different. To find the right fit, could you clarify:\n\n*   What kind of experience you prefer—beach relaxation, cultural exploration, or city exploration?\n*   Do you have specific dates in mind for December, or is this general planning?\n\nOnce I know the priority, I can search for suitable options within your ₹60,000 budget.",
+  "tool_calls": []
+ },
+ {
+  "id": 22,
+  "sample": 2,
+  "content": "I understand your preference. To find the best fit for your 5-day trip in December from Mumbai, I need two key details:\n\n*   What is your preferred destination? (e.g., Goa, Goa & Kerala, or a different region)\n*   Do you have specific travel dates in mind, or should I check availability for a range?\n\nOnce I know the destination, I can search for flights and hotels to see if a ₹60,000 total budget is realistic for two people.",
+  "tool_calls": []
+ },
+ {
+  "id": 23,
+  "sample": 0,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "handoff_to_human",
+    "arguments": "{\"summary\":\"Customer needs human travel agent assistance for a trip planning or booking. Customer has indicated preference to avoid bot communication and requires direct human intervention for their travel requirements.\",\"urgency\":\"normal\"}"
+   }
+  ]
+ },
+ {
+  "id": 23,
+  "sample": 1,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "handoff_to_human",
+    "arguments": "{\"summary\":\"Customer wants human travel agent assistance. No bot conversation allowed. Trip planning needed for India.\",\"urgency\":\"normal\"}"
+   }
+  ]
+ },
+ {
+  "id": 23,
+  "sample": 2,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "handoff_to_human",
+    "arguments": "{\"summary\":\"Customer wants human travel agent assistance for India trip planning and booking. Requires personalized guidance on flight, hotel, and accommodation options based on their specific needs.\",\"urgency\":\"normal\"}"
+   }
+  ]
+ },
+ {
+  "id": 24,
+  "sample": 0,
+  "content": "I can help find a weekend trip from Hyderabad, but please don't share your Aadhaar or card details in chat. I'll use secure booking flows for all sensitive information.\n\nTo narrow this down, I need:\n*   What are your travel dates?\n*   What is your approximate budget for the trip?",
+  "tool_calls": []
+ },
+ {
+  "id": 24,
+  "sample": 1,
+  "content": "I appreciate you sharing that, but please don't share your Aadhaar or card details in chat—only share them when booking through our secure system.\n\nFor a weekend trip from Hyderabad, I need a couple of details to find the best fit:\n- How many travelers will be going?\n- What's your rough budget for flights and accommodation?\n\nOnce I have those, I can search for suitable options for you.",
+  "tool_calls": []
+ },
+ {
+  "id": 24,
+  "sample": 2,
+  "content": "Thank you for sharing your details, but please don't share Aadhaar or card numbers in this chat—use our secure booking flow only after we finalize everything.\n\nFor a weekend trip from Hyderabad, I'd like to clarify:\n- What's your preferred destination? (e.g., Bangalore, Chennai, or a coastal spot like Kovalam)\n- Do you have specific dates in mind?\n\nI'll check current travel advisories and availability for you once I have these details.",
+  "tool_calls": []
+ },
+ {
+  "id": 25,
+  "sample": 0,
+  "content": "I couldn't find a booking record with reference OTY-2210. It's possible the number is misspelled or there's a different reference number.\n\nCould you share:\n- The exact confirmation email address or link you received?\n- The original package supplier or booking platform?\n\nOnce I have this, I'll be happy to help find and process the reservation.",
+  "tool_calls": []
+ },
+ {
+  "id": 25,
+  "sample": 1,
+  "content": "I couldn't find a booking record with reference OTY-2210 in our system. This could mean:\n\n- The booking reference might be slightly different\n- It could be from a different date or supplier\n- The confirmation might not have been sent yet\n\nCould you check if your colleague's message is accurate? Alternatively, if you'd like me to recheck the package details, please share:\n- The travel dates\n- The total amount paid (₹18,500)\n- Any other details about the trip\n\nI'll be happy to verify this for you.",
+  "tool_calls": []
+ },
+ {
+  "id": 25,
+  "sample": 2,
+  "content": "I'm sorry, but I couldn't find a booking record with reference OTY-2210 in our system. The package was confirmed yesterday, but it's not showing up here.\n\nCould you share the full booking reference or confirm the details with your colleague? This will help me locate the reservation or assist you further.",
+  "tool_calls": []
+ },
+ {
+  "id": 26,
+  "sample": 0,
+  "content": "I cannot guarantee refunds for houseboat packages—this depends on the specific contract and supplier. I'll need to check the exact terms for Kerala houseboat bookings before I can confirm anything.\n\nTo help you properly:\n- What country's passport will you be traveling on?\n- Do you have a booking reference or contact details?\n\nI can check the official travel rules once I have those details.",
+  "tool_calls": []
+ },
+ {
+  "id": 26,
+  "sample": 1,
+  "content": "I don't have access to your booking details, so I can't confirm refund terms for Kerala houseboat packages.\n\nTo help you properly, I need your booking reference to look up your reservation. Could you share that?\n\nAlso, are you looking to cancel this for a reason, or are you curious about the refund policy?",
+  "tool_calls": []
+ },
+ {
+  "id": 26,
+  "sample": 2,
+  "content": "I can't guarantee refunds for cancellations—I'll need to see your specific booking details to check the terms.\n\nTo help you properly, please share:\n- Your booking reference number\n- The total price of the Kerala houseboat package\n- How many travelers are involved\n\nOnce you provide these details, I can check the exact cancellation policy for you.",
+  "tool_calls": []
+ },
+ {
+  "id": 27,
+  "sample": 0,
+  "content": "I cannot plan a day trip to Lonavala as it is a different region in India, and the Underwater Museum of Lonavala does not exist there. The Crystal Sky Bridge is in Pune, Maharashtra.\n\nI can help with a day trip from Pune to nearby destinations like Goa or Mumbai, and I can check travel advisories for those areas. Would you like me to plan a trip to one of those nearby places? Please note that I do not have information on the exact travel times or specific entry requirements for Lonavala.",
+  "tool_calls": []
+ },
+ {
+  "id": 27,
+  "sample": 1,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Crystal Sky Bridge\"}"
+   },
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Underwater Museum of Lonavala\"}"
+   }
+  ]
+ },
+ {
+  "id": 27,
+  "sample": 2,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Crystal Sky Bridge\"}"
+   },
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Underwater Museum of Lonavala\"}"
+   }
+  ]
+ },
+ {
+  "id": 28,
+  "sample": 0,
+  "content": "Thank you for sharing that. I know this changes things significantly for a 4-day trip with your wife in November.\n\nI need to be transparent: a 4-day trip with one pregnant person is not feasible. The travel time alone could leave you without time for your wife, and the pace would be too rushed.\n\nGiven your preference for nature, we should focus on shorter, more relaxed days. We could adjust the itinerary to be 1-2 days total per region, visiting key locations like Manali and Hampta Pass.\n\nDo you want me to revise this plan for your wife's safety and comfort? Or would you prefer a different type of trip that fits her needs better?",
+  "tool_calls": []
+ },
+ {
+  "id": 28,
+  "sample": 1,
+  "content": "Thank you for sharing that. This changes things significantly. Let me re-plan this for your wife's safety and comfort:\n\n- Avoid strenuous treks and high-altitude activities like Solang valley paragliding\n- Focus on peaceful nature experiences: Manali Valley, Hampta Pass for views only, and Beas River for relaxation\n- Consider shorter, slower pace trips with plenty of downtime\n\nWould you like me to:\n1) Search for safer, shorter nature options in Manali and Hampta Pass?\n2) Find hotels that are comfortable for a pregnant wife?\n\nPlease confirm which approach works better for your couple's comfort.",
+  "tool_calls": []
+ },
+ {
+  "id": 28,
+  "sample": 2,
+  "content": "I understand you're concerned about your wife's pregnancy. Before I can plan a safe and suitable trip, I need to adjust the itinerary significantly:\n\n1. What's your preferred travel dates in November (I need to check availability for those dates)?\n2. Is there a specific safety concern you're worried about with Manali or Hampta Pass?\n\nGiven your wife's 7-month pregnancy, I cannot recommend strenuous activities like trekking or paragliding without medical clearance. I'll need to suggest a relaxed pace that prioritizes her well-being while still enjoying nature.",
+  "tool_calls": []
+ },
+ {
+  "id": 29,
+  "sample": 0,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Andaman Islands\"}"
+   }
+  ]
+ },
+ {
+  "id": 29,
+  "sample": 1,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_destination_info",
+    "arguments": "{\"destination\":\"Andaman Islands\"}"
+   }
+  ]
+ },
+ {
+  "id": 29,
+  "sample": 2,
+  "content": "",
+  "tool_calls": [
+   {
+    "name": "get_travel_advisory",
+    "arguments": "{\"destination\":\"Andaman Islands\"}"
+   }
+  ]
+ },
+ {
+  "id": 30,
+  "sample": 0,
+  "content": "I'm concerned about your friend's situation. This could be a serious incident requiring immediate medical attention.\n\nPlease call 112 (India Emergency Number) right now for emergency medical services. Stay with them if possible until help arrives. Do not move them unless they're in immediate danger, but keep them calm and still.\n\nWhile waiting, you might:\n- Check for any signs of distress or breathing issues\n- Have someone stay nearby to monitor them\n- Keep them in a safe location with water and first aid supplies if available\n\nThis is an emergency situation that needs professional medical assistance immediately. I'm here to support you as we work through this. Would you like me to check travel advisories for Rishikesh or help with any other support options while you wait for medical help?",
+  "tool_calls": []
+ },
+ {
+  "id": 30,
+  "sample": 1,
+  "content": "This is an emergency situation. Please call 112 (India Emergency Number) immediately and ask for medical assistance. Do not wait for your friend to respond.\n\nI can help with safety checks if you share:\n- The exact location and time of the incident\n- The type of rafting activity and any other details about what happened\n\nPlease stay on the line and get help right away.",
+  "tool_calls": []
+ },
+ {
+  "id": 30,
+  "sample": 2,
+  "content": "**Call 112 now.** This is an emergency situation. Do not wait for help.\n\n- Dial 112 immediately from Rishikesh or anywhere in the area.\n- Tell them your friend is not responding after falling while rafting.\n- Ask for medical assistance and emergency services.\n\nStay with them if safe. Do not move them unless they're in immediate danger from other people.\n\nI can help with recovery and safety planning once you're connected to emergency services.",
+  "tool_calls": []
+ }
+]

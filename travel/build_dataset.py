@@ -24,7 +24,8 @@ SGD_SEARCH_CONVS = 300
 VAL_SHARE = 0.05
 LEAK_JACCARD = 0.5
 REPEAT = {"book_it_quick": 2, "non_refundable": 2, "two_suppliers": 2, "health_reveal": 2,   # v1's weakest behaviours, seen twice
-          "v5_supplier_correction": 2, "v5_book_now_summary": 2}                          # v4's: booking on a wrong belief
+          "v5_supplier_correction": 2, "v5_book_now_summary": 2,                          # v4's: booking on a wrong belief
+          "v6_status_wording": 2, "v6_health_after_plan": 2}                              # v5's critical failures
 
 
 def refresh(conv, runtime_prompt):
@@ -69,6 +70,8 @@ def main():
     model_path = ROOT / "models/trained-v2-merged"
     tok = AutoTokenizer.from_pretrained(str(model_path) if model_path.exists() else "unsloth/Qwen3.5-0.8B", fix_mistral_regex=True)
     eval_openings = [words(o) for o in evaluate.opening_messages()]
+    # data designed after the held-out set was written (v6 on) must not resemble it either
+    holdout_openings = [words(o) for o in evaluate.opening_messages(include_holdout=True)[len(eval_openings):]]
     stats, convs = collections.Counter(), []
 
     runtime_prompt = (ROOT / "prompts/runtime_system_prompt.txt").read_text(encoding="utf-8").strip()
@@ -104,7 +107,11 @@ def main():
             if leaks(opening, eval_openings):
                 stats["gap dropped: too close to an eval scenario"] += 1
                 continue
-            convs.append((conv, None))
+            if cat.startswith("v6_") and leaks(opening, holdout_openings):
+                stats["gap dropped: too close to a held-out scenario"] += 1
+                continue
+            k = conv["meta"].get("scripted_turns", 0)   # replies to scripted turns are not the teacher's: don't train them
+            convs.append((conv, None if not k else set(range(k, sum(m["role"] == "user" for m in conv["messages"])))))
 
     rng.shuffle(convs)
     n_val = max(1, int(len(convs) * VAL_SHARE))

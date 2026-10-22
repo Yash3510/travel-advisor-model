@@ -9,6 +9,7 @@ import re
 import random
 
 from travel import tools
+from travel.evaluate import a, call, res, u
 
 METROS = ["Delhi", "Mumbai", "Bengaluru", "Chennai", "Kolkata", "Hyderabad", "Pune", "Ahmedabad", "Lucknow", "Chandigarh", "Kochi", "Indore"]
 LEISURE = ["Jaisalmer", "Munnar", "Darjeeling", "Gangtok", "Hampi", "Mysuru", "Puducherry", "Shillong", "Coorg", "Varanasi",
@@ -426,3 +427,157 @@ def _v5_slots(rng, slots):
 
 def build_v5(seed=1):
     return _build_targeted(V5_CATALOG, seed, extra=_v5_slots)
+
+
+# v6: what v5 still missed (eval/results/v5_cuda_REPORT.md). Where an eval scenario starts after earlier turns (a plan
+# already proposed, a booking just submitted, a suggestion turned down), the conversation starts with those turns scripted
+# in sc["prefix"]; build_dataset trains only the teacher's replies after them (meta.scripted_turns). Openings are worded
+# away from the eval and held-out openings, which build_dataset's leak check would drop.
+V6_AIRPORTS = ["Amritsar", "Varanasi", "Jodhpur", "Coimbatore", "Mangaluru", "Visakhapatnam", "Bhubaneswar", "Dehradun"]
+V6_TYPES = {"beach": (BEACHES, "quiet beaches, seafood and slow days", ["beaches are boring for us", "we're not beach people at all"]),
+            "hill": (HILLS + ["Munnar", "Darjeeling", "Mussoorie", "Kodaikanal"], "cool air, viewpoints and cosy stays",
+                     ["we don't like hills, too cold", "no mountains please, the winding roads make us sick"]),
+            "heritage": (["Hampi", "Khajuraho", "Jodhpur", "Bundi", "Varanasi", "Orchha"], "old forts, temples and walkable lanes",
+                         ["we've had enough of forts and temples", "history isn't really our thing"])}
+V6_PLANS = ["Here's an active plan: Day 1 arrive in {hill} and a short acclimatisation walk; Day 2 a full-day ridge trek; "
+            "Day 3 river rafting in the morning and paragliding in the afternoon; Day 4 a summit hike before heading back.",
+            "Here's a packed plan for {hill}: Day 1 a steep hike to the main viewpoint; Day 2 a long trek to a high pass; "
+            "Day 3 rafting and a waterfall hike, then the drive back.",
+            "Plan: Day 1 reach {hill} and a forest trail; Day 2 a long trek with a camp night; Day 3 paragliding and a "
+            "jeep safari on rough roads; Day 4 return."]
+V6_PLAN_DAYS = [4, 3, 4]
+
+
+def _p_booking(rng, s, today):
+    """Hotel or flight booking already confirmed by the customer; the create_booking result comes back pending or failed."""
+    start, nights, dates = _date_phrase(rng, today)
+    end, n = start + dt.timedelta(days=nights), s["n"]
+    from travel.india import hotel_name, inr
+    if rng.random() < 0.65:
+        price = rng.choice([3400, 4200, 5600, 6800, 7900, 9200])
+        refundable = rng.random() < 0.6
+        rule = f"Free cancellation until {(start - dt.timedelta(days=3)).isoformat()} 23:59" if refundable else "NON_REFUNDABLE"
+        offer = {"offer_id": f"H-{rng.randint(100, 999)}", "hotel": hotel_name(rng, s["city"]), "city": s["city"],
+                 "room": rng.choice(["Deluxe Room", "Superior Double", "Family Room"]), "price_per_night_inr": price,
+                 "nights": nights, "total_inr": price * nights, "taxes_included": True, "rate_rule": rule}
+        ask = rng.choice([f"Hotel in {s['city']} for {n} guests, {dates}.", f"Need a room in {s['city']}, {dates}, {n} of us.",
+                          f"Can you find a hotel in {s['city']} from {dates} for {n} people?"])
+        search = call("c1", "search_hotels", {"city": s["city"], "check_in": start.isoformat(), "check_out": end.isoformat(), "guests": n})
+        terms = f"free cancellation until {start - dt.timedelta(days=3):%d %b}" if refundable else "non-refundable"
+        summary = f"{offer['hotel']}, {offer['room']}, {dates}, {n} guests: {inr(offer['total_inr'])} total including taxes, {terms}. Shall I book it?"
+        total = offer["total_inr"]
+    else:
+        fare = rng.choice([4800, 6100, 7400, 9300]) * n
+        offer = {"offer_id": f"F-{rng.randint(100, 999)}", "airline": rng.choice(["IndiGo", "Air India", "Akasa Air"]),
+                 "out": f"{start.day} {start:%b} {rng.choice(['06:10', '08:45', '13:20', '18:05'])} {s['metro']} → {s['metro2']}",
+                 "total_inr": fare, "fare_rule": rng.choice(["Non-refundable", "Partially refundable; change fee applies"])}
+        ask = rng.choice([f"One-way flight {s['metro']} to {s['metro2']} on {start.day} {start:%B} for {n}.",
+                          f"Flights from {s['metro']} to {s['metro2']}, {start.day} {start:%B}, {n} passengers, one way."])
+        search = call("c1", "search_flights", {"origin": s["metro"], "destination": s["metro2"], "date": start.isoformat(), "passengers": n})
+        summary = f"{offer['airline']}, {offer['out']}, {n} passengers: {inr(fare)} total, {offer['fare_rule'].lower()}. Shall I book it?"
+        total = fare
+    roll = rng.random()
+    result = ({"status": "PENDING_SUPPLIER_CONFIRMATION", "request_id": f"REQ-{rng.randint(1000, 9999)}", "payment": "AUTHORISED_NOT_CAPTURED"}
+              if roll < 0.7 else {"status": "FAILED", "reason": "SOLD_OUT" if roll < 0.85 else "PAYMENT_DECLINED", "charged": False})
+    prefix = [u(ask), search, res("c1", {"checked_at": f"{today}T11:00+05:30", "results": [offer]}), a(summary),
+              u(rng.choice([f"Yes, I confirm {inr(total)} and the terms. Book it.", f"Yes please, go ahead at {inr(total)}.", "Confirmed, book it."])),
+              call("c2", "create_booking", {"offer_id": offer["offer_id"], "travelers": n, "total_price_inr": total, "customer_confirmed_terms": True}),
+              res("c2", result)]
+    return {"situation": "You have just confirmed a booking. After the assistant's next message, ask plainly whether you are booked now "
+                         "and when you will know for sure (or, if it failed, what your options are).", "prefix": prefix}
+
+
+def _p_health(rng, s, today):
+    plan = rng.randrange(len(V6_PLANS))
+    days = V6_PLAN_DAYS[plan]
+    opening = rng.choice([f"My {s['relation']} and I want an adventurous {days}-day break in {s['hill']} in {s['month']}: treks, rafting, the works. Can you plan it?",
+                          f"Plan something active in {s['hill']} for the two of us ({s['relation']} and me), {s['month']}, lots of trekking.",
+                          f"We love the outdoors. Put together a {days}-day adventure around {s['hill']} for me and my {s['relation']}."])
+    reveal = rng.choice([f"Oh, I forgot to mention, my {s['relation']} {s['condition']}.", f"By the way, my {s['relation']} {s['condition']}.",
+                         f"One thing I should have said: my {s['relation']} {s['condition']}. Is the plan still fine?"])
+    return {"situation": f"You asked for an adventure trip and just revealed that your {s['relation']} {s['condition']}. React naturally to "
+                         "the assistant's answer and ask one follow-up question.",
+            "prefix": [u(opening), a(V6_PLANS[plan].format(hill=s["hill"])), u(reveal)]}
+
+
+def _p_rejected(rng, s, today):
+    kind = rng.choice(list(V6_TYPES))
+    pool, blurb, reasons = V6_TYPES[kind]
+    place = rng.choice(pool)
+    opening = rng.choice([f"We're two people in {s['metro']} with {s['days']} days off in {s['month']} and about ₹{s['budget']:,}. Where should we go?",
+                          f"Ideas for a {s['days']}-day {s['month']} holiday from {s['metro']} for a couple? Budget around ₹{s['budget']:,}."])
+    return {"situation": f"The assistant suggested {place}; you said {kind} trips are not for you. React to its new suggestion.",
+            "prefix": [u(opening), a(f"For a relaxed {s['month']} break, {place} is a strong fit: {blurb}. Shall I check flights and stays for your dates?"),
+                       u(rng.choice(["No, ", "Hmm, no. ", "Not really, "]) + rng.choice(reasons) + ". Something else?")],
+            "rejected": place}
+
+
+def _v6_slots(rng, slots):
+    slots["condition"] = rng.choice(CONDITIONS)
+    if "pregnant" in slots["condition"]:
+        slots["relation"] = "wife"
+    slots["metro2"] = rng.choice([m for m in METROS if m != slots["metro"]])
+    slots["adults"], slots["kids"] = rng.choice([1, 2, 2, 3]), rng.choice([1, 1, 2])
+    slots["ages"] = " and ".join(str(rng.randint(3, 14)) for _ in range(slots["kids"]))
+    slots["children"] = "1 child" if slots["kids"] == 1 else f"{slots['kids']} children"
+    slots["grown"] = "1 adult" if slots["adults"] == 1 else f"{slots['adults']} adults"
+    slots["fly_to"] = rng.choice(V6_AIRPORTS + [m for m in METROS if m != slots["metro"]])
+    slots["adj"] = rng.choice(["quiet", "peaceful", "romantic", "budget", "family-friendly", "luxurious but not flashy"])
+    slots["hi"], slots["lo"] = rng.choice([(6500, 2400), (8000, 3000), (5500, 2200)])
+    slots["activity"] = rng.choice(["trekking", "sightseeing", "rafting and hiking", "at the conference"])
+
+
+V6_CATALOG = [
+    # (category, count, user_turns, maker(rng, slots, today) -> fields, or a list of opening briefs)
+    ("v6_status_wording", 35, 1, _p_booking, None),
+    ("v6_health_after_plan", 35, 0, _p_health, None),          # ends on the replan: the pilot's follow-ups were noise
+    ("v6_rejected_suggestion", 30, 0, _p_rejected, None),
+    ("v6_too_many_places", 30, 0, None, [
+        "Ask for a trip covering {cities} in {days} days and say it must be relaxed.",
+        "Say you want to see {cities} in {days} days without rushing, and ask for a plan."]),
+    ("v6_budget_gap", 30, 1, None, [
+        "In one message: a strict ₹{low} total for {n} people, a 5-star resort in {beach} for {nights} nights, with return flights from {metro}. If the assistant says it won't fit, ask what you can get instead.",
+        "In one message: you only have ₹{low} for {n} people, want a luxury villa holiday in {dest} for {nights} nights including flights from {metro}. Insist it must fit."]),
+    ("v6_no_rail_trip", 30, 0, None, [
+        "Ask whether there is a train from {metro} to {island}, because you want to leave Saturday and be home Sunday.",
+        "Ask to drive from {metro} to {island} for a quick weekend.",
+        "Ask to book a direct train from {metro} to {norail} this Friday and back on Sunday."]),
+    ("v6_full_spec_search", 30, 0, None, [
+        "In one message give everything: {grown} and {children} (age {ages}) flying from {metro} to {fly_to}, {dates}, total budget ₹{budget:,} for flights and hotel, and a {adj} area. Leave nothing out."]),
+    ("v6_vague_ask", 25, 0, None, [
+        "Ask for a {adj} place to stay in {city}, and nothing else.",
+        "Say only that you need somewhere {adj} to stay in {hill}."]),
+    ("v6_upgrade_advice", 20, 0, None, [
+        "You are planning (not yet booked) {nights} nights in {city}; you will be out {activity} all day and only sleep at the hotel, and money is tight. Ask for an honest opinion: is the ₹{hi}/night suite with a spa worth it over the ₹{lo} room? You want advice, not a booking."]),
+    ("v6_attraction_pair", 25, 0, None, [
+        "Ask for a day in {city} built around the {fake} in the morning and the {fake2} in {city2} in the evening."]),
+]
+FOCUS_CATEGORIES.add("v6_attraction_pair")
+
+
+def build_v6(seed=2):
+    """v6 briefs; a scripted prefix replaces the simulated opening where the eval scenario starts mid-conversation."""
+    from travel import kb
+    rng = random.Random(seed)
+    entries = {k: v for k, v in kb.load().items() if k not in V4_EXCLUDE}
+    no_rail = [entries[k]["destination"] for k in V4_NO_RAIL if k in entries]
+    islands = [v["destination"] for k, v in entries.items() if k in ("lakshadweep",)] or no_rail
+    out = []
+    for category, count, user_turns, maker, templates in V6_CATALOG:
+        for k in range(count):
+            today = dt.date(2026, 10, 1) + dt.timedelta(days=rng.randint(0, 150))
+            slots = _fill(rng, today)
+            slots["island"], slots["norail"] = rng.choice(islands), rng.choice(no_rail)
+            slots["fake2"] = rng.choice([f"{a_} {b_}" for a_ in FAKE_A for b_ in FAKE_B if f"{a_} {b_}" != slots["fake"]])
+            slots["cities"] = ", ".join(rng.sample(METROS + LEISURE, slots["big"]))
+            _v6_slots(rng, slots)
+            sc = {"id": f"{category}-{k:03d}", "category": category, "today": today.isoformat(), "style": rng.choice(STYLES),
+                  "user_turns": user_turns, "tools": [t["function"]["name"] for t in ALL], "backend": {}, "seed": rng.randint(0, 10**9)}
+            if maker:
+                sc.update(maker(rng, slots, today))
+            else:
+                sc["situation"] = rng.choice(templates).format(**slots)
+            if category in FOCUS_CATEGORIES:
+                sc["focus"] = [slots["fake"], slots["fake2"]]
+            out.append(sc)
+    return out

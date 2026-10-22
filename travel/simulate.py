@@ -6,6 +6,7 @@ Resumable: scenario ids already in <out.jsonl> are skipped.
 import concurrent.futures as cf
 import datetime as dt
 import json
+import re
 import pathlib
 import sys
 import threading
@@ -59,11 +60,25 @@ def customer_says(base, sc, history):
 
 EDITOR_NOTE = ("[Editor note, not from the customer] Your last reply breaks the chat-channel rules ({issues}). Rewrite that reply "
                "for the customer with the same facts and intent: under 120 words, at most two questions, plain sentences or short "
-               "bullets, no tables, headings or emojis. Reply with the rewritten message only.")
+               "bullets, no tables, headings or emojis. Write it as a fresh reply to the customer: never mention an earlier draft or apologise for it. Reply with the rewritten message only.")
 FACT_NOTE = ("[Editor note, not from the customer] Your last reply states facts that no tool result or customer message gave "
              "({issues}: months, seasons or routes). Rewrite it using only what the destination guide and other tool results "
-             "actually say; where they are silent, say you don't have that detail. Reply with the rewritten message only.")
+             "actually say; where they are silent, say you don't have that detail. Write it as a fresh reply to the customer: never mention an earlier draft or apologise for it. Reply with the rewritten message only.")
+PRICE_NOTE = ("[Editor note, not from the customer] Your last reply quotes prices or amounts that no tool result or customer "
+              "message gave ({issues}). Rewrite it without them: explain the gap in words, or offer to search for real prices. "
+              "Write it as a fresh reply to the customer: never mention an earlier draft or apologise for it. Reply with the rewritten message only.")
 MAX_EDITS = 2
+# the teacher sometimes opens a rewrite with "Got it. Here is the rewritten reply:"
+PREAMBLE = re.compile(r"^\s*(got it[.!]?\s*)?here(?: is|'s) (the|my) (rewritten|revised|updated) (reply|message|version)[^\n:]*:\s*", re.I)
+
+
+def _invented_prices(sc, history, draft):
+    """v6 on: does the draft add amounts no customer message or tool result gave? (earlier catalogs generate as before)"""
+    if not sc["category"].startswith("v6_"):
+        return False
+    conv = lambda msgs: {"messages": [{"role": "system", "content": ""}] + msgs, "tools": tools.ALL,
+                         "meta": {"category": "", "today": sc["today"]}}
+    return "invented_amount" in set(validate.check(conv(history + [{"role": "assistant", "content": draft}]))) - set(validate.check(conv(history)))
 
 
 def edited(base, sc, history, draft):
@@ -71,24 +86,27 @@ def edited(base, sc, history, draft):
     context = validate.context_of(history)
     for _ in range(MAX_EDITS):
         facts = validate.fact_issues(draft, context)
-        issues = facts or validate.turn_issues(draft)
+        price = not facts and _invented_prices(sc, history, draft)
+        issues = facts or (["prices from memory"] if price else validate.turn_issues(draft))
         if not issues:
             break
+        note = FACT_NOTE if facts else PRICE_NOTE if price else EDITOR_NOTE
         out = post(base, dict(model="local", max_tokens=600, chat_template_kwargs={"enable_thinking": False},
                               temperature=0.7, top_p=0.8, top_k=20, messages=[
             {"role": "system", "content": TEACHER_PROMPT + deployment_context(sc["today"])}, *history,
-            {"role": "assistant", "content": draft}, {"role": "user", "content": (FACT_NOTE if facts else EDITOR_NOTE).format(issues=", ".join(issues))}]))
-        draft = (out.get("content") or draft).strip()
+            {"role": "assistant", "content": draft}, {"role": "user", "content": note.format(issues=", ".join(issues))}]))
+        draft = PREAMBLE.sub("", (out.get("content") or draft).strip(), count=1)
     return draft
 
 
 def run(base, sc):
     tool_defs = [tools.BY_NAME[n] for n in sc["tools"]]
     backend = Backend({**sc["backend"], "now": f"{sc['today']}T11:00+05:30"}, sc["seed"])
-    msgs = []                                      # conversation without the system prompt
+    msgs = [dict(m) for m in sc.get("prefix", [])]  # conversation without the system prompt; scripted turns first
     corrections = []                               # in-generation fixes, recorded in meta
-    opening = customer_says(base, sc, msgs)
-    msgs.append({"role": "user", "content": opening})
+    if not msgs:
+        opening = customer_says(base, sc, msgs)
+        msgs.append({"role": "user", "content": opening})
     for turn in range(sc["user_turns"] + 1):
         for _ in range(MAX_TOOL_ROUNDS + 1):
             out = post(base, dict(model="local", max_tokens=3500, tools=tool_defs, chat_template_kwargs={"enable_thinking": True},
@@ -100,11 +118,28 @@ def run(base, sc):
                                         "function": {"name": c["function"]["name"], "arguments": c["function"]["arguments"]}}
                                        for k, c in enumerate(calls)]
             fixes.focus_first(sc, msgs, reply, corrections)
+            first_reply = not any(m["role"] == "assistant" for m in msgs)
+            if (sc["category"] in fixes.SEARCH_FIRST and first_reply
+                    and not any(c["function"]["name"] in validate.SEARCHES for c in reply.get("tool_calls") or [])):
+                retry = post(base, dict(model="local", max_tokens=3500, tools=tool_defs, chat_template_kwargs={"enable_thinking": True},
+                                        messages=[{"role": "system", "content": TEACHER_PROMPT + deployment_context(sc["today"])}, *msgs,
+                                                  reply, {"role": "user", "content": fixes.SEARCH_NOTE}], **THINK))
+                if any(c["function"]["name"] in validate.SEARCHES for c in retry.get("tool_calls") or []):
+                    reply = {"role": "assistant", "content": (retry.get("content") or "").strip(), "tool_calls": [
+                        {"id": c.get("id") or f"call_{len(msgs)}_{k}", "type": "function",
+                         "function": {"name": c["function"]["name"], "arguments": c["function"]["arguments"]}}
+                        for k, c in enumerate(retry["tool_calls"])]}
+                    corrections.append("searched instead of re-asking")
             calls = reply.get("tool_calls") or []
             note = None
-            if (sc["category"] in fixes.WARN_FIRST and not any(m["role"] == "assistant" for m in msgs)
+            if (sc["category"] in fixes.WARN_FIRST and first_reply
                     and not validate.PII_WARN.search(reply["content"])):
                 note = fixes.PII_NOTE                     # the warning comes before any answer or tool call
+            elif sc["category"] in fixes.OPINION_FIRST and first_reply and not validate.ADVICE.search(reply["content"]):
+                note = fixes.ADVICE_NOTE                  # an opinion question gets an opinion, not questions or searches
+            elif (sc["category"] in fixes.SUGGEST_FIRST and not any(m["role"] == "assistant" for m in msgs[len(sc.get("prefix", [])):])
+                    and not validate.names_another_place(reply["content"], sc.get("rejected"))):
+                note = fixes.SUGGEST_NOTE                 # the first teacher reply after the scripted turns
             elif calls:
                 meta = {"category": sc["category"], "today": sc["today"]}
                 verdicts = [fixes.triage(meta, msgs, c) for c in reply["tool_calls"]]
@@ -136,7 +171,9 @@ def run(base, sc):
     conv = {"messages": [{"role": "system", "content": RUNTIME_PROMPT + deployment_context(sc["today"])}] + msgs,
             "tools": tool_defs, "meta": {"source": "gap", "id": sc["id"], "category": sc["category"], "today": sc["today"],
                                          "situation": sc["situation"], "style": sc["style"],
-                                         "corrections": corrections, **({"focus": sc["focus"]} if "focus" in sc else {})}}
+                                         "corrections": corrections, **{k: sc[k] for k in ("focus", "rejected") if k in sc}}}
+    if sc.get("prefix"):                           # replies to these customer turns were scripted, not the teacher's
+        conv["meta"]["scripted_turns"] = sum(m["role"] == "user" for m in sc["prefix"]) - 1
     conv["meta"]["problems"] = validate.check(conv)
     return conv
 
@@ -149,7 +186,8 @@ def main():
     done = set()
     if out_path.exists():
         done = {json.loads(l)["meta"]["id"] for l in out_path.open(encoding="utf-8") if l.strip()}
-    built = {"v3": scenarios.build_v3, "v4": scenarios.build_v4, "v5": scenarios.build_v5}.get(catalog, lambda: scenarios.build(catalog=catalog))()
+    built = {"v3": scenarios.build_v3, "v4": scenarios.build_v4, "v5": scenarios.build_v5,
+             "v6": scenarios.build_v6}.get(catalog, lambda: scenarios.build(catalog=catalog))()
     pending = [s for s in built if s["id"] not in done and (not only or s["category"] in only.split(","))]
     by_cat = {}
     for s in pending:
