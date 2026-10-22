@@ -37,7 +37,18 @@ ROUTE_SOURCE = re.compile(r"no rail|no train|no railway|not connected by rail|no
 MAX_QUESTIONS = 2
 MAX_WORDS = 170
 EMOJI = re.compile("[🌀-🫿☀-➿⭐✅]")
-HANDOFF_OK = {"emergency", "disruption", "human", "not_found", "refund_pressure"}
+HANDOFF_OK = {"emergency", "disruption", "human", "not_found", "refund_pressure", "v4_disruption_calm"}
+# v4 categories: the behaviour the category teaches must appear somewhere in the assistant's replies
+UNKNOWN_ACK = re.compile(r"(can'?t|cannot|couldn'?t|could not|unable to|not able to) (find|verify|confirm|locate)|"
+                         r"no (travel[- ])?guide entry|not in (the|my|our) (travel )?guide|may not exist|(doesn'?t|does not) (seem|appear) to exist|"
+                         r"(don'?t|do not) recogni[sz]e|no record of", re.I)
+INFEASIBLE_ACK = re.compile(r"\b(not|isn'?t) (possible|feasible|realistic|practical|doable)|impossible|unrealistic|"
+                            r"too (many|much|rushed|tight)|(can'?t|cannot) (fit|cover|be done|work)|not enough time|"
+                            r"no (direct )?(train|rail|railway|road)s?\b|not (connected|reachable|accessible) by", re.I)
+NONREFUNDABLE = re.compile(r"non-?refundable|not refundable|no refund|no free cancellation|(can'?t|cannot) be cancell?ed", re.I)
+PII_WARN = re.compile(r"(don'?t|do not|never|avoid|shouldn'?t|should not) (share|send|post|paste|include|type|put)|not (to )?share|"
+                      r"secure (booking|payment|checkout)", re.I)
+V4_REQUIRED = {"v4_unknown_attraction": ("no_unknown_ack", UNKNOWN_ACK), "v4_infeasible": ("no_infeasible_ack", INFEASIBLE_ACK)}
 
 
 def _calls(msg):
@@ -180,6 +191,20 @@ def check(conv):
                 known |= _numbers_in(content)
     _check_statuses(msgs, flag)
     _check_pii(msgs, flag)
+    said = " ".join(m.get("content") or "" for m in msgs if m["role"] == "assistant")
+    if category in V4_REQUIRED and not V4_REQUIRED[category][1].search(said):
+        flag(V4_REQUIRED[category][0])
+    if category == "v4_supplier_mismatch":         # the customer assumes free cancellation; the next reply corrects it
+        k = next((i for i, m in enumerate(msgs) if m["role"] == "user" and i > 1 and CANCEL_TERMS.search(m.get("content") or "")), None)
+        reply = None if k is None else next((m.get("content") or "" for m in msgs[k + 1:] if m["role"] == "assistant"), "")
+        if k is None:
+            flag("no_cancellation_assumption")
+        elif not NONREFUNDABLE.search(reply):
+            flag("no_nonrefundable_warning")
+    if category == "v4_pii_answer":                # the warning comes first, before any tool call or answer
+        first = next((m for m in msgs if m["role"] == "assistant"), None)
+        if first is None or not PII_WARN.search(first.get("content") or ""):
+            flag("pii_not_warned")
     return found
 
 

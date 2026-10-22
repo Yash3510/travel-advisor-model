@@ -48,59 +48,65 @@
 | gap dropped: too close to an eval scenario | 7 |
 | gap superseded by a newer file (budget_gap) | 20 |
 | gap superseded by a newer file (emergency) | 20 |
-| train samples (gap) | 1,685 |
-| train samples (sgd) | 855 |
-| train tokens (gap) | 3,299,629 |
-| train tokens (sgd) | 2,332,196 |
-| val samples (gap) | 65 |
-| val samples (sgd) | 52 |
-| val tokens (gap) | 117,790 |
-| val tokens (sgd) | 144,042 |
+| train samples (gap) | 2,055 |
+| train samples (sgd) | 865 |
+| train tokens (gap) | 4,040,802 |
+| train tokens (sgd) | 2,353,471 |
+| val samples (gap) | 119 |
+| val samples (sgd) | 42 |
+| val tokens (gap) | 244,891 |
+| val tokens (sgd) | 122,767 |
 
 ## Train samples by category
 
 | category | samples |
 |---|---|
-| sgd | 855 |
-| book_it_quick | 151 |
-| booking_status | 124 |
-| season_question | 87 |
-| infeasible_route | 72 |
+| sgd | 865 |
+| book_it_quick | 143 |
+| booking_status | 114 |
+| v4_supplier_mismatch | 95 |
+| season_question | 84 |
+| v4_visa_ask | 82 |
+| v4_unknown_attraction | 75 |
 | plan_with_facts | 69 |
-| unknown_place | 67 |
+| infeasible_route | 66 |
 | how_to_reach | 65 |
-| pii | 56 |
-| permits | 54 |
+| unknown_place | 64 |
+| v4_disruption_calm | 59 |
+| v4_infeasible | 58 |
+| permits | 57 |
+| pii | 54 |
 | budget_scope | 51 |
-| visa | 48 |
-| disruption | 48 |
+| disruption | 51 |
 | year_boundary | 46 |
-| well_specified | 44 |
+| visa | 45 |
+| underspecified_search | 44 |
 | closure_season | 43 |
-| health | 42 |
 | change_after_proposal | 40 |
-| vague_prefs | 39 |
-| refund_pressure | 39 |
+| health | 39 |
 | disruption_urgent | 39 |
-| underspecified_search | 38 |
-| accessibility | 36 |
+| vague_prefs | 39 |
 | health_reveal | 36 |
-| infeasible | 27 |
-| island_access | 27 |
-| non_refundable | 26 |
-| two_suppliers | 25 |
-| emergency | 24 |
-| no_inventory | 24 |
+| well_specified | 36 |
+| accessibility | 33 |
+| refund_pressure | 33 |
+| v4_pii_answer | 31 |
+| non_refundable | 31 |
+| infeasible | 30 |
+| island_access | 30 |
+| two_suppliers | 28 |
 | price_objection | 24 |
+| no_inventory | 22 |
+| emergency | 22 |
 | tool_error | 22 |
 | think_about_it | 22 |
-| inspiration | 21 |
+| human | 21 |
 | competitor | 21 |
-| human | 19 |
+| inspiration | 21 |
 | upsell_question | 18 |
 | fictional | 14 |
-| stop_selling | 12 |
 | safety_guarantee | 12 |
+| stop_selling | 10 |
+| broad | 6 |
 | budget_gap | 6 |
 | not_found | 4 |
-| broad | 3 |

@@ -1,0 +1,250 @@
+0 done, 180 to generate
+[1/180 | clean 1 | 59s] v4_visa_ask-000: ok
+[2/180 | clean 1 | 94s] v4_pii_answer-000: ['pii_not_warned']
+[3/180 | clean 2 | 109s] v4_unknown_attraction-000: ok
+[4/180 | clean 2 | 115s] v4_infeasible-000: ['unsupported_route', 'unsupported_months']
+[5/180 | clean 3 | 158s] v4_disruption_calm-000: ok
+[6/180 | clean 3 | 183s] v4_visa_ask-001: ['unsupported_months']
+[7/180 | clean 4 | 190s] v4_supplier_mismatch-000: ok
+[8/180 | clean 4 | 238s] v4_pii_answer-001: ['unsupported_months', 'pii_not_warned']
+[9/180 | clean 5 | 257s] v4_unknown_attraction-001: ok
+[10/180 | clean 5 | 271s] v4_infeasible-001: ['no_infeasible_ack']
+[11/180 | clean 6 | 303s] v4_visa_ask-002: ok
+[12/180 | clean 7 | 332s] v4_disruption_calm-001: ok
+[13/180 | clean 7 | 407s] v4_infeasible-002: ['unsupported_measure']
+[14/180 | clean 7 | 410s] v4_supplier_mismatch-001: ['unsupported_months']
+[15/180 | clean 8 | 429s] v4_unknown_attraction-002: ok
+[16/180 | clean 9 | 457s] v4_disruption_calm-002: ok
+[17/180 | clean 10 | 485s] v4_pii_answer-002: ok
+[18/180 | clean 11 | 501s] v4_visa_ask-003: ok
+[19/180 | clean 12 | 539s] v4_supplier_mismatch-002: ok
+[20/180 | clean 13 | 592s] v4_infeasible-003: ok
+[21/180 | clean 13 | 599s] v4_pii_answer-003: ['pii_not_warned']
+[22/180 | clean 13 | 620s] v4_unknown_attraction-003: ['unsupported_months']
+[23/180 | clean 14 | 651s] v4_disruption_calm-003: ok
+[24/180 | clean 15 | 669s] v4_visa_ask-004: ok
+[25/180 | clean 15 | 690s] v4_supplier_mismatch-003: ['no_nonrefundable_warning']
+[26/180 | clean 16 | 750s] v4_unknown_attraction-004: ok
+[27/180 | clean 17 | 753s] v4_pii_answer-004: ok
+[28/180 | clean 18 | 775s] v4_infeasible-004: ok
+[29/180 | clean 19 | 812s] v4_disruption_calm-004: ok
+[30/180 | clean 19 | 830s] v4_visa_ask-005: ['unsupported_months']
+[31/180 | clean 20 | 838s] v4_supplier_mismatch-004: ok
+[32/180 | clean 20 | 877s] v4_unknown_attraction-005: ['no_unknown_ack']
+[33/180 | clean 20 | 889s] v4_pii_answer-005: ['pii_not_warned']
+[34/180 | clean 21 | 906s] v4_infeasible-005: ok
+[35/180 | clean 22 | 940s] v4_visa_ask-006: ok
+[36/180 | clean 23 | 943s] v4_disruption_calm-005: ok
+[37/180 | clean 24 | 997s] v4_supplier_mismatch-005: ok
+[38/180 | clean 24 | 1029s] v4_unknown_attraction-006: ['invented_amount', 'no_unknown_ack']
+[39/180 | clean 24 | 1030s] v4_infeasible-006: ['unsupported_route']
+[40/180 | clean 24 | 1041s] v4_pii_answer-006: ['pii_not_warned']
+[41/180 | clean 25 | 1081s] v4_visa_ask-007: ok
+[42/180 | clean 26 | 1109s] v4_disruption_calm-006: ok
+[43/180 | clean 27 | 1123s] v4_supplier_mismatch-006: ok
+[44/180 | clean 27 | 1182s] v4_pii_answer-007: ['too_many_questions', 'pii_not_warned']
+[45/180 | clean 27 | 1194s] v4_unknown_attraction-007: ['invented_amount', 'no_unknown_ack']
+[46/180 | clean 28 | 1210s] v4_infeasible-007: ok
+[47/180 | clean 29 | 1239s] v4_supplier_mismatch-007: ok
+[48/180 | clean 30 | 1241s] v4_disruption_calm-007: ok
+[49/180 | clean 31 | 1253s] v4_visa_ask-008: ok
+[50/180 | clean 31 | 1315s] v4_pii_answer-008: ['unsupported_months']
+[51/180 | clean 31 | 1335s] v4_infeasible-008: ['unsupported_measure', 'invented_amount']
+[52/180 | clean 32 | 1361s] v4_disruption_calm-008: ok
+[53/180 | clean 33 | 1411s] v4_visa_ask-009: ok
+[54/180 | clean 33 | 1418s] v4_unknown_attraction-008: ['no_unknown_ack']
+[55/180 | clean 34 | 1461s] v4_supplier_mismatch-008: ok
+[56/180 | clean 34 | 1480s] v4_unknown_attraction-009: ['no_unknown_ack']
+[57/180 | clean 35 | 1501s] v4_infeasible-009: ok
+[58/180 | clean 35 | 1512s] v4_pii_answer-009: ['pii_not_warned']
+[59/180 | clean 36 | 1540s] v4_disruption_calm-009: ok
+[60/180 | clean 37 | 1549s] v4_visa_ask-010: ok
+[61/180 | clean 37 | 1599s] v4_supplier_mismatch-009: ['unsupported_months', 'no_nonrefundable_warning']
+[62/180 | clean 37 | 1611s] v4_unknown_attraction-010: ['no_unknown_ack']
+[63/180 | clean 37 | 1639s] v4_infeasible-010: ['no_infeasible_ack']
+[64/180 | clean 38 | 1663s] v4_pii_answer-010: ok
+[65/180 | clean 39 | 1670s] v4_disruption_calm-010: ok
+[66/180 | clean 40 | 1730s] v4_unknown_attraction-011: ok
+[67/180 | clean 41 | 1737s] v4_supplier_mismatch-010: ok
+[68/180 | clean 41 | 1782s] v4_visa_ask-011: ['invented_amount']
+[69/180 | clean 42 | 1790s] v4_pii_answer-011: ok
+[70/180 | clean 42 | 1828s] v4_infeasible-011: ['no_infeasible_ack']
+[71/180 | clean 43 | 1848s] v4_disruption_calm-011: ok
+[72/180 | clean 44 | 1865s] v4_visa_ask-012: ok
+[73/180 | clean 45 | 1876s] v4_supplier_mismatch-011: ok
+[74/180 | clean 45 | 1944s] v4_pii_answer-012: ['pii_not_warned']
+[75/180 | clean 45 | 1956s] v4_unknown_attraction-012: ['invented_amount']
+[76/180 | clean 45 | 1959s] v4_infeasible-012: ['no_infeasible_ack']
+[77/180 | clean 46 | 2000s] v4_visa_ask-013: ok
+[78/180 | clean 46 | 2021s] v4_disruption_calm-012: ['unsupported_months']
+[79/180 | clean 47 | 2040s] v4_supplier_mismatch-012: ok
+[80/180 | clean 47 | 2094s] v4_pii_answer-013: ['unsupported_months', 'pii_not_warned']
+[81/180 | clean 48 | 2108s] v4_infeasible-013: ok
+[82/180 | clean 48 | 2160s] v4_unknown_attraction-013: ['too_many_questions', 'unsupported_months']
+[83/180 | clean 48 | 2185s] v4_supplier_mismatch-013: ['no_nonrefundable_warning']
+[84/180 | clean 49 | 2191s] v4_disruption_calm-013: ok
+[85/180 | clean 50 | 2201s] v4_visa_ask-014: ok
+[86/180 | clean 51 | 2236s] v4_pii_answer-014: ok
+[87/180 | clean 51 | 2288s] v4_infeasible-014: ['invented_amount']
+[88/180 | clean 52 | 2303s] v4_disruption_calm-014: ok
+[89/180 | clean 53 | 2336s] v4_unknown_attraction-014: ok
+[90/180 | clean 54 | 2347s] v4_visa_ask-015: ok
+[91/180 | clean 55 | 2387s] v4_supplier_mismatch-014: ok
+[92/180 | clean 56 | 2427s] v4_pii_answer-015: ok
+[93/180 | clean 57 | 2451s] v4_infeasible-015: ok
+[94/180 | clean 57 | 2454s] v4_unknown_attraction-015: ['unsupported_measure']
+[95/180 | clean 58 | 2485s] v4_disruption_calm-015: ok
+[96/180 | clean 59 | 2512s] v4_visa_ask-016: ok
+[97/180 | clean 60 | 2534s] v4_supplier_mismatch-015: ok
+[98/180 | clean 61 | 2595s] v4_pii_answer-016: ok
+[99/180 | clean 61 | 2605s] v4_infeasible-016: ['unsupported_measure']
+[100/180 | clean 61 | 2619s] v4_unknown_attraction-016: ['no_unknown_ack']
+[101/180 | clean 62 | 2643s] v4_disruption_calm-016: ok
+[102/180 | clean 62 | 2664s] v4_visa_ask-017: ['too_many_questions', 'unsupported_months']
+[103/180 | clean 63 | 2700s] v4_supplier_mismatch-016: ok
+[104/180 | clean 64 | 2730s] v4_infeasible-017: ok
+[105/180 | clean 65 | 2752s] v4_unknown_attraction-017: ok
+[106/180 | clean 66 | 2753s] v4_pii_answer-017: ok
+[107/180 | clean 67 | 2798s] v4_disruption_calm-017: ok
+[108/180 | clean 68 | 2846s] v4_supplier_mismatch-017: ok
+[109/180 | clean 69 | 2855s] v4_visa_ask-018: ok
+[110/180 | clean 69 | 2887s] v4_unknown_attraction-018: ['no_unknown_ack']
+[111/180 | clean 70 | 2931s] v4_infeasible-018: ok
+[112/180 | clean 71 | 2949s] v4_disruption_calm-018: ok
+[113/180 | clean 71 | 2979s] v4_pii_answer-018: ['pii_not_warned']
+[114/180 | clean 72 | 2984s] v4_visa_ask-019: ok
+[115/180 | clean 73 | 3008s] v4_supplier_mismatch-018: ok
+[116/180 | clean 74 | 3054s] v4_pii_answer-019: ok
+[117/180 | clean 74 | 3084s] v4_unknown_attraction-019: ['invented_amount', 'no_unknown_ack']
+[118/180 | clean 75 | 3102s] v4_infeasible-019: ok
+[119/180 | clean 76 | 3107s] v4_disruption_calm-019: ok
+[120/180 | clean 77 | 3157s] v4_visa_ask-020: ok
+[121/180 | clean 78 | 3179s] v4_supplier_mismatch-019: ok
+[122/180 | clean 78 | 3197s] v4_unknown_attraction-020: ['too_many_questions', 'no_unknown_ack']
+[123/180 | clean 79 | 3246s] v4_pii_answer-020: ok
+[124/180 | clean 80 | 3257s] v4_infeasible-020: ok
+[125/180 | clean 80 | 3301s] v4_supplier_mismatch-020: ['invented_amount']
+[126/180 | clean 81 | 3309s] v4_visa_ask-021: ok
+[127/180 | clean 82 | 3331s] v4_unknown_attraction-021: ok
+[128/180 | clean 83 | 3347s] v4_pii_answer-021: ok
+[129/180 | clean 83 | 3383s] v4_infeasible-021: ['too_many_questions']
+[130/180 | clean 84 | 3415s] v4_visa_ask-022: ok
+[131/180 | clean 84 | 3443s] v4_supplier_mismatch-021: ['no_nonrefundable_warning']
+[132/180 | clean 85 | 3462s] v4_unknown_attraction-022: ok
+[133/180 | clean 86 | 3479s] v4_pii_answer-022: ok
+[134/180 | clean 86 | 3497s] v4_infeasible-022: ['no_infeasible_ack']
+[135/180 | clean 87 | 3533s] v4_supplier_mismatch-022: ok
+[136/180 | clean 88 | 3539s] v4_visa_ask-023: ok
+[137/180 | clean 88 | 3585s] v4_unknown_attraction-023: ['invented_amount', 'no_unknown_ack']
+[138/180 | clean 88 | 3599s] v4_pii_answer-023: ['unsupported_measure', 'unsupported_months']
+[139/180 | clean 89 | 3608s] v4_infeasible-023: ok
+[140/180 | clean 90 | 3636s] v4_visa_ask-024: ok
+[141/180 | clean 91 | 3702s] v4_supplier_mismatch-023: ok
+[142/180 | clean 92 | 3719s] v4_infeasible-024: ok
+[143/180 | clean 92 | 3743s] v4_unknown_attraction-024: ['invented_amount']
+[144/180 | clean 93 | 3754s] v4_pii_answer-024: ok
+[145/180 | clean 94 | 3780s] v4_visa_ask-025: ok
+[146/180 | clean 95 | 3814s] v4_supplier_mismatch-024: ok
+[147/180 | clean 96 | 3859s] v4_unknown_attraction-025: ok
+[148/180 | clean 96 | 3878s] v4_supplier_mismatch-025: ['no_cancellation_assumption']
+[149/180 | clean 97 | 3907s] v4_visa_ask-026: ok
+[150/180 | clean 97 | 3938s] v4_infeasible-025: ['unsupported_route', 'unsupported_months']
+[151/180 | clean 98 | 3991s] v4_unknown_attraction-026: ok
+[152/180 | clean 99 | 4009s] v4_supplier_mismatch-026: ok
+[153/180 | clean 99 | 4022s] v4_infeasible-026: ['no_infeasible_ack']
+[154/180 | clean 100 | 4027s] v4_visa_ask-027: ok
+[155/180 | clean 100 | 4082s] v4_unknown_attraction-027: ['unsupported_measure', 'invented_amount', 'no_unknown_ack']
+[156/180 | clean 101 | 4101s] v4_supplier_mismatch-027: ok
+[157/180 | clean 102 | 4109s] v4_visa_ask-028: ok
+[158/180 | clean 102 | 4115s] v4_infeasible-027: ['no_infeasible_ack']
+[159/180 | clean 102 | 4166s] v4_infeasible-028: ['no_infeasible_ack']
+[160/180 | clean 103 | 4209s] v4_unknown_attraction-028: ok
+[161/180 | clean 104 | 4225s] v4_visa_ask-029: ok
+[162/180 | clean 105 | 4242s] v4_supplier_mismatch-028: ok
+[163/180 | clean 105 | 4313s] v4_unknown_attraction-029: ['too_many_questions', 'unsupported_months']
+[164/180 | clean 105 | 4320s] v4_infeasible-029: ['unsupported_measure']
+[165/180 | clean 106 | 4342s] v4_supplier_mismatch-029: ok
+[166/180 | clean 106 | 4402s] v4_unknown_attraction-031: ['no_unknown_ack']
+[167/180 | clean 107 | 4418s] v4_unknown_attraction-032: ok
+[168/180 | clean 107 | 4422s] v4_unknown_attraction-030: ['unsupported_measure']
+[169/180 | clean 107 | 4525s] v4_unknown_attraction-033: ['no_unknown_ack']
+[170/180 | clean 108 | 4534s] v4_unknown_attraction-034: ok
+[171/180 | clean 108 | 4537s] v4_unknown_attraction-035: ['no_unknown_ack']
+[172/180 | clean 108 | 4601s] v4_unknown_attraction-037: ['invented_amount']
+[173/180 | clean 109 | 4610s] v4_unknown_attraction-038: ok
+[174/180 | clean 110 | 4614s] v4_unknown_attraction-036: ok
+[175/180 | clean 110 | 4664s] v4_unknown_attraction-039: ['invented_amount']
+[176/180 | clean 110 | 4680s] v4_unknown_attraction-040: ['no_unknown_ack']
+[177/180 | clean 110 | 4685s] v4_unknown_attraction-041: ['no_unknown_ack']
+[178/180 | clean 111 | 4752s] v4_unknown_attraction-042: ok
+[179/180 | clean 112 | 4788s] v4_unknown_attraction-043: ok
+[180/180 | clean 112 | 4797s] v4_unknown_attraction-044: ['invented_amount', 'no_unknown_ack']
+112 done, 68 to generate
+[1/68 | clean 1 | 43s] v4_visa_ask-001: ok
+[2/68 | clean 1 | 88s] v4_infeasible-000: ['no_infeasible_ack']
+[3/68 | clean 1 | 117s] v4_unknown_attraction-003: ['too_many_questions', 'unsupported_months', 'no_unknown_ack']
+[4/68 | clean 2 | 162s] v4_disruption_calm-012: ok
+[5/68 | clean 2 | 184s] v4_pii_answer-000: ['too_long']
+[6/68 | clean 3 | 201s] v4_visa_ask-005: ok
+[7/68 | clean 4 | 207s] v4_supplier_mismatch-001: ok
+[8/68 | clean 5 | 252s] v4_unknown_attraction-005: ok
+[9/68 | clean 5 | 264s] v4_pii_answer-001: ['pii_not_warned']
+[10/68 | clean 6 | 294s] v4_infeasible-001: ok
+[11/68 | clean 6 | 334s] v4_supplier_mismatch-003: ['no_nonrefundable_warning']
+[12/68 | clean 7 | 342s] v4_visa_ask-011: ok
+[13/68 | clean 8 | 369s] v4_unknown_attraction-006: ok
+[14/68 | clean 8 | 423s] v4_infeasible-002: ['no_infeasible_ack']
+[15/68 | clean 8 | 435s] v4_pii_answer-003: ['pii_not_warned']
+[16/68 | clean 8 | 452s] v4_supplier_mismatch-009: ['no_nonrefundable_warning']
+[17/68 | clean 9 | 486s] v4_visa_ask-017: ok
+[18/68 | clean 9 | 526s] v4_unknown_attraction-007: ['no_unknown_ack']
+[19/68 | clean 9 | 536s] v4_pii_answer-005: ['pii_not_warned']
+[20/68 | clean 10 | 593s] v4_infeasible-006: ok
+[21/68 | clean 11 | 604s] v4_supplier_mismatch-013: ok
+[22/68 | clean 12 | 624s] v4_unknown_attraction-008: ok
+[23/68 | clean 12 | 632s] v4_pii_answer-006: ['pii_not_warned']
+[24/68 | clean 13 | 670s] v4_infeasible-008: ok
+[25/68 | clean 13 | 703s] v4_unknown_attraction-009: ['too_many_questions', 'unsupported_months', 'no_unknown_ack']
+[26/68 | clean 14 | 750s] v4_supplier_mismatch-020: ok
+[27/68 | clean 15 | 787s] v4_pii_answer-007: ok
+[28/68 | clean 15 | 788s] v4_infeasible-010: ['unsupported_measure', 'no_infeasible_ack']
+[29/68 | clean 16 | 850s] v4_supplier_mismatch-021: ok
+[30/68 | clean 17 | 853s] v4_unknown_attraction-010: ok
+[31/68 | clean 17 | 905s] v4_infeasible-011: ['unsupported_route']
+[32/68 | clean 18 | 916s] v4_pii_answer-008: ok
+[33/68 | clean 19 | 932s] v4_supplier_mismatch-025: ok
+[34/68 | clean 19 | 975s] v4_pii_answer-009: ['pii_not_warned']
+[35/68 | clean 19 | 1009s] v4_unknown_attraction-012: ['unsupported_months']
+[36/68 | clean 20 | 1019s] v4_infeasible-012: ok
+[37/68 | clean 21 | 1084s] v4_pii_answer-012: ok
+[38/68 | clean 21 | 1118s] v4_infeasible-014: ['invented_amount']
+[39/68 | clean 21 | 1159s] v4_unknown_attraction-013: ['invented_amount']
+[40/68 | clean 21 | 1190s] v4_pii_answer-013: ['pii_not_warned']
+[41/68 | clean 21 | 1207s] v4_unknown_attraction-015: ['too_many_questions']
+[42/68 | clean 21 | 1227s] v4_infeasible-016: ['invented_amount']
+[43/68 | clean 21 | 1279s] v4_unknown_attraction-016: ['no_unknown_ack']
+[44/68 | clean 22 | 1289s] v4_infeasible-021: ok
+[45/68 | clean 22 | 1307s] v4_pii_answer-018: ['too_long', 'unsupported_months']
+[46/68 | clean 22 | 1361s] v4_pii_answer-023: ['pii_not_warned']
+[47/68 | clean 22 | 1369s] v4_infeasible-022: ['unsupported_measure']
+[48/68 | clean 22 | 1370s] v4_unknown_attraction-018: ['no_unknown_ack']
+[49/68 | clean 22 | 1456s] v4_infeasible-025: ['no_infeasible_ack']
+[50/68 | clean 23 | 1481s] v4_unknown_attraction-020: ok
+[51/68 | clean 23 | 1494s] v4_unknown_attraction-019: ['unsupported_measure']
+[52/68 | clean 23 | 1567s] v4_infeasible-026: ['no_infeasible_ack']
+[53/68 | clean 24 | 1577s] v4_unknown_attraction-023: ok
+[54/68 | clean 25 | 1590s] v4_infeasible-027: ok
+[55/68 | clean 25 | 1645s] v4_infeasible-028: ['no_infeasible_ack']
+[56/68 | clean 26 | 1698s] v4_unknown_attraction-027: ok
+[57/68 | clean 26 | 1712s] v4_unknown_attraction-024: ['invented_amount', 'no_unknown_ack']
+[58/68 | clean 27 | 1728s] v4_infeasible-029: ok
+[59/68 | clean 28 | 1769s] v4_unknown_attraction-029: ok
+[60/68 | clean 28 | 1786s] v4_unknown_attraction-031: ['no_unknown_ack']
+[61/68 | clean 28 | 1859s] v4_unknown_attraction-030: ['unsupported_months']
+[62/68 | clean 28 | 1882s] v4_unknown_attraction-033: ['no_unknown_ack']
+[63/68 | clean 28 | 1896s] v4_unknown_attraction-035: ['no_unknown_ack']
+[64/68 | clean 28 | 1958s] v4_unknown_attraction-039: ['no_unknown_ack']
+[65/68 | clean 28 | 1963s] v4_unknown_attraction-037: ['unsupported_measure']
+[66/68 | clean 28 | 1969s] v4_unknown_attraction-040: ['no_unknown_ack']
+[67/68 | clean 28 | 2044s] v4_unknown_attraction-041: ['no_unknown_ack']
+[68/68 | clean 29 | 2074s] v4_unknown_attraction-044: ok

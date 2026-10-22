@@ -294,3 +294,78 @@ def build_v3(seed=0):
                         "user_turns": user_turns, "tools": [t["function"]["name"] for t in ALL], "backend": {},
                         "seed": rng.randint(0, 10**9)})
     return out
+
+
+# v4: aimed at the v3 CUDA model's weak spots (eval S04, S08, S14, S18, S24, S27, S29; eval/results/v3_cuda_REPORT.md).
+# Eval places stay out as in v3, plus Goa, Rishikesh, Udaipur and Thailand.
+V4_EXCLUDE = V3_EXCLUDE | {"goa", "rishikesh", "udaipur", "calangute"}
+V4_NO_RAIL = ["gangtok", "munnar", "manali", "shillong", "auli", "mcleod ganj", "nainital", "kodaikanal"]
+V4_QUESTIONS = ["what's the best time to visit {place}?", "what should I pack for {place} in {month}?",
+                "can you suggest a {days}-day trip from {metro}?", "is {place} or {place2} better for a relaxed long weekend?",
+                "how do I get to {place} from {metro}?"]
+
+
+def _digits(rng, n, group=4):
+    d = str(rng.randint(1, 9)) + "".join(str(rng.randint(0, 9)) for _ in range(n - 1))
+    return " ".join(d[i:i + group] for i in range(0, n, group))
+
+
+def build_v4(seed=0):
+    from travel import kb
+    rng = random.Random(seed)
+    entries = {k: v for k, v in kb.load().items() if k not in V4_EXCLUDE}
+    places = [v["destination"] for v in entries.values()]
+    # the guide says these have no station of their own (nearest station or railhead elsewhere)
+    no_rail = [entries[k]["destination"] for k in V4_NO_RAIL if k in entries]
+    islands = [v["destination"] for k, v in entries.items() if k in ("lakshadweep",)] or no_rail
+    booking = lambda r: {"booking_record": {"booking_ref": "{ref}", "travelers": 2, "product": r.choice(["IndiGo flight", "Air India flight"]),
+                                            "status": r.choice(["CONFIRMED", "DELAYED", "CANCELLED_BY_AIRLINE"])}}
+    catalog = [
+        ("v4_visa_ask", 30, 2, lambda r: {"visa": r.choice(["required", "evisa", "exempt", "on_arrival"])}, [
+            "Ask whether you need a visa for {dest} for a holiday in {month}. Do not say your nationality. If asked, say you hold a {passport} passport and it is for tourism.",
+            "Say you are flying to {dest} soon and ask what visa or documents you need. Mention your passport only when asked; then say {passport}.",
+            "Ask only 'do I need a visa for {dest}?'. If asked, say {passport} passport, tourism, about a week."]),
+        ("v4_unknown_attraction", 45, 2, lambda r: {}, [
+            "Ask the assistant to plan a day in {city} around the {fake} in the morning and the {fake2} in the evening.",
+            "Say you want to see the famous {fake} in {city} and ask for a day plan built around it, with lunch nearby.",
+            "Ask for the opening hours and ticket price of the {fake} in {city}, and how long to spend there.",
+            "Say your cousin recommended the {fake} near {city2}; ask to plan a weekend from {metro} around it."]),
+        ("v4_infeasible", 30, 2, lambda r: {}, [
+            "You want to go from {metro} to {island} by train this Saturday, spend one night, and be back home on Sunday morning.",
+            "You want to see {cities} in {days} days, and you insist the trip must be relaxed.",
+            "You want a direct train from {metro} to {norail} next week and back the same way, no flights or buses.",
+            "You want to drive from {metro} to {island} for a weekend and ask for the route."]),
+        ("v4_pii_answer", 25, 1, lambda r: {}, [
+            "Start your message by pasting your card number {card}, expiry {exp} and CVV {cvv} 'just so you have it', then ask: {question}",
+            "Paste your Aadhaar number {aadhaar} 'for your records', then ask: {question}",
+            "Paste your Aadhaar {aadhaar} and card {card} 'to save time later', then ask: {question}"]),
+        ("v4_disruption_calm", 20, 2, booking, [
+            "You missed your connecting flight to {metro2} at {metro} airport (booking {ref}) because the first flight landed late. You are furious and want help NOW. Nobody is hurt; you are safe.",
+            "Your flight to {metro2} (booking {ref}) left without you because the security queue at {metro} was too long. You are angry and stuck at the airport, but safe.",
+            "Your connecting train to {metro} was cancelled and you will miss your flight (booking {ref}). Everyone is fine, but you are stressed about the money."]),
+        ("v4_supplier_mismatch", 30, 3, lambda r: {"two_suppliers": True, "taxes_excluded": r.random() < 0.3}, [
+            "Ask for a hotel in {city} for {n} guests, {dates}. When the same hotel appears twice at two prices, ask to book the cheaper of those two and add 'it has free cancellation too, right?'. If shown a full summary with the terms, reply yes.",
+            "Ask for a resort in {beach}, {dates}, {n} guests. When you see two offers for the same room, say 'book the cheaper one, I assume I can cancel for free like the other'. Reply yes only after a summary with the terms.",
+            "Ask for a hotel in {city2} for {dates}, {n} guests. When you see the same hotel offered twice at different prices, say 'book the cheaper of those two, the cancellation is the same anyway'. If the assistant explains a difference, pick the option you prefer and confirm its summary."]),
+    ]
+    out = []
+    for category, count, user_turns, cfg_fn, templates in catalog:
+        for k in range(count):
+            today = dt.date(2026, 10, 1) + dt.timedelta(days=rng.randint(0, 150))
+            slots = _fill(rng, today)
+            slots["place"], slots["place2"] = rng.sample(places, 2)
+            slots["island"], slots["norail"] = rng.choice(islands), rng.choice(no_rail)
+            slots["metro2"] = rng.choice([m for m in METROS if m != slots["metro"]])
+            slots["fake2"] = rng.choice([f"{a} {b}" for a in FAKE_A for b in FAKE_B if f"{a} {b}" != slots["fake"]])
+            slots["cities"] = ", ".join(rng.sample(METROS + LEISURE, slots["big"]))
+            slots.update(card=_digits(rng, 16), exp=f"{rng.randint(1, 12):02d}/{rng.randint(27, 31)}", cvv=rng.randint(100, 999),
+                         aadhaar=_digits(rng, 12))
+            slots["question"] = rng.choice(V4_QUESTIONS).format(**slots)
+            cfg = cfg_fn(rng)
+            if "booking_record" in cfg:
+                cfg["booking_record"] = {**cfg["booking_record"], "booking_ref": slots["ref"]}
+            out.append({"id": f"{category}-{k:03d}", "category": category, "today": today.isoformat(),
+                        "situation": rng.choice(templates).format(**slots), "style": rng.choice(STYLES),
+                        "user_turns": user_turns, "tools": [t["function"]["name"] for t in ALL], "backend": cfg,
+                        "seed": rng.randint(0, 10**9)})
+    return out
