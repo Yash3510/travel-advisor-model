@@ -23,7 +23,8 @@ SGD_BOOKING_CONVS = 700
 SGD_SEARCH_CONVS = 300
 VAL_SHARE = 0.05
 LEAK_JACCARD = 0.5
-REPEAT = {"book_it_quick": 2, "non_refundable": 2, "two_suppliers": 2, "health_reveal": 2}   # v1's weakest behaviours, seen twice
+REPEAT = {"book_it_quick": 2, "non_refundable": 2, "two_suppliers": 2, "health_reveal": 2,   # v1's weakest behaviours, seen twice
+          "v5_supplier_correction": 2, "v5_book_now_summary": 2}                          # v4's: booking on a wrong belief
 
 
 def refresh(conv, runtime_prompt):

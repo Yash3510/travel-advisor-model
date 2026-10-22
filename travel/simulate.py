@@ -99,19 +99,26 @@ def run(base, sc):
                 reply["tool_calls"] = [{"id": c.get("id") or f"call_{len(msgs)}_{k}", "type": "function",
                                         "function": {"name": c["function"]["name"], "arguments": c["function"]["arguments"]}}
                                        for k, c in enumerate(calls)]
+            fixes.focus_first(sc, msgs, reply, corrections)
+            calls = reply.get("tool_calls") or []
+            note = None
+            if (sc["category"] in fixes.WARN_FIRST and not any(m["role"] == "assistant" for m in msgs)
+                    and not validate.PII_WARN.search(reply["content"])):
+                note = fixes.PII_NOTE                     # the warning comes before any answer or tool call
+            elif calls:
                 meta = {"category": sc["category"], "today": sc["today"]}
                 verdicts = [fixes.triage(meta, msgs, c) for c in reply["tool_calls"]]
                 note = next((n for v, _, n in verdicts if v == "redirect"), None)
-                if note:                                  # teacher should have spoken first: have it write that message
-                    redo = post(base, dict(model="local", max_tokens=3500, tools=tool_defs, chat_template_kwargs={"enable_thinking": True},
-                                           messages=[{"role": "system", "content": TEACHER_PROMPT + deployment_context(sc["today"])}, *msgs,
-                                                     reply, {"role": "user", "content": note}], **THINK))
-                    reply = {"role": "assistant", "content": (redo.get("content") or "").strip()}
-                    calls = []
-                    corrections.append(note[:40])
-                else:
+                if not note:
                     reply["tool_calls"] = [fixed for _, fixed, _ in verdicts]
                     corrections.extend("auto-fixed call" for v, _, _ in verdicts if v == "fixed")
+            if note:                                      # teacher should have spoken first: have it write that message
+                redo = post(base, dict(model="local", max_tokens=3500, tools=tool_defs, chat_template_kwargs={"enable_thinking": True},
+                                       messages=[{"role": "system", "content": TEACHER_PROMPT + deployment_context(sc["today"])}, *msgs,
+                                                 reply, {"role": "user", "content": note}], **THINK))
+                reply = {"role": "assistant", "content": (redo.get("content") or "").strip()}
+                calls = []
+                corrections.append(note[:40])
             if not calls and reply["content"]:
                 reply["content"] = edited(base, sc, msgs, reply["content"])
             msgs.append(reply)
@@ -129,7 +136,7 @@ def run(base, sc):
     conv = {"messages": [{"role": "system", "content": RUNTIME_PROMPT + deployment_context(sc["today"])}] + msgs,
             "tools": tool_defs, "meta": {"source": "gap", "id": sc["id"], "category": sc["category"], "today": sc["today"],
                                          "situation": sc["situation"], "style": sc["style"],
-                                         "corrections": corrections}}
+                                         "corrections": corrections, **({"focus": sc["focus"]} if "focus" in sc else {})}}
     conv["meta"]["problems"] = validate.check(conv)
     return conv
 
@@ -142,7 +149,7 @@ def main():
     done = set()
     if out_path.exists():
         done = {json.loads(l)["meta"]["id"] for l in out_path.open(encoding="utf-8") if l.strip()}
-    built = {"v3": scenarios.build_v3, "v4": scenarios.build_v4}.get(catalog, lambda: scenarios.build(catalog=catalog))()
+    built = {"v3": scenarios.build_v3, "v4": scenarios.build_v4, "v5": scenarios.build_v5}.get(catalog, lambda: scenarios.build(catalog=catalog))()
     pending = [s for s in built if s["id"] not in done and (not only or s["category"] in only.split(","))]
     by_cat = {}
     for s in pending:

@@ -1,0 +1,296 @@
+0 done, 205 to generate
+[1/205 | clean 1 | 21s] v5_attraction_lookup-000: ok
+[2/205 | clean 2 | 43s] v5_book_now_summary-000: ok
+[3/205 | clean 3 | 52s] v5_supplier_correction-000: ok
+[4/205 | clean 4 | 74s] v5_pii_first-000: ok
+[5/205 | clean 5 | 105s] v5_supplier_correction-001: ok
+[6/205 | clean 6 | 142s] v5_health_replan-000: ok
+[7/205 | clean 7 | 145s] v5_book_now_summary-001: ok
+[8/205 | clean 8 | 147s] v5_attraction_lookup-001: ok
+[9/205 | clean 8 | 189s] v5_pii_first-001: ['pii_not_warned']
+[10/205 | clean 8 | 201s] v5_supplier_correction-002: ['no_nonrefundable_warning']
+[11/205 | clean 9 | 228s] v5_attraction_lookup-002: ok
+[12/205 | clean 9 | 237s] v5_book_now_summary-002: ['status_not_reported']
+[13/205 | clean 10 | 243s] v5_health_replan-001: ok
+[14/205 | clean 10 | 306s] v5_supplier_correction-003: ['invented_amount']
+[15/205 | clean 10 | 314s] v5_health_replan-002: ['no_replan']
+[16/205 | clean 10 | 329s] v5_pii_first-002: ['unsupported_route']
+[17/205 | clean 11 | 334s] v5_attraction_lookup-003: ok
+[18/205 | clean 12 | 379s] v5_book_now_summary-003: ok
+[19/205 | clean 13 | 396s] v5_pii_first-003: ok
+[20/205 | clean 14 | 426s] v5_supplier_correction-004: ok
+[21/205 | clean 14 | 439s] v5_health_replan-003: ['no_replan']
+[22/205 | clean 15 | 442s] v5_book_now_summary-004: ok
+[23/205 | clean 16 | 459s] v5_attraction_lookup-004: ok
+[24/205 | clean 17 | 469s] v5_pii_first-004: ok
+[25/205 | clean 18 | 517s] v5_supplier_correction-005: ok
+[26/205 | clean 19 | 545s] v5_book_now_summary-005: ok
+[27/205 | clean 20 | 562s] v5_attraction_lookup-005: ok
+[28/205 | clean 20 | 567s] v5_health_replan-004: ['too_many_questions', 'status_not_reported', 'no_replan']
+[29/205 | clean 20 | 622s] v5_supplier_correction-006: ['no_nonrefundable_warning']
+[30/205 | clean 21 | 624s] v5_pii_first-005: ok
+[31/205 | clean 22 | 663s] v5_attraction_lookup-006: ok
+[32/205 | clean 22 | 668s] v5_health_replan-005: ['no_replan']
+[33/205 | clean 23 | 675s] v5_book_now_summary-006: ok
+[34/205 | clean 24 | 700s] v5_pii_first-006: ok
+[35/205 | clean 25 | 729s] v5_supplier_correction-007: ok
+[36/205 | clean 26 | 745s] v5_book_now_summary-007: ok
+[37/205 | clean 27 | 771s] v5_attraction_lookup-007: ok
+[38/205 | clean 27 | 797s] v5_health_replan-006: ['no_replan']
+[39/205 | clean 27 | 832s] v5_pii_first-007: ['pii_not_warned']
+[40/205 | clean 27 | 846s] v5_supplier_correction-008: ['no_nonrefundable_warning']
+[41/205 | clean 28 | 895s] v5_health_replan-007: ok
+[42/205 | clean 29 | 901s] v5_attraction_lookup-008: ok
+[43/205 | clean 30 | 915s] v5_book_now_summary-008: ok
+[44/205 | clean 31 | 951s] v5_pii_first-008: ok
+[45/205 | clean 32 | 965s] v5_supplier_correction-009: ok
+[46/205 | clean 33 | 1000s] v5_book_now_summary-009: ok
+[47/205 | clean 33 | 1011s] v5_attraction_lookup-009: ['too_many_questions']
+[48/205 | clean 34 | 1044s] v5_pii_first-009: ok
+[49/205 | clean 34 | 1059s] v5_health_replan-008: ['unsupported_months', 'no_replan']
+[50/205 | clean 35 | 1101s] v5_health_replan-009: ok
+[51/205 | clean 35 | 1110s] v5_supplier_correction-010: ['no_nonrefundable_warning']
+[52/205 | clean 35 | 1125s] v5_attraction_lookup-010: ['no_unknown_ack']
+[53/205 | clean 36 | 1128s] v5_book_now_summary-010: ok
+[54/205 | clean 36 | 1181s] v5_pii_first-010: ['no_pii_in_opening']
+[55/205 | clean 36 | 1218s] v5_supplier_correction-011: ['no_nonrefundable_warning']
+[56/205 | clean 36 | 1247s] v5_book_now_summary-011: ['no_summary']
+[57/205 | clean 36 | 1263s] v5_health_replan-010: ['unsupported_months', 'no_replan']
+[58/205 | clean 36 | 1283s] v5_attraction_lookup-011: ['unsupported_measure']
+[59/205 | clean 37 | 1335s] v5_supplier_correction-012: ok
+[60/205 | clean 38 | 1347s] v5_health_replan-011: ok
+[61/205 | clean 39 | 1349s] v5_pii_first-011: ok
+[62/205 | clean 40 | 1376s] v5_attraction_lookup-012: ok
+[63/205 | clean 41 | 1382s] v5_book_now_summary-012: ok
+[64/205 | clean 41 | 1421s] v5_pii_first-012: ['no_pii_in_opening', 'pii_not_warned']
+[65/205 | clean 42 | 1432s] v5_supplier_correction-013: ok
+[66/205 | clean 43 | 1459s] v5_attraction_lookup-013: ok
+[67/205 | clean 44 | 1463s] v5_book_now_summary-013: ok
+[68/205 | clean 44 | 1487s] v5_health_replan-012: ['too_many_questions', 'no_replan']
+[69/205 | clean 44 | 1518s] v5_pii_first-013: ['unsupported_measure', 'no_pii_in_opening', 'pii_not_warned']
+[70/205 | clean 44 | 1545s] v5_supplier_correction-014: ['invented_amount', 'no_cancellation_assumption']
+[71/205 | clean 45 | 1565s] v5_book_now_summary-014: ok
+[72/205 | clean 45 | 1582s] v5_health_replan-013: ['no_replan']
+[73/205 | clean 46 | 1584s] v5_attraction_lookup-014: ok
+[74/205 | clean 46 | 1625s] v5_pii_first-014: ['pii_not_warned']
+[75/205 | clean 47 | 1647s] v5_supplier_correction-015: ok
+[76/205 | clean 48 | 1691s] v5_book_now_summary-015: ok
+[77/205 | clean 48 | 1692s] v5_attraction_lookup-015: ['unsupported_measure']
+[78/205 | clean 48 | 1724s] v5_health_replan-014: ['no_replan']
+[79/205 | clean 49 | 1730s] v5_pii_first-015: ok
+[80/205 | clean 50 | 1769s] v5_health_replan-015: ok
+[81/205 | clean 50 | 1770s] v5_supplier_correction-016: ['invented_amount']
+[82/205 | clean 51 | 1793s] v5_attraction_lookup-016: ok
+[83/205 | clean 52 | 1799s] v5_book_now_summary-016: ok
+[84/205 | clean 52 | 1844s] v5_pii_first-016: ['no_pii_in_opening', 'pii_not_warned']
+[85/205 | clean 53 | 1850s] v5_supplier_correction-017: ok
+[86/205 | clean 54 | 1870s] v5_attraction_lookup-017: ok
+[87/205 | clean 55 | 1906s] v5_book_now_summary-017: ok
+[88/205 | clean 56 | 1908s] v5_pii_first-017: ok
+[89/205 | clean 57 | 1941s] v5_health_replan-016: ok
+[90/205 | clean 57 | 1971s] v5_supplier_correction-018: ['no_cancellation_assumption']
+[91/205 | clean 58 | 1982s] v5_book_now_summary-018: ok
+[92/205 | clean 59 | 2008s] v5_attraction_lookup-018: ok
+[93/205 | clean 59 | 2017s] v5_pii_first-018: ['pii_not_warned']
+[94/205 | clean 59 | 2025s] v5_health_replan-017: ['no_replan']
+[95/205 | clean 60 | 2075s] v5_supplier_correction-019: ok
+[96/205 | clean 60 | 2095s] v5_attraction_lookup-019: ['no_unknown_ack']
+[97/205 | clean 61 | 2143s] v5_health_replan-018: ok
+[98/205 | clean 61 | 2163s] v5_pii_first-019: ['pii_not_warned']
+[99/205 | clean 62 | 2187s] v5_book_now_summary-019: ok
+[100/205 | clean 63 | 2207s] v5_supplier_correction-020: ok
+[101/205 | clean 63 | 2240s] v5_attraction_lookup-020: ['no_unknown_ack']
+[102/205 | clean 64 | 2243s] v5_book_now_summary-020: ok
+[103/205 | clean 64 | 2251s] v5_health_replan-019: ['no_replan']
+[104/205 | clean 64 | 2306s] v5_supplier_correction-021: ['invented_amount', 'no_cancellation_assumption']
+[105/205 | clean 64 | 2315s] v5_pii_first-020: ['status_not_reported']
+[106/205 | clean 64 | 2321s] v5_health_replan-020: ['invented_amount', 'unsupported_measure']
+[107/205 | clean 64 | 2352s] v5_attraction_lookup-021: ['no_unknown_ack']
+[108/205 | clean 65 | 2375s] v5_pii_first-021: ok
+[109/205 | clean 66 | 2382s] v5_book_now_summary-021: ok
+[110/205 | clean 66 | 2416s] v5_supplier_correction-022: ['no_cancellation_assumption']
+[111/205 | clean 67 | 2446s] v5_attraction_lookup-022: ok
+[112/205 | clean 68 | 2454s] v5_book_now_summary-022: ok
+[113/205 | clean 69 | 2458s] v5_health_replan-021: ok
+[114/205 | clean 70 | 2501s] v5_pii_first-022: ok
+[115/205 | clean 71 | 2504s] v5_supplier_correction-023: ok
+[116/205 | clean 72 | 2532s] v5_attraction_lookup-023: ok
+[117/205 | clean 73 | 2546s] v5_health_replan-022: ok
+[118/205 | clean 74 | 2566s] v5_book_now_summary-023: ok
+[119/205 | clean 74 | 2629s] v5_supplier_correction-024: ['no_nonrefundable_warning']
+[120/205 | clean 74 | 2639s] v5_pii_first-023: ['no_pii_in_opening', 'pii_not_warned']
+[121/205 | clean 74 | 2652s] v5_health_replan-023: ['no_replan']
+[122/205 | clean 75 | 2669s] v5_book_now_summary-024: ok
+[123/205 | clean 76 | 2678s] v5_attraction_lookup-024: ok
+[124/205 | clean 77 | 2689s] v5_pii_first-024: ok
+[125/205 | clean 78 | 2729s] v5_supplier_correction-025: ok
+[126/205 | clean 79 | 2732s] v5_book_now_summary-025: ok
+[127/205 | clean 79 | 2752s] v5_health_replan-024: ['no_replan']
+[128/205 | clean 80 | 2773s] v5_attraction_lookup-025: ok
+[129/205 | clean 81 | 2800s] v5_pii_first-025: ok
+[130/205 | clean 81 | 2822s] v5_supplier_correction-026: ['no_nonrefundable_warning']
+[131/205 | clean 81 | 2848s] v5_attraction_lookup-026: ['no_unknown_ack']
+[132/205 | clean 82 | 2856s] v5_book_now_summary-026: ok
+[133/205 | clean 82 | 2876s] v5_health_replan-025: ['unsupported_months', 'no_replan']
+[134/205 | clean 83 | 2911s] v5_supplier_correction-027: ok
+[135/205 | clean 83 | 2962s] v5_health_replan-026: ['unsupported_months', 'no_replan']
+[136/205 | clean 84 | 2970s] v5_pii_first-026: ok
+[137/205 | clean 84 | 2986s] v5_book_now_summary-027: ['booked']
+[138/205 | clean 84 | 3023s] v5_attraction_lookup-027: ['no_unknown_ack']
+[139/205 | clean 85 | 3040s] v5_pii_first-027: ok
+[140/205 | clean 86 | 3066s] v5_supplier_correction-028: ok
+[141/205 | clean 87 | 3074s] v5_health_replan-027: ok
+[142/205 | clean 87 | 3109s] v5_attraction_lookup-028: ['no_unknown_ack']
+[143/205 | clean 87 | 3112s] v5_book_now_summary-028: ['booked']
+[144/205 | clean 87 | 3125s] v5_pii_first-028: ['no_pii_in_opening', 'pii_not_warned']
+[145/205 | clean 88 | 3174s] v5_supplier_correction-029: ok
+[146/205 | clean 89 | 3179s] v5_book_now_summary-029: ok
+[147/205 | clean 90 | 3181s] v5_health_replan-028: ok
+[148/205 | clean 90 | 3207s] v5_attraction_lookup-029: ['no_unknown_ack']
+[149/205 | clean 91 | 3245s] v5_pii_first-029: ok
+[150/205 | clean 92 | 3251s] v5_supplier_correction-030: ok
+[151/205 | clean 93 | 3267s] v5_attraction_lookup-030: ok
+[152/205 | clean 93 | 3289s] v5_health_replan-029: ['no_replan']
+[153/205 | clean 94 | 3303s] v5_supplier_correction-031: ok
+[154/205 | clean 94 | 3318s] v5_pii_first-030: ['no_pii_in_opening']
+[155/205 | clean 94 | 3346s] v5_attraction_lookup-031: ['no_unknown_ack']
+[156/205 | clean 94 | 3362s] v5_pii_first-031: ['unsupported_measure']
+[157/205 | clean 95 | 3374s] v5_supplier_correction-032: ok
+[158/205 | clean 95 | 3375s] v5_attraction_lookup-032: ['no_unknown_ack']
+[159/205 | clean 95 | 3391s] v5_pii_first-032: ['unsupported_measure', 'no_pii_in_opening']
+[160/205 | clean 96 | 3402s] v5_attraction_lookup-033: ok
+[161/205 | clean 97 | 3430s] v5_supplier_correction-033: ok
+[162/205 | clean 97 | 3445s] v5_pii_first-033: ['unsupported_measure']
+[163/205 | clean 97 | 3448s] v5_supplier_correction-034: ['no_nonrefundable_warning']
+[164/205 | clean 98 | 3471s] v5_attraction_lookup-034: ok
+[165/205 | clean 99 | 3487s] v5_pii_first-034: ok
+[166/205 | clean 100 | 3498s] v5_supplier_correction-035: ok
+[167/205 | clean 101 | 3506s] v5_attraction_lookup-035: ok
+[168/205 | clean 101 | 3540s] v5_attraction_lookup-036: ['no_unknown_ack']
+[169/205 | clean 101 | 3550s] v5_supplier_correction-036: ['no_nonrefundable_warning']
+[170/205 | clean 102 | 3569s] v5_pii_first-035: ok
+[171/205 | clean 103 | 3582s] v5_pii_first-036: ok
+[172/205 | clean 104 | 3603s] v5_supplier_correction-037: ok
+[173/205 | clean 105 | 3615s] v5_attraction_lookup-037: ok
+[174/205 | clean 106 | 3645s] v5_supplier_correction-038: ok
+[175/205 | clean 106 | 3662s] v5_attraction_lookup-038: ['too_many_questions', 'unsupported_measure']
+[176/205 | clean 106 | 3707s] v5_pii_first-038: ['no_pii_in_opening']
+[177/205 | clean 106 | 3713s] v5_supplier_correction-039: ['invented_amount', 'no_nonrefundable_warning']
+[178/205 | clean 106 | 3733s] v5_pii_first-037: ['no_pii_in_opening', 'pii_not_warned']
+[179/205 | clean 107 | 3743s] v5_attraction_lookup-039: ok
+[180/205 | clean 107 | 3766s] v5_attraction_lookup-040: ['no_unknown_ack']
+[181/205 | clean 107 | 3776s] v5_pii_first-039: ['invented_amount', 'no_pii_in_opening', 'pii_not_warned']
+[182/205 | clean 107 | 3781s] v5_supplier_correction-040: ['no_nonrefundable_warning']
+[183/205 | clean 108 | 3819s] v5_supplier_correction-041: ok
+[184/205 | clean 108 | 3828s] v5_attraction_lookup-041: ['no_unknown_ack']
+[185/205 | clean 108 | 3829s] v5_pii_first-040: ['no_pii_in_opening', 'pii_not_warned']
+[186/205 | clean 109 | 3856s] v5_attraction_lookup-042: ok
+[187/205 | clean 109 | 3869s] v5_pii_first-041: ['pii_not_warned']
+[188/205 | clean 109 | 3901s] v5_supplier_correction-042: ['no_nonrefundable_warning']
+[189/205 | clean 109 | 3909s] v5_pii_first-042: ['pii_echoed']
+[190/205 | clean 109 | 3922s] v5_supplier_correction-043: ['no_nonrefundable_warning']
+[191/205 | clean 110 | 3945s] v5_pii_first-043: ok
+[192/205 | clean 110 | 3961s] v5_attraction_lookup-043: ['no_unknown_ack']
+[193/205 | clean 111 | 3972s] v5_supplier_correction-044: ok
+[194/205 | clean 111 | 3989s] v5_attraction_lookup-044: ['unsupported_measure']
+[195/205 | clean 112 | 4009s] v5_pii_first-044: ok
+[196/205 | clean 113 | 4031s] v5_supplier_correction-045: ok
+[197/205 | clean 113 | 4061s] v5_pii_first-045: ['unsupported_months']
+[198/205 | clean 114 | 4072s] v5_supplier_correction-046: ok
+[199/205 | clean 114 | 4075s] v5_pii_first-046: ['pii_not_warned']
+[200/205 | clean 115 | 4117s] v5_supplier_correction-048: ok
+[201/205 | clean 115 | 4126s] v5_supplier_correction-047: ['no_nonrefundable_warning']
+[202/205 | clean 115 | 4144s] v5_pii_first-047: ['no_pii_in_opening']
+[203/205 | clean 115 | 4151s] v5_pii_first-048: ['unsupported_measure', 'no_pii_in_opening']
+[204/205 | clean 116 | 4176s] v5_supplier_correction-049: ok
+[205/205 | clean 116 | 4179s] v5_pii_first-049: ['no_pii_in_opening']
+116 done, 89 to generate
+[1/89 | clean 0 | 29s] v5_attraction_lookup-009: ['no_unknown_ack']
+[2/89 | clean 1 | 37s] v5_supplier_correction-002: ok
+[3/89 | clean 2 | 50s] v5_book_now_summary-002: ok
+[4/89 | clean 3 | 75s] v5_pii_first-001: ok
+[5/89 | clean 4 | 115s] v5_supplier_correction-003: ok
+[6/89 | clean 5 | 137s] v5_attraction_lookup-010: ok
+[7/89 | clean 6 | 152s] v5_book_now_summary-011: ok
+[8/89 | clean 6 | 189s] v5_health_replan-002: ['too_long', 'emoji']
+[9/89 | clean 6 | 227s] v5_pii_first-002: ['invented_amount']
+[10/89 | clean 7 | 238s] v5_supplier_correction-006: ok
+[11/89 | clean 8 | 271s] v5_book_now_summary-027: ok
+[12/89 | clean 9 | 274s] v5_attraction_lookup-011: ok
+[13/89 | clean 10 | 276s] v5_health_replan-003: ok
+[14/89 | clean 11 | 322s] v5_pii_first-007: ok
+[15/89 | clean 11 | 334s] v5_supplier_correction-008: ['no_nonrefundable_warning']
+[16/89 | clean 12 | 374s] v5_health_replan-004: ok
+[17/89 | clean 13 | 375s] v5_book_now_summary-028: ok
+[18/89 | clean 14 | 376s] v5_attraction_lookup-015: ok
+[19/89 | clean 14 | 413s] v5_pii_first-010: ['no_pii_in_opening', 'pii_not_warned']
+[20/89 | clean 14 | 431s] v5_supplier_correction-010: ['unsupported_months']
+[21/89 | clean 14 | 441s] v5_attraction_lookup-019: ['no_unknown_ack']
+[22/89 | clean 15 | 483s] v5_health_replan-005: ok
+[23/89 | clean 16 | 490s] v5_pii_first-012: ok
+[24/89 | clean 16 | 519s] v5_attraction_lookup-020: ['no_unknown_ack']
+[25/89 | clean 17 | 526s] v5_supplier_correction-011: ok
+[26/89 | clean 17 | 533s] v5_health_replan-006: ['no_replan']
+[27/89 | clean 18 | 549s] v5_pii_first-013: ok
+[28/89 | clean 19 | 571s] v5_attraction_lookup-021: ok
+[29/89 | clean 19 | 586s] v5_supplier_correction-014: ['no_cancellation_assumption']
+[30/89 | clean 20 | 617s] v5_pii_first-014: ok
+[31/89 | clean 20 | 619s] v5_health_replan-008: ['no_replan']
+[32/89 | clean 21 | 650s] v5_attraction_lookup-026: ok
+[33/89 | clean 22 | 677s] v5_supplier_correction-016: ok
+[34/89 | clean 23 | 706s] v5_pii_first-016: ok
+[35/89 | clean 23 | 718s] v5_health_replan-010: ['no_replan']
+[36/89 | clean 24 | 752s] v5_supplier_correction-018: ok
+[37/89 | clean 24 | 760s] v5_attraction_lookup-027: ['unsupported_measure', 'no_unknown_ack']
+[38/89 | clean 25 | 778s] v5_health_replan-012: ok
+[39/89 | clean 25 | 803s] v5_pii_first-018: ['unsupported_measure']
+[40/89 | clean 25 | 824s] v5_supplier_correction-021: ['invented_amount']
+[41/89 | clean 26 | 839s] v5_attraction_lookup-028: ok
+[42/89 | clean 26 | 852s] v5_health_replan-013: ['unsupported_months']
+[43/89 | clean 27 | 867s] v5_pii_first-019: ok
+[44/89 | clean 28 | 888s] v5_attraction_lookup-029: ok
+[45/89 | clean 29 | 900s] v5_supplier_correction-022: ok
+[46/89 | clean 29 | 914s] v5_health_replan-014: ['no_replan']
+[47/89 | clean 30 | 950s] v5_supplier_correction-024: ok
+[48/89 | clean 30 | 985s] v5_attraction_lookup-031: ['no_unknown_ack']
+[49/89 | clean 30 | 992s] v5_health_replan-017: ['no_replan']
+[50/89 | clean 30 | 1002s] v5_pii_first-020: ['no_pii_in_opening']
+[51/89 | clean 30 | 1044s] v5_supplier_correction-026: ['no_cancellation_assumption']
+[52/89 | clean 30 | 1065s] v5_pii_first-023: ['unsupported_months', 'no_pii_in_opening', 'pii_not_warned']
+[53/89 | clean 30 | 1067s] v5_attraction_lookup-032: ['no_unknown_ack']
+[54/89 | clean 30 | 1103s] v5_pii_first-028: ['no_pii_in_opening', 'pii_not_warned']
+[55/89 | clean 30 | 1128s] v5_health_replan-019: ['too_long']
+[56/89 | clean 30 | 1150s] v5_health_replan-020: ['too_many_questions']
+[57/89 | clean 30 | 1155s] v5_supplier_correction-034: ['no_cancellation_assumption']
+[58/89 | clean 30 | 1157s] v5_attraction_lookup-036: ['no_unknown_ack']
+[59/89 | clean 31 | 1208s] v5_supplier_correction-036: ok
+[60/89 | clean 31 | 1222s] v5_health_replan-023: ['no_replan']
+[61/89 | clean 32 | 1228s] v5_attraction_lookup-038: ok
+[62/89 | clean 32 | 1250s] v5_pii_first-030: ['no_pii_in_opening', 'pii_not_warned']
+[63/89 | clean 33 | 1298s] v5_pii_first-031: ok
+[64/89 | clean 33 | 1304s] v5_supplier_correction-039: ['invented_amount', 'no_nonrefundable_warning']
+[65/89 | clean 33 | 1322s] v5_attraction_lookup-040: ['no_unknown_ack']
+[66/89 | clean 34 | 1343s] v5_health_replan-024: ok
+[67/89 | clean 34 | 1354s] v5_pii_first-032: ['invented_amount', 'unsupported_measure', 'no_pii_in_opening']
+[68/89 | clean 34 | 1383s] v5_attraction_lookup-041: ['no_unknown_ack']
+[69/89 | clean 34 | 1385s] v5_supplier_correction-040: ['no_nonrefundable_warning']
+[70/89 | clean 35 | 1424s] v5_health_replan-025: ok
+[71/89 | clean 36 | 1458s] v5_health_replan-026: ok
+[72/89 | clean 37 | 1459s] v5_pii_first-033: ok
+[73/89 | clean 38 | 1485s] v5_supplier_correction-042: ok
+[74/89 | clean 38 | 1503s] v5_attraction_lookup-043: ['unsupported_measure', 'no_unknown_ack']
+[75/89 | clean 39 | 1545s] v5_pii_first-037: ok
+[76/89 | clean 39 | 1564s] v5_health_replan-029: ['no_replan']
+[77/89 | clean 39 | 1565s] v5_supplier_correction-043: ['invented_amount', 'no_cancellation_assumption']
+[78/89 | clean 40 | 1584s] v5_attraction_lookup-044: ok
+[79/89 | clean 41 | 1623s] v5_supplier_correction-047: ok
+[80/89 | clean 41 | 1640s] v5_pii_first-039: ['unsupported_measure', 'no_pii_in_opening']
+[81/89 | clean 42 | 1657s] v5_pii_first-038: ok
+[82/89 | clean 42 | 1682s] v5_pii_first-040: ['too_many_questions', 'unsupported_months', 'no_pii_in_opening', 'pii_not_warned']
+[83/89 | clean 43 | 1694s] v5_pii_first-042: ok
+[84/89 | clean 43 | 1748s] v5_pii_first-046: ['pii_not_warned']
+[85/89 | clean 44 | 1758s] v5_pii_first-041: ok
+[86/89 | clean 44 | 1772s] v5_pii_first-045: ['unsupported_months', 'no_pii_in_opening', 'pii_not_warned']
+[87/89 | clean 44 | 1824s] v5_pii_first-048: ['no_pii_in_opening', 'pii_not_warned']
+[88/89 | clean 44 | 1833s] v5_pii_first-049: ['no_pii_in_opening']
+[89/89 | clean 44 | 1840s] v5_pii_first-047: ['no_pii_in_opening', 'pii_not_warned']

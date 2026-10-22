@@ -17,6 +17,31 @@ ASK_NOTE = ("[Editor note, not from the customer] Do not search yet: the custome
             "short, friendly message (at most two questions). Reply with that message only.")
 SELF_NOTE = ("[Editor note, not from the customer] Do not hand this to a human. You can handle it yourself with your tools "
              "and the conversation so far. Reply to the customer directly.")
+PII_NOTE = ("[Editor note, not from the customer] The customer pasted card, CVV, Aadhaar or passport details. Start your reply by "
+            "asking them not to share these in chat (they are only collected in the secure booking flow), without repeating "
+            "them. Then answer their question, or ask the one or two things you need. Reply with that message only.")
+HEALTH_NOTE = ("[Editor note, not from the customer] The customer has just told you about a health condition. Do not call a tool "
+               "yet. Revise the plan for it first: drop strenuous or risky activities, offer gentler alternatives, and suggest "
+               "they check with their doctor before travelling. Do not diagnose. Reply with that message only.")
+WARN_FIRST = {"v5_pii_first"}                      # first reply must warn about pasted card/ID data
+REPLAN_AFTER_REVEAL = {"v5_health_replan"}         # the reply to the health reveal must replan, not call a tool
+
+
+def focus_first(sc, msgs, reply, corrections):
+    """Look up the attraction the customer named (sc["focus"]) before anything else: the student copies whichever lookup
+    comes first. A guide lookup of the city is pointed at the attraction; a first reply without one becomes that lookup."""
+    focus = sc.get("focus")
+    if not focus or any(focus.lower() in str(c["function"]["arguments"]).lower()
+                        for m in msgs + [reply] for c in m.get("tool_calls") or []):
+        return
+    lookup = {"name": "get_destination_info", "arguments": json.dumps({"destination": focus}, ensure_ascii=False)}
+    first = next((c for c in reply.get("tool_calls") or [] if c["function"]["name"] == "get_destination_info"), None)
+    if first is not None:
+        first["function"] = lookup
+        corrections.append("guide lookup pointed at the attraction")
+    elif not any(m["role"] == "assistant" for m in msgs):
+        reply.update(content="", tool_calls=[{"id": f"call_{len(msgs)}_0", "type": "function", "function": lookup}])
+        corrections.append("first reply replaced by a lookup of the attraction")
 
 
 def _conv(meta, msgs):
@@ -39,6 +64,9 @@ def _roll_forward(value, today):
 
 def triage(meta, msgs, call):
     """Return ("ok" | "fixed" | "redirect", call to run, editor note or None)."""
+    if (meta["category"] in REPLAN_AFTER_REVEAL and msgs and msgs[-1]["role"] == "user"
+            and sum(m["role"] == "user" for m in msgs) == 2):
+        return "redirect", None, HEALTH_NOTE
     new = _new_problems(meta, msgs, call)
     fixed = copy.deepcopy(call)
     if new & {"past_date", "invented_filter"}:

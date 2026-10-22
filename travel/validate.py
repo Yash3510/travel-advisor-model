@@ -48,7 +48,11 @@ INFEASIBLE_ACK = re.compile(r"\b(not|isn'?t) (possible|feasible|realistic|practi
 NONREFUNDABLE = re.compile(r"non-?refundable|not refundable|no refund|no free cancellation|(can'?t|cannot) be cancell?ed", re.I)
 PII_WARN = re.compile(r"(don'?t|do not|never|avoid|shouldn'?t|should not) (share|send|post|paste|include|type|put)|not (to )?share|"
                       r"secure (booking|payment|checkout)", re.I)
-V4_REQUIRED = {"v4_unknown_attraction": ("no_unknown_ack", UNKNOWN_ACK), "v4_infeasible": ("no_infeasible_ack", INFEASIBLE_ACK)}
+V4_REQUIRED = {"v4_unknown_attraction": ("no_unknown_ack", UNKNOWN_ACK), "v4_infeasible": ("no_infeasible_ack", INFEASIBLE_ACK),
+               "v5_attraction_lookup": ("no_unknown_ack", UNKNOWN_ACK)}
+PII_PASTED = re.compile(r"\d[\d \-]{9,}\d|\b[A-Z]\d{7}\b|\b[A-Z]{5}\d{4}[A-Z]\b")   # card/Aadhaar digits, passport, PAN
+DOCTOR = re.compile(r"doctor|physician|gyn(a)?ecolog|obstetric|medical (advice|clearance)", re.I)
+NO_BOOKING = {"v5_supplier_correction", "v5_book_now_summary"}     # these conversations end on the correction or summary
 
 
 def _calls(msg):
@@ -194,14 +198,34 @@ def check(conv):
     said = " ".join(m.get("content") or "" for m in msgs if m["role"] == "assistant")
     if category in V4_REQUIRED and not V4_REQUIRED[category][1].search(said):
         flag(V4_REQUIRED[category][0])
-    if category == "v4_supplier_mismatch":         # the customer assumes free cancellation; the next reply corrects it
+    if category in NO_BOOKING and any(c["function"]["name"] == "create_booking" for m in msgs for c in _calls(m)):
+        flag("booked")
+    if category == "v5_book_now_summary":          # ends on a summary with the total and the cancellation rule
+        last = next((m.get("content") or "" for m in reversed(msgs) if m["role"] == "assistant"), "")
+        if not (AMOUNT.search(last) and CANCEL_TERMS.search(last)):
+            flag("no_summary")
+    if category == "v5_attraction_lookup":         # the first guide lookup is the attraction itself
+        first = next((c for m in msgs for c in _calls(m) if c["function"]["name"] == "get_destination_info"), None)
+        focus = conv.get("meta", {}).get("focus", "")
+        if first is None or focus.lower() not in str(first["function"]["arguments"]).lower():
+            flag("focus_not_looked_up")
+    if category == "v5_health_replan":             # the reply to the reveal replans and mentions a doctor
+        k = [i for i, m in enumerate(msgs) if m["role"] == "user"]
+        reply = next((m for m in msgs[k[1] + 1:] if m["role"] == "assistant"), None) if len(k) > 1 else None
+        if reply is None or _calls(reply) or not DOCTOR.search(reply.get("content") or ""):
+            flag("no_replan")
+    if category in ("v4_supplier_mismatch", "v5_supplier_correction"):   # the customer assumes free cancellation; the next reply corrects it
         k = next((i for i, m in enumerate(msgs) if m["role"] == "user" and i > 1 and CANCEL_TERMS.search(m.get("content") or "")), None)
         reply = None if k is None else next((m.get("content") or "" for m in msgs[k + 1:] if m["role"] == "assistant"), "")
         if k is None:
             flag("no_cancellation_assumption")
         elif not NONREFUNDABLE.search(reply):
             flag("no_nonrefundable_warning")
-    if category == "v4_pii_answer":                # the warning comes first, before any tool call or answer
+    if category == "v5_pii_first":                # the customer simulator sometimes leaves the numbers out
+        opening = next((m.get("content") or "" for m in msgs if m["role"] == "user"), "")
+        if not PII_PASTED.search(opening):
+            flag("no_pii_in_opening")
+    if category in ("v4_pii_answer", "v5_pii_first"):   # the warning comes first, before any tool call or answer
         first = next((m for m in msgs if m["role"] == "assistant"), None)
         if first is None or not PII_WARN.search(first.get("content") or ""):
             flag("pii_not_warned")

@@ -48,65 +48,70 @@
 | gap dropped: too close to an eval scenario | 7 |
 | gap superseded by a newer file (budget_gap) | 20 |
 | gap superseded by a newer file (emergency) | 20 |
-| train samples (gap) | 2,055 |
-| train samples (sgd) | 865 |
-| train tokens (gap) | 4,040,802 |
-| train tokens (sgd) | 2,353,471 |
-| val samples (gap) | 119 |
-| val samples (sgd) | 42 |
-| val tokens (gap) | 244,891 |
-| val tokens (sgd) | 122,767 |
+| train samples (gap) | 2,374 |
+| train samples (sgd) | 854 |
+| train tokens (gap) | 4,669,248 |
+| train tokens (sgd) | 2,327,343 |
+| val samples (gap) | 103 |
+| val samples (sgd) | 53 |
+| val tokens (gap) | 202,843 |
+| val tokens (sgd) | 148,895 |
 
 ## Train samples by category
 
 | category | samples |
 |---|---|
-| sgd | 865 |
-| book_it_quick | 143 |
-| booking_status | 114 |
-| v4_supplier_mismatch | 95 |
+| sgd | 854 |
+| book_it_quick | 163 |
+| booking_status | 109 |
+| v4_supplier_mismatch | 107 |
 | season_question | 84 |
 | v4_visa_ask | 82 |
-| v4_unknown_attraction | 75 |
-| plan_with_facts | 69 |
-| infeasible_route | 66 |
-| how_to_reach | 65 |
+| v5_supplier_correction | 80 |
+| v4_unknown_attraction | 78 |
+| infeasible_route | 72 |
+| v5_pii_first | 67 |
+| plan_with_facts | 66 |
 | unknown_place | 64 |
-| v4_disruption_calm | 59 |
-| v4_infeasible | 58 |
-| permits | 57 |
+| how_to_reach | 62 |
+| v5_book_now_summary | 58 |
+| v4_disruption_calm | 56 |
+| v4_infeasible | 55 |
 | pii | 54 |
+| permits | 54 |
+| v5_health_replan | 54 |
 | budget_scope | 51 |
 | disruption | 51 |
-| year_boundary | 46 |
-| visa | 45 |
-| underspecified_search | 44 |
+| visa | 48 |
 | closure_season | 43 |
+| year_boundary | 43 |
+| health | 42 |
+| refund_pressure | 42 |
+| underspecified_search | 41 |
 | change_after_proposal | 40 |
-| health | 39 |
-| disruption_urgent | 39 |
-| vague_prefs | 39 |
-| health_reveal | 36 |
-| well_specified | 36 |
-| accessibility | 33 |
-| refund_pressure | 33 |
-| v4_pii_answer | 31 |
+| well_specified | 40 |
+| accessibility | 39 |
+| vague_prefs | 36 |
+| disruption_urgent | 36 |
+| v5_attraction_lookup | 34 |
+| health_reveal | 33 |
 | non_refundable | 31 |
 | infeasible | 30 |
-| island_access | 30 |
+| v4_pii_answer | 29 |
 | two_suppliers | 28 |
 | price_objection | 24 |
-| no_inventory | 22 |
-| emergency | 22 |
-| tool_error | 22 |
-| think_about_it | 22 |
-| human | 21 |
+| no_inventory | 24 |
+| inspiration | 24 |
+| emergency | 24 |
+| island_access | 24 |
 | competitor | 21 |
-| inspiration | 21 |
+| human | 21 |
+| tool_error | 20 |
 | upsell_question | 18 |
+| think_about_it | 18 |
 | fictional | 14 |
 | safety_guarantee | 12 |
-| stop_selling | 10 |
+| stop_selling | 12 |
 | broad | 6 |
 | budget_gap | 6 |
 | not_found | 4 |

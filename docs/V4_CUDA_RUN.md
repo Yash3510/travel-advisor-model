@@ -2,7 +2,7 @@
 
 v4 = v3's recipe (Recipe A in [HANDOFF_V3_TRAINING.md](HANDOFF_V3_TRAINING.md)) plus new teacher conversations aimed at the
 weak spots in [eval/results/v3_cuda_REPORT.md](../eval/results/v3_cuda_REPORT.md). Trained overnight on the RTX 4050 laptop,
-22 Oct 2026, hands-off with `scripts/v4_overnight.ps1`. Setup, versions and kernels are the same as
+22 Oct 2026, hands-off with `scripts/overnight.ps1 -Version v4` (then named `scripts/v4_overnight.ps1`). Setup, versions and kernels are the same as
 [V3_CUDA_RUN.md](V3_CUDA_RUN.md). Scores: [eval/results/v4_cuda_REPORT.md](../eval/results/v4_cuda_REPORT.md) (not the official judge).
 
 ## New data: `data/gap/gap_v4.jsonl`
